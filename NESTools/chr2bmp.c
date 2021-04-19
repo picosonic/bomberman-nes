@@ -3,7 +3,7 @@
 
 #define WIDTH   8*16*2
 #define HEIGHT 8*16
-#define FSIZE   (WIDTH * HEIGHT * 3) + 0x36 
+#define FSIZE   (WIDTH * HEIGHT * 3) + 0x36
 
 char chr_name[256] = "bomber.chr";
 unsigned char chr_data[8192];
@@ -111,3 +111,4 @@ int main(int argc, char *argv[])
         }
     }
 }
+
