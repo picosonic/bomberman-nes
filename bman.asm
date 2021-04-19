@@ -6087,8 +6087,7 @@
         EQUB $FF,$FF,$FF,$FF,$FF,$FF
 
     ORG     $F000
-    INCLUDE "boom.asm"
-
+    INCBIN "boom.bin"
 
 .DUMMY:      EQUB $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
 ; ---------------------------------------------------------------------------
