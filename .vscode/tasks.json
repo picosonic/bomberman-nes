@@ -1,0 +1,41 @@
+{
+    "version": "0.1.0",
+    "command": "bash",
+    "isShellCommand": true,
+    "showOutput": "always",
+    "echoCommand": true,
+    "suppressTaskName": true,
+    "args": [
+        "-c"
+    ],
+    "tasks": [
+        {
+            "taskName": "bomberman.nes",
+            "problemMatcher": {
+                "owner": "6502",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceRoot}"
+                ],
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 4
+                }
+            },
+            "args": [
+                "${workspaceFolder}/make.sh \"${workspaceFolder}\""
+            ],
+            "isBuildCommand": true
+        },
+        {
+            "taskName": "Run 'bomberman.nes' in Emulator",
+            "isTestCommand": true,
+            "args": [
+                "fceux ${workspaceFolder}/bomberman.nes"
+            ]
+        }
+    ]
+}

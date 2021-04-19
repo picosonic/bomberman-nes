@@ -1,0 +1,7 @@
+# Binary output files
+bomberman
+bomberman.nes
+
+# Other files
+*.cdl
+*.ram.nl
