@@ -7,6 +7,8 @@ PAD_SELECT = &20
 PAD_B      = &40
 PAD_A      = &80
 
+MAP_LEVELS = 50
+
 MAP_WIDTH = 32
 MAP_HEIGHT = 13
 

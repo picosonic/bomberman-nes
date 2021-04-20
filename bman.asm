@@ -602,8 +602,8 @@ INCLUDE "vars.asm"
   STA APU_MUSIC
 
 .GAME_MENU
-  LDX #&FF
-  TXS
+  LDX #&FF:TXS ; Clear stack
+
   LDA #&F
   STA APU_MASTERCTRL_REG
   LDA #0
@@ -837,7 +837,7 @@ INCLUDE "vars.asm"
   INC STAGE
   LDY #0
   LDA STAGE
-  CMP #51
+  CMP #MAP_LEVELS+1
   BNE SELECT_BONUS_MONSTER ; ������� ��� ������� ��� ��������� ������
   JMP END_GAME
 ; ---------------------------------------------------------------------------
@@ -2628,17 +2628,17 @@ INCLUDE "vars.asm"
 .sub_CF60
   LDA (STAGE_MAP),Y
   BEQ locret_CF7C
-  CMP #8
+  CMP #MAP_EXIT
   BEQ locret_CF7C
-  CMP #6
+  CMP #MAP_BONUS
   BEQ locret_CF7C
-  CMP #2
+  CMP #MAP_BRICK
   BEQ loc_CF7D
-  CMP #4
+  CMP #MAP_HIDDEN_EXIT
   BEQ loc_CF7D
-  CMP #5
+  CMP #MAP_HIDDEN_BONUS
   BEQ loc_CF7D
-  CMP #3
+  CMP #MAP_BOMB
   BEQ loc_CF82
 
 .locret_CF7C
@@ -3475,11 +3475,11 @@ INCLUDE "vars.asm"
 .ENEMY_COLLISION
   LDA (STAGE_MAP),Y
   BEQ locret_D4BF
-  CMP #8
+  CMP #MAP_EXIT
   BEQ locret_D4BF
-  CMP #6
+  CMP #MAP_BONUS
   BEQ locret_D4BF
-  CMP #2
+  CMP #MAP_BRICK
   BEQ BRICK_WALL
   RTS
 ; ---------------------------------------------------------------------------
