@@ -97,12 +97,12 @@ INCLUDE "vars.asm"
   DEC TILE_CNT
   BEQ DRAW_MENU_ARROW
 
-.DRAW_NEXT_TILE:
+.DRAW_NEXT_TILE
   LDY TILE_CUR
   CPY TILE_PTR
   BNE DRAW_TILES  ; ������������ ����� ����� �� ����� ������, �� �� ����� TILE_CNT ����
 
-.DRAW_MENU_ARROW:
+.DRAW_MENU_ARROW
   LDA INMENU
   BEQ DRAW_ARROW_SKIP
   LDA #&22 ; '"'
@@ -113,7 +113,7 @@ INCLUDE "vars.asm"
   BNE DRAW_ARROW_START
   LDY #&40 ; '@'
 
-.DRAW_ARROW_START:
+.DRAW_ARROW_START
   STY PPU_DATA
   LDA #&22 ; '"'
   LDX #&70 ; 'p'
@@ -123,12 +123,12 @@ INCLUDE "vars.asm"
   BEQ DRAW_ARROW_CONT
   LDY #&40 ; '@'
 
-.DRAW_ARROW_CONT:
+.DRAW_ARROW_CONT
   STY PPU_DATA
   JMP UPDATE_FPS
 ; ---------------------------------------------------------------------------
 
-.DRAW_ARROW_SKIP:
+.DRAW_ARROW_SKIP
   LDA STAGE_STARTED
   BEQ UPDATE_FPS
   LDA TILE_CNT
@@ -139,7 +139,7 @@ INCLUDE "vars.asm"
   JSR VRAMADDR    ; Y=2, X=11
   LDX #0
 
-.DRAW_SCORE_BLANK:
+.DRAW_SCORE_BLANK
   LDA SCORE,X     ; ���������� ��������� ����
   BNE DRAW_SCORE_NUM
   LDA #&3A ; ':'      ; ������ ������ ������ ����
@@ -149,7 +149,7 @@ INCLUDE "vars.asm"
   BNE DRAW_SCORE_BLANK ; ���������� ��������� ����
   BEQ DRAW_TIMER
 
-.DRAW_SCORE_NUM:
+.DRAW_SCORE_NUM
   LDA SCORE,X
   CLC
   ADC #&30 ; '0'      ; ����� 0...9
@@ -158,7 +158,7 @@ INCLUDE "vars.asm"
   CPX #7
   BNE DRAW_SCORE_NUM
 
-.DRAW_TIMER:
+.DRAW_TIMER
   LDA #&20 ; ' '
   LDX #&46 ; 'F'      ; Y=2, X=6
   JSR VRAMADDR
@@ -167,10 +167,10 @@ INCLUDE "vars.asm"
   BNE TIME_OVERFLOW
   LDA #0
 
-.TIME_OVERFLOW:
+.TIME_OVERFLOW
   JSR DRAW_TIME
 
-.UPDATE_FPS:
+.UPDATE_FPS
   LDA PPU_STATUS
   JSR PPU_RESTORE
   INC FRAME_CNT
@@ -183,7 +183,7 @@ INCLUDE "vars.asm"
   LDA #0
   STA IS_SECOND_PASSED
 
-.TICK_FPS:
+.TICK_FPS
   STA FPS
   JSR PAD_READ
   JSR APU_PLAY_MELODY ; ��������� �������
@@ -205,16 +205,16 @@ INCLUDE "vars.asm"
   LDA #&1F
   STA APU_MASTERCTRL_REG
 
-.SET_SCROLL_REG:
+.SET_SCROLL_REG
   LDA STAGE_STARTED
   BEQ LEAVE_NMI
 
-.WAIT_SPR0_HIT:
+.WAIT_SPR0_HIT
   LDA PPU_STATUS
   AND #&40 ; '@'
   BNE WAIT_SPR0_HIT
 
-.WAIT_SPR0_MISS:
+.WAIT_SPR0_MISS
   LDA PPU_STATUS
   AND #&40 ; '@'
   BEQ WAIT_SPR0_MISS
@@ -223,7 +223,7 @@ INCLUDE "vars.asm"
   LDA V_SCROLL
   STA PPU_SCROLL_REG
 
-.LEAVE_NMI:
+.LEAVE_NMI
   LDA #5
   EOR SPR_TAB_TOGGLE
   STA SPR_TAB_TOGGLE
@@ -280,7 +280,7 @@ INCLUDE "vars.asm"
   TAX
   LDY #8
 
-.JOY1:
+.JOY1
   TXA
   ASL A
   TAX
@@ -291,7 +291,7 @@ INCLUDE "vars.asm"
   LDX #0
   LDY #8
 
-.JOY2:
+.JOY2
   TXA
   ASL A
   TAX
@@ -310,7 +310,7 @@ INCLUDE "vars.asm"
   BEQ NOT_PRESSED
   INX
 
-.NOT_PRESSED:
+.NOT_PRESSED
   DEY
   RTS
 
@@ -356,7 +356,7 @@ INCLUDE "vars.asm"
   LDX #&40 ; '@'
   LDA #0
 
-.CLEAR_AT:
+.CLEAR_AT
   STA PPU_DATA
   DEX
   BNE CLEAR_AT
@@ -386,7 +386,7 @@ INCLUDE "vars.asm"
 ; ��� ��� ��� �����������.
 ; ����������� ���������� SPR_TAB_TOGGLE ������ ���� ��������� �������� 0 -> 5 -> 0 ...
 ; � ��� ����� �������� ����� ��������� SPR_TAB ������������ ��� ���������.
-; ������ �������� � SPR_TAB ��� �������� ����������� ������ ����������� ���:
+; ������ �������� � SPR_TAB ��� �������� ����������� ������ ����������� ���
 ; TEMP = SPR_TAB_INDEX++ + SPR_TAB_TOGGLE   <-- ������ ���������� � 1.
 ; TEMP = TEMP >= 12 ? TEMP - 10 : TEMP      <-- ���������� ������ �� 12
 ; Y = 16 * TEMP                             <-- *16 ������ ��� ����� �� 4 ��������
@@ -417,10 +417,10 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.WRITE2001:
+.WRITE2001
   STA PPU_CTRL_REG2
 
-.WRITE2001_2:
+.WRITE2001_2
   STA LAST_2001
   RTS
 
@@ -428,7 +428,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.SPRE:
+.SPRE
   LDA LAST_2001
   ORA #&10
   BNE WRITE2001_2
@@ -442,7 +442,7 @@ INCLUDE "vars.asm"
   LDY #&1C
   LDA #248
 
-.SETATTR:
+.SETATTR
   STA SPR_TAB,Y
   STA SPR_TAB+&20,Y
   STA SPR_TAB+&40,Y
@@ -466,7 +466,7 @@ INCLUDE "vars.asm"
   LDA PPU_STATUS
   BMI WAITVBL
 
-.WAITVBL2:
+.WAITVBL2
   LDA PPU_STATUS
   BPL WAITVBL2
   RTS
@@ -506,7 +506,7 @@ INCLUDE "vars.asm"
   LDA LAST_2000
   AND #&7F ; ''
 
-.WRITE2000:
+.WRITE2000
   STA LAST_2000
   STA PPU_CTRL_REG1
   RTS
@@ -515,13 +515,13 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.PAL_RESET:
+.PAL_RESET
   LDA #&3F ; '?'
   LDX #0
   JSR VRAMADDR
   LDY #32
 
-.PAL_RESET_LOOP:
+.PAL_RESET_LOOP
   LDA STARTPAL,X
   STA PPU_DATA
   INX
@@ -542,7 +542,7 @@ INCLUDE "vars.asm"
   RTS
 
 ; ---------------------------------------------------------------------------
-.STARTPAL:
+.STARTPAL
   EQUB &19, &F,&10,&30,&19,&16,&26,&36,&19, &F,&18,&28,&19, &F,&17,  7
   EQUB &19,&30,&21,&26,&19, &F,&26,&30,&19, &F,&15,&30,&19, &F,&21,&30
 
@@ -568,7 +568,7 @@ INCLUDE "vars.asm"
   TYA
   LDX #7
 
-.CLEAR_WRAM:
+.CLEAR_WRAM
   STA (TEMP_ADDR),Y
   INY
   BNE CLEAR_WRAM
@@ -600,7 +600,7 @@ INCLUDE "vars.asm"
   LDA #1
   STA APU_MUSIC
 
-.GAME_MENU:
+.GAME_MENU
   LDX #&FF
   TXS
   LDA #&F
@@ -616,15 +616,15 @@ INCLUDE "vars.asm"
   LDA #1
   STA INMENU
 
-.WAIT_RELEASE:
+.WAIT_RELEASE
   LDA JOYPAD1
   BNE WAIT_RELEASE
 
-.ADVANCE_FRAME:
+.ADVANCE_FRAME
   LDA #8
   STA DEMO_WAIT_HI
 
-.DEMO_WAIT_LOOP:
+.DEMO_WAIT_LOOP
   JSR NEXTFRAME
   LDA JOYPAD1
   AND #&10
@@ -639,7 +639,7 @@ INCLUDE "vars.asm"
   JMP ADVANCE_FRAME
 ; ---------------------------------------------------------------------------
 
-.UPDATE_RAND:
+.UPDATE_RAND
   JSR RAND        ; �������� ��������� ��������� �����
   DEC DEMO_WAIT_LO
   BNE DEMO_WAIT_LOOP
@@ -647,14 +647,14 @@ INCLUDE "vars.asm"
   BNE DEMO_WAIT_LOOP
   INC DEMOPLAY    ; ���� ������� �����, �� ��������� ������������
 
-.START_PRESSED:
+.START_PRESSED
   LDA DEMOPLAY
   BNE loc_C3A3
   LDA CURSOR
   BEQ loc_C3A3
   JSR sub_DA8E
 
-.loc_C3A3:
+.loc_C3A3
   LDA #0
   STA INMENU
   JSR WAITUNPRESS ; ����� ���������� ������
@@ -665,7 +665,7 @@ INCLUDE "vars.asm"
   LDA CURSOR
   BNE loc_C40A
 
-.loc_C3B6:
+.loc_C3B6
   LDA #1
   STA STAGE
   LDA DEMOPLAY
@@ -673,12 +673,12 @@ INCLUDE "vars.asm"
   LDX #6
   LDA #0
 
-.CLEAR_SCORE_LOOP:
+.CLEAR_SCORE_LOOP
   STA SCORE,X
   DEX
   BPL CLEAR_SCORE_LOOP
 
-.loc_C3C7:
+.loc_C3C7
   LDA #&10
   STA BONUS_POWER
   LDA #0
@@ -712,12 +712,12 @@ INCLUDE "vars.asm"
   LDA DEMO_KEYDATA+1
   STA DEMOKEY_PAD1
 
-.loc_C40A:
+.loc_C40A
   LDA #0
   STA BONUS_BOMBWALK
   STA INVUL_UNK1
 
-.START_STAGE:
+.START_STAGE
   LDA #0
   STA byte_B1
   STA byte_A8
@@ -747,7 +747,7 @@ INCLUDE "vars.asm"
   LDA #200
   STA TIMELEFT
 
-.STAGE_LOOP:
+.STAGE_LOOP
   JSR PAUSED      ; ��������� ������ �� ����� (� ���� ������, �� ����� ����������)
   JSR SPRD        ; �������� �������
   JSR sub_CC36    ; ��������� ������� �� ������
@@ -769,7 +769,7 @@ INCLUDE "vars.asm"
   JMP STAGE_LOOP
 ; ---------------------------------------------------------------------------
 
-.loc_C481:
+.loc_C481
   LDA DEMOPLAY
   BNE loc_C4C3
   LDA #0
@@ -786,35 +786,35 @@ INCLUDE "vars.asm"
   JMP START_STAGE
 ; ---------------------------------------------------------------------------
 
-.GAME_OVER:
+.GAME_OVER
   LDA #0
   STA STAGE_STARTED
   JSR GAME_OVER_SCREEN
   LDA #9
   STA APU_MUSIC
 
-.GAME_OVER_WAIT:
+.GAME_OVER_WAIT
   LDA JOYPAD1
   AND #&10
   BNE GAME_OVER_END
   LDA APU_MUSIC
   BNE GAME_OVER_WAIT
 
-.GAME_OVER_END:
+.GAME_OVER_END
   LDA #0
   STA APU_MUSIC
 
-.WAIT_PRESS:
+.WAIT_PRESS
   LDA JOYPAD1
   BEQ WAIT_PRESS
   JMP GAME_MENU
 ; ---------------------------------------------------------------------------
 
-.loc_C4BF:
+.loc_C4BF
   LDA DEMOPLAY
   BEQ NEXT_STAGE
 
-.loc_C4C3:
+.loc_C4C3
   LDA #0
   STA APU_MUSIC
   INC byte_B0
@@ -824,11 +824,11 @@ INCLUDE "vars.asm"
   JMP GAME_MENU
 ; ---------------------------------------------------------------------------
 
-.loc_C4D2:
+.loc_C4D2
   JMP RESET_GAME
 ; ---------------------------------------------------------------------------
 
-.NEXT_STAGE:
+.NEXT_STAGE
   LDA #10
   STA APU_MUSIC
   JSR WAITTUNE    ; ��������� ��������� ������� �������
@@ -841,7 +841,7 @@ INCLUDE "vars.asm"
   JMP END_GAME
 ; ---------------------------------------------------------------------------
 
-.SELECT_BONUS_MONSTER:
+.SELECT_BONUS_MONSTER
   INY         ; ������� ��� ������� ��� ��������� ������
   SEC
   SBC #5
@@ -851,7 +851,7 @@ INCLUDE "vars.asm"
   BCC SELECT_STAGE_TYPE
   LDY #8      ; ��� ������� ��������� 1...8
 
-.SELECT_STAGE_TYPE:
+.SELECT_STAGE_TYPE
   STY BONUS_ENEMY_TYPE
   ADC #5
   CMP #1
@@ -859,7 +859,7 @@ INCLUDE "vars.asm"
   JMP START_STAGE
 ; ---------------------------------------------------------------------------
 
-.START_BONUS_STAGE:
+.START_BONUS_STAGE
   LDA #0
   STA STAGE_STARTED
   JSR BONUS_STAGE_SCREEN
@@ -879,7 +879,7 @@ INCLUDE "vars.asm"
   LDA #30     ; ���������� 30 ������
   STA TIMELEFT
 
-.BONUS_STAGE_LOOP:
+.BONUS_STAGE_LOOP
   JSR PAUSED      ; ��������� ������ �� ����� (� ���� ������, �� ����� ����������)
   LDA TIMELEFT
   BEQ BONUS_STAGE_END ; ���� ����� ����������� �� ����� �� ��������� ������
@@ -899,7 +899,7 @@ INCLUDE "vars.asm"
   JMP BONUS_STAGE_LOOP
 ; ---------------------------------------------------------------------------
 
-.BONUS_STAGE_END:
+.BONUS_STAGE_END
   LDA #10
   STA APU_MUSIC
   JSR WAITTUNE    ; ��������� ��������� ������� �������
@@ -909,7 +909,7 @@ INCLUDE "vars.asm"
   JMP START_STAGE
 ; ---------------------------------------------------------------------------
 
-.END_GAME:
+.END_GAME
   JSR PPU_RESET
   JSR sub_DBF9
   JSR BUILD_CONCRET_WALLS ; ��������� �������� �����
@@ -926,7 +926,7 @@ INCLUDE "vars.asm"
   JSR SPRE
   JSR VBLE
 
-.loc_C58F:
+.loc_C58F
   JSR NEXTFRAME
   LDA #1
   STA SPR_TAB_INDEX
@@ -937,12 +937,12 @@ INCLUDE "vars.asm"
   BCS loc_C5A4
   JSR sub_CDD4
 
-.loc_C5A4:
+.loc_C5A4
   LDA BOMBMAN_X
   CMP #8
   BNE loc_C58F
 
-.WAIT_END_MELODY:
+.WAIT_END_MELODY
   JSR NEXTFRAME
   LDA #1
   STA SPR_TAB_INDEX
@@ -953,11 +953,11 @@ INCLUDE "vars.asm"
   BCS loc_C5BF
   JSR sub_CDD4
 
-.loc_C5BF:
+.loc_C5BF
   LDA APU_MUSIC
   BNE WAIT_END_MELODY
 
-.WAIT_BUTTON:
+.WAIT_BUTTON
   LDA JOYPAD1
   BEQ WAIT_BUTTON
   LDA #1
@@ -968,7 +968,7 @@ INCLUDE "vars.asm"
 
 ; ������� �������� � ����������
 
-.SPAWN:
+.SPAWN
   LDA #1
   STA BOMBMAN_X
   STA BOMBMAN_Y
@@ -997,7 +997,7 @@ INCLUDE "vars.asm"
 
 ; �������� ����� � �������
 
-.PICTURE_ON:
+.PICTURE_ON
   JSR SPRD        ; �������� �������
   JSR VBLE
   JSR PPUE
@@ -1008,7 +1008,7 @@ INCLUDE "vars.asm"
 
 ; ��������� ��������� ������� �������
 
-.WAITTUNE:
+.WAITTUNE
   LDA APU_MUSIC
   BNE WAITTUNE    ; ��������� ��������� ������� �������
   RTS
@@ -1016,14 +1016,14 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR PAUSED
 
-.ABORT_DEMOPLAY:
+.ABORT_DEMOPLAY
   JMP loc_C4C3
 
 ; =============== S U B R O U T I N E =======================================
 
 ; ��������� ������ �� ����� (� ���� ������, �� ����� ����������)
 
-.PAUSED:
+.PAUSED
   JSR NEXTFRAME
   LDA #1
   STA SPR_TAB_INDEX
@@ -1038,7 +1038,7 @@ INCLUDE "vars.asm"
   STA APU_SOUND   ; ��������� ����
   JSR WAITUNPRESS ; ����� ���������� ������
 
-.WAIT_START:
+.WAIT_START
   LDA JOYPAD1
   AND #&10
   BEQ WAIT_START
@@ -1050,7 +1050,7 @@ INCLUDE "vars.asm"
   JMP NEXTFRAME
 ; ---------------------------------------------------------------------------
 
-.NOT_PAUSED:
+.NOT_PAUSED
   RTS
 
 
@@ -1058,7 +1058,7 @@ INCLUDE "vars.asm"
 
 ; �������� ����� �� 1 ������� (������� �������)
 
-.STAGE_TIMER:
+.STAGE_TIMER
   LDA FRAME_CNT
   AND #&3F ; '?'
   BNE STAGE_TIMER_END
@@ -1073,7 +1073,7 @@ INCLUDE "vars.asm"
   JMP RESPAWN_BONUS_ENEMY ; ���� ���������� �������� � �������� ������ ������ 10, �� �������� ���
 ; ---------------------------------------------------------------------------
 
-.STAGE_TIMER_END:
+.STAGE_TIMER_END
   RTS
 
 
@@ -1081,7 +1081,7 @@ INCLUDE "vars.asm"
 
 ; �������� ����� �� 1 ������� (�������� �������)
 
-.BONUS_STAGE_TIMER:
+.BONUS_STAGE_TIMER
   LDA FRAME_CNT
   AND #&3F ; '?'
   BNE STAGE_TIMER_END
@@ -1095,10 +1095,10 @@ INCLUDE "vars.asm"
 
 ; ����������� ������ ��� ���������� ������
 
-.sub_C66C:
+.sub_C66C
   LDX #&4F ; 'O'
 
-.loc_C66E:
+.loc_C66E
   LDA FIRE_ACTIVE,X
   BEQ loc_C6CD
   BPL loc_C688
@@ -1112,7 +1112,7 @@ INCLUDE "vars.asm"
   JMP loc_C6DA
 ; ---------------------------------------------------------------------------
 
-.loc_C688:
+.loc_C688
   LDA FIRE_X,X
   STA byte_1F
   LDA FIRE_Y,X
@@ -1134,7 +1134,7 @@ INCLUDE "vars.asm"
   JMP loc_C6DA
 ; ---------------------------------------------------------------------------
 
-.loc_C6B2:
+.loc_C6B2
   AND #7
   BEQ loc_C6D0
   AND #1
@@ -1152,21 +1152,21 @@ INCLUDE "vars.asm"
   JMP loc_C6D6
 ; ---------------------------------------------------------------------------
 
-.loc_C6CD:
+.loc_C6CD
   JMP loc_C756
 ; ---------------------------------------------------------------------------
 
-.loc_C6D0:
+.loc_C6D0
   LDA byte_526,X
   LSR A
   LSR A
   LSR A
 
-.loc_C6D6:
+.loc_C6D6
   TAY
   LDA byte_C764,Y
 
-.loc_C6DA:
+.loc_C6DA
   AND #&FF
   BEQ loc_C753
   JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
@@ -1189,10 +1189,10 @@ INCLUDE "vars.asm"
   LDA #12
   STA BOMBMAN_FRAME
 
-.loc_C705:
+.loc_C705
   LDY #9
 
-.loc_C707:
+.loc_C707
   LDA ENEMY_TYPE,Y
   BEQ loc_C74E
   CMP #9
@@ -1226,31 +1226,31 @@ INCLUDE "vars.asm"
   ADC #&20 ; ' '
   STA ENEMY_FRAME,Y
 
-.loc_C74E:
+.loc_C74E
   DEY
   BPL loc_C707
   BMI loc_C756
 
-.loc_C753:
+.loc_C753
   JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
 
-.loc_C756:
+.loc_C756
   DEX
   BMI locret_C75C
   JMP loc_C66E
 ; ---------------------------------------------------------------------------
 
-.locret_C75C:
+.locret_C75C
   RTS
 
 ; ---------------------------------------------------------------------------
-.byte_C75D:
+.byte_C75D
   EQUB &27,  3,  4,  5,  6,  7,  0
-.byte_C764:
+.byte_C764
   EQUB   0, &B, &C, &D, &E, &D, &C, &B
   EQUB   0, &F,&10,&11,&12,&13,&14,&15
   EQUB &16,&13,&14,&11
-.byte_C778:
+.byte_C778
   EQUB &12, &F,&10,  0,  0,&17,&18,&19
   EQUB &1A,&1B,&1C,&1D,&1E,&1F,&20,&21
   EQUB &22,&23,&24,&25,&26,&1F,&20,&21
@@ -1261,18 +1261,18 @@ INCLUDE "vars.asm"
 
 ; ��������� ������� (?)
 
-.sub_C79D:
+.sub_C79D
   LDX #79
 
-.loc_C79F:
+.loc_C79F
   LDA FIRE_ACTIVE,X
   BNE loc_C7A7
 
-.loc_C7A4:
+.loc_C7A4
   JMP loc_C8A6
 ; ---------------------------------------------------------------------------
 
-.loc_C7A7:
+.loc_C7A7
   PHA
   LDY FIRE_Y,X
   STY byte_20
@@ -1290,7 +1290,7 @@ INCLUDE "vars.asm"
   STA (STAGE_MAP),Y
   BEQ loc_C7A4
 
-.loc_C7CB:
+.loc_C7CB
   LDA (STAGE_MAP),Y
   TAY
   BEQ loc_C838
@@ -1302,7 +1302,7 @@ INCLUDE "vars.asm"
   JMP loc_C8A6
 ; ---------------------------------------------------------------------------
 
-.loc_C7DE:
+.loc_C7DE
   CPY #3
   BNE loc_C7EE
   LDA byte_4D6,X
@@ -1312,7 +1312,7 @@ INCLUDE "vars.asm"
   JMP loc_C830
 ; ---------------------------------------------------------------------------
 
-.loc_C7EE:
+.loc_C7EE
   CPY #4
   BNE loc_C800
   LDY byte_1F
@@ -1323,7 +1323,7 @@ INCLUDE "vars.asm"
   JMP loc_C830
 ; ---------------------------------------------------------------------------
 
-.loc_C800:
+.loc_C800
   CPY #5
   BNE loc_C815
   LDY byte_1F
@@ -1336,7 +1336,7 @@ INCLUDE "vars.asm"
   JMP loc_C830
 ; ---------------------------------------------------------------------------
 
-.loc_C815:
+.loc_C815
   CPY #8
   BEQ loc_C828
   CPY #6
@@ -1347,20 +1347,20 @@ INCLUDE "vars.asm"
   JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
   DEC byte_A7
 
-.loc_C828:
+.loc_C828
   INC byte_A7
   JSR sub_C8AD
   JMP loc_C830
 
-.loc_C830:
+.loc_C830
   LDA #0
   STA FIRE_ACTIVE,X
 
-.loc_C835:
+.loc_C835
   JMP loc_C8A6
 ; ---------------------------------------------------------------------------
 
-.loc_C838:
+.loc_C838
   LDA byte_526,X
   CLC
   ADC #8
@@ -1408,30 +1408,30 @@ INCLUDE "vars.asm"
   JMP loc_C8A1
 ; ---------------------------------------------------------------------------
 
-.loc_C89E:
+.loc_C89E
   STA byte_4D6,Y
 
-.loc_C8A1:
+.loc_C8A1
   LDA #0
   STA byte_4D6,X
 
-.loc_C8A6:
+.loc_C8A6
   DEX
   BMI locret_C8AC
   JMP loc_C79F
 ; ---------------------------------------------------------------------------
 
-.locret_C8AC:
+.locret_C8AC
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_C8AD:
+.sub_C8AD
   LDY #9
 
-.loc_C8AF:
+.loc_C8AF
   LDA ENEMY_TYPE,Y
   BNE loc_C8E9
   LDA EXIT_ENEMY_TYPE
@@ -1456,7 +1456,7 @@ INCLUDE "vars.asm"
   LDA #&1E
   STA byte_5B2,Y
 
-.loc_C8E9:
+.loc_C8E9
   DEY
   BPL loc_C8AF
   RTS
@@ -1466,10 +1466,10 @@ INCLUDE "vars.asm"
 
 ; ���� ���������� �������� � �������� ������ ������ 10, �� �������� ���
 
-.RESPAWN_BONUS_ENEMY:
+.RESPAWN_BONUS_ENEMY
   LDY #9
 
-.SPAWN_BMONSTR:
+.SPAWN_BMONSTR
   LDA ENEMY_TYPE,Y
   BNE NEXT_BMONSTR
   LDA BONUS_ENEMY_TYPE
@@ -1501,7 +1501,7 @@ INCLUDE "vars.asm"
   LDA #&1E
   STA byte_5B2,Y
 
-.NEXT_BMONSTR:
+.NEXT_BMONSTR
   DEY
   BPL SPAWN_BMONSTR
   RTS
@@ -1511,10 +1511,10 @@ INCLUDE "vars.asm"
 
 ; ��������� ��� �����
 
-.DETONATE:
+.DETONATE
   LDX #9
 
-.DETONATE_LOOP:
+.DETONATE_LOOP
   LDA BOMB_ACTIVE,X
   BEQ DETONATE_NEXT
   LDY BOMB_Y,X
@@ -1535,7 +1535,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.DETONATE_NEXT:
+.DETONATE_NEXT
   DEX
   BPL DETONATE_LOOP
   RTS
@@ -1545,10 +1545,10 @@ INCLUDE "vars.asm"
 
 ; ��������� ������� ���� � ��������� ������
 
-.BOMB_TICK:
+.BOMB_TICK
   LDX #9
 
-.BOMB_TICK_LOOP:
+.BOMB_TICK_LOOP
   LDA BOMB_ACTIVE,X
   BEQ BOMB_TICK_NEXT
   LDY BOMB_Y,X
@@ -1569,7 +1569,7 @@ INCLUDE "vars.asm"
   BNE BOMB_TICK_NEXT
   LDA #0
 
-.loc_C999:
+.loc_C999
   AND #7
   JSR sub_C9B6
   LDA byte_A5
@@ -1577,25 +1577,25 @@ INCLUDE "vars.asm"
   BEQ loc_C9A6
   INC byte_A5
 
-.loc_C9A6:
+.loc_C9A6
   JSR PLAY_BOOM_SOUND ; ������������� ���� ������ �����
   LDA #0
   STA (STAGE_MAP),Y
   LDA #0
   STA BOMB_ACTIVE,X
 
-.BOMB_TICK_NEXT:
+.BOMB_TICK_NEXT
   DEX
   BPL BOMB_TICK_LOOP
 
-.BOMB_TICK_END:
+.BOMB_TICK_END
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_C9B6:
+.sub_C9B6
   STX byte_2F
   STY byte_30
   TAY
@@ -1616,13 +1616,13 @@ INCLUDE "vars.asm"
   RTS
 
 ; ---------------------------------------------------------------------------
-.byte_C9DE:
+.byte_C9DE
   EQUB &FF,  3,  4,  1,  2
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_C9E3:
+.sub_C9E3
   CMP byte_2E
   BEQ BOMB_TICK_END
   STA byte_31
@@ -1644,23 +1644,23 @@ INCLUDE "vars.asm"
   LDA #1
   STA FIRE_ACTIVE,Y
 
-.locret_CA10:
+.locret_CA10
   RTS
 
 ; ---------------------------------------------------------------------------
-.byte_CA11:
+.byte_CA11
   EQUB   0,  0,&FF,  0,  1
-.byte_CA16:
+.byte_CA16
   EQUB   0,  1,  0,&FF,  0
 
 ; =============== S U B R O U T I N E =======================================
 
 ; ���������� �������� ����
 
-.BOMB_ANIMATE:
+.BOMB_ANIMATE
   LDX #9
 
-.BOMB_ANIM_LOOP:
+.BOMB_ANIM_LOOP
   LDA BOMB_ACTIVE,X
   BEQ BOMB_ANIM_NEXT  ; ���� ����� �� �����������, ����������
   LDA BOMB_X,X
@@ -1680,20 +1680,20 @@ INCLUDE "vars.asm"
   LDA BOMB_ANIM,Y ; ������� ���� �������� �� �������
   JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
 
-.BOMB_ANIM_NEXT:
+.BOMB_ANIM_NEXT
   DEX
   BPL BOMB_ANIM_LOOP
   RTS
 
 ; ---------------------------------------------------------------------------
-.BOMB_ANIM:
+.BOMB_ANIM
   EQUB   9, &A,  9,  8
 
 ; =============== S U B R O U T I N E =======================================
 
 ; ������������� ����� ������ � ���������
 
-.BUILD_MAP:
+.BUILD_MAP
   JSR BUILD_CONCRET_WALLS ; ��������� �������� �����
   JSR RAND_COORDS
   LDA #4
@@ -1708,7 +1708,7 @@ INCLUDE "vars.asm"
   ADC STAGE
   STA byte_1F
 
-.NEXT_BRICK:
+.NEXT_BRICK
   JSR RAND_COORDS
   LDA #2
   STA (STAGE_MAP),Y
@@ -1721,7 +1721,7 @@ INCLUDE "vars.asm"
 
 ; ��������� �������� �����
 
-.BUILD_CONCRET_WALLS:
+.BUILD_CONCRET_WALLS
   LDA #0
   STA STAGE_MAP
   LDA #2
@@ -1757,18 +1757,18 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.STAGE_ROW:
+.STAGE_ROW
   LDA #&20 ; ' '
   STA TEMP_X
 
-.STAGE_CELL:
+.STAGE_CELL
   LDA STAGE_ROWS,X
   STA (STAGE_MAP),Y
   INC STAGE_MAP
   BNE HI_PART
   INC STAGE_MAP+1
 
-.HI_PART:
+.HI_PART
   INX
   DEC TEMP_X
   BNE STAGE_CELL
@@ -1778,7 +1778,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.RAND_COORDS:
+.RAND_COORDS
   JSR RAND
   ROR A
   ROR A
@@ -1786,7 +1786,7 @@ INCLUDE "vars.asm"
   BEQ RAND_COORDS
   STA TEMP_X
 
-.loc_CADA:
+.loc_CADA
   JSR RAND
   ROR A
   ROR A
@@ -1810,14 +1810,14 @@ INCLUDE "vars.asm"
   CMP #3
   BCC RAND_COORDS
 
-.locret_CB05:
+.locret_CB05
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_CB06:
+.sub_CB06
   JSR PPUD
   LDA #0
   STA byte_20
@@ -1827,34 +1827,34 @@ INCLUDE "vars.asm"
   STA word_26+1
   LDY #0
 
-.loc_CB17:
+.loc_CB17
   LDA #0
   STA byte_1F
 
-.loc_CB1B:
+.loc_CB1B
   LDA byte_94
   BEQ loc_CB24
   LDA (word_26),Y
   JMP loc_CB30
 ; ---------------------------------------------------------------------------
 
-.loc_CB24:
+.loc_CB24
   LDA (word_26),Y
   CMP #4
   BEQ loc_CB2E
   CMP #5
   BNE loc_CB30
 
-.loc_CB2E:
+.loc_CB2E
   LDA #2
 
-.loc_CB30:
+.loc_CB30
   JSR sub_CB4E
   INY
   BNE loc_CB38
   INC word_26+1
 
-.loc_CB38:
+.loc_CB38
   INC byte_1F
   LDA byte_1F
   AND #&20 ; ' '
@@ -1870,12 +1870,12 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_CB4E:
+.sub_CB4E
   STY TEMP_Y
   JSR sub_D924
   LDX #0
 
-.loc_CB55:
+.loc_CB55
   LDA &17,X
   STA TILE_TAB,X
   INX
@@ -1889,7 +1889,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_CB65:
+.sub_CB65
   LDA TILE_TAB+2
   ORA TILE_TAB
   PHA
@@ -1933,17 +1933,17 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.STAGE_CLEANUP:
+.STAGE_CLEANUP
   LDX #9
   LDA #0
 
-.CLEAN_BOMBS:
+.CLEAN_BOMBS
   STA BOMB_ACTIVE,X
   DEX
   BPL CLEAN_BOMBS
   LDX #79
 
-.CLEAN_EXPLO:
+.CLEAN_EXPLO
   STA FIRE_ACTIVE,X
   DEX
   BPL CLEAN_EXPLO
@@ -1953,11 +1953,11 @@ INCLUDE "vars.asm"
 
 ; ������� ���� �������� � �����
 
-.KILL_ENEMY:
+.KILL_ENEMY
   LDA #0
   LDX #9
 
-.KILL_LOOP:
+.KILL_LOOP
   STA ENEMY_TYPE,X
   DEX
   BPL KILL_LOOP
@@ -1966,7 +1966,7 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_CBE5
 
-.loc_CBE2:
+.loc_CBE2
   DEY
   BMI locret_CBEA
 
@@ -1974,11 +1974,11 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_CBE5:
+.sub_CBE5
   LDA FIRE_ACTIVE,Y
   BNE loc_CBE2
 
-.locret_CBEA:
+.locret_CBEA
   RTS
 
 
@@ -1986,7 +1986,7 @@ INCLUDE "vars.asm"
 
 ; ���������� ��������� �� ������� ������ �����
 
-.FIX_STAGE_PTR:
+.FIX_STAGE_PTR
   LDA MULT_TABY,Y
   STA STAGE_MAP
   LDA MULT_TABX,Y
@@ -1998,7 +1998,7 @@ INCLUDE "vars.asm"
 
 ; ������������� ���� ������ �����
 
-.PLAY_BOOM_SOUND:
+.PLAY_BOOM_SOUND
   LDA #1
   STA BOOM_SOUND
   RTS
@@ -2007,17 +2007,18 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.NEXTFRAME:
+.NEXTFRAME
   LDA FRAMEDONE
   BNE NEXTFRAME
   LDA #1
   STA FRAMEDONE
 
-.locret_CC03:
+.locret_CC03
   RTS
 
 ; ---------------------------------------------------------------------------
-.EXIT_ENEMY_TAB: EQUB   2,  1,  5,  3,  1,  1,  2,  5,  6,  4 ; � ���� ������� ���������� ��� �������, ������� �������� �� ����� ����� ������
+.EXIT_ENEMY_TAB
+  EQUB   2,  1,  5,  3,  1,  1,  2,  5,  6,  4 ; � ���� ������� ���������� ��� �������, ������� �������� �� ����� ����� ������
   EQUB   1,  1,  5,  6,  2,  4,  1,  6,  1,  5
   EQUB   6,  5,  1,  5,  6,  8,  2,  1,  5,  7
   EQUB   4,  1,  5,  8,  6,  7,  5,  2,  4,  8
@@ -2027,7 +2028,7 @@ INCLUDE "vars.asm"
 
 ; ��������� ������� �� ������
 
-.sub_CC36:
+.sub_CC36
   LDA INVUL_UNK2
   BNE loc_CC4C
   LDA INVUL_UNK1
@@ -2040,7 +2041,7 @@ INCLUDE "vars.asm"
   LDA #3
   STA APU_MUSIC
 
-.loc_CC4C:
+.loc_CC4C
   LDA byte_5C
   BEQ loc_CC63
   LDA FRAME_CNT
@@ -2053,11 +2054,11 @@ INCLUDE "vars.asm"
   LDA #1
   STA byte_5D
 
-.locret_CC62:
+.locret_CC62
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CC63:
+.loc_CC63
   LDA BOMBMAN_U
   CMP #8
   BNE loc_CCA4    ; ��������� �������� �������
@@ -2083,7 +2084,7 @@ INCLUDE "vars.asm"
   JMP loc_CEE9
 ; ---------------------------------------------------------------------------
 
-.loc_CC95:
+.loc_CC95
   INC byte_9F
   LDA #0
   STA byte_A6
@@ -2092,48 +2093,48 @@ INCLUDE "vars.asm"
   LDA #1
   STA byte_5E
 
-.locret_CCA3:
+.locret_CCA3
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CCA4:
+.loc_CCA4
   LDA BONUS_SPEED ; ��������� �������� �������
   BNE FAST_MOVE
   LDA FRAME_CNT
   AND #3      ; ��� �������� �������� ������ ������ ������ 1 ��� � 4 �����
   BEQ locret_CCA3
 
-.FAST_MOVE:
+.FAST_MOVE
   JSR GET_INPUT   ; ���������� � A �������� ������ P1 | P2
   BNE CASE_RIGHT
   STA byte_A6
   STA LAST_INPUT
 
-.CASE_RIGHT:
+.CASE_RIGHT
   TAX
   AND #1      ; ������
   BEQ CASE_LEFT
   JSR sub_CDD4
 
-.CASE_LEFT:
+.CASE_LEFT
   TXA
   AND #2      ; �����
   BEQ CASE_UP
   JSR sub_CDA3
 
-.CASE_UP:
+.CASE_UP
   TXA
   AND #8      ; �����
   BEQ CASE_DOWN
   JSR sub_CD70
 
-.CASE_DOWN:
+.CASE_DOWN
   TXA
   AND #4      ; ����
   BEQ CASE_ACTION
   JSR sub_CD39
 
-.CASE_ACTION:
+.CASE_ACTION
   TXA
   AND #&80 ; '�'      ; A
   BNE CASE_A
@@ -2147,11 +2148,11 @@ INCLUDE "vars.asm"
   STA LAST_INPUT
   JSR DETONATE    ; ��������� ��� �����
 
-.CASE_NOTHING:
+.CASE_NOTHING
   RTS
 ; ---------------------------------------------------------------------------
 
-.CASE_A:
+.CASE_A
   LDY BOMBMAN_Y
   LDA MULT_TABY,Y
   STA STAGE_MAP
@@ -2164,7 +2165,7 @@ INCLUDE "vars.asm"
   JSR ADJUST_BOMBMAN_VPOS ; �������� ������� ���������� ����� ��� ���� ����� ��������� �����
   LDX BONUS_BOMBS
 
-.CHECK_AMMO_LEFT:
+.CHECK_AMMO_LEFT
   LDA BOMB_ACTIVE,X
   BEQ PLACE_BOMB
   DEX
@@ -2172,7 +2173,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.PLACE_BOMB:
+.PLACE_BOMB
   LDA #3
   STA (STAGE_MAP),Y
   LDA BOMBMAN_X
@@ -2195,7 +2196,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_CD39:
+.sub_CD39
   LDA BOMBMAN_V
   CMP #8
   BCS loc_CD44
@@ -2203,7 +2204,7 @@ INCLUDE "vars.asm"
   JMP loc_CD69
 ; ---------------------------------------------------------------------------
 
-.loc_CD44:
+.loc_CD44
   LDY BOMBMAN_Y
   INY
   LDA MULT_TABY,Y
@@ -2222,7 +2223,7 @@ INCLUDE "vars.asm"
   STA BOMBMAN_V
   INC BOMBMAN_Y
 
-.loc_CD69:
+.loc_CD69
   LDA #4
   LDY #7
   JMP loc_CE2E
@@ -2231,7 +2232,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_CD70:
+.sub_CD70
   LDA BOMBMAN_V
   CMP #9
   BCC loc_CD7B
@@ -2239,7 +2240,7 @@ INCLUDE "vars.asm"
   JMP loc_CD9C
 ; ---------------------------------------------------------------------------
 
-.loc_CD7B:
+.loc_CD7B
   LDY BOMBMAN_Y
   DEY
   LDA MULT_TABY,Y
@@ -2256,7 +2257,7 @@ INCLUDE "vars.asm"
   STA BOMBMAN_V
   DEC BOMBMAN_Y
 
-.loc_CD9C:
+.loc_CD9C
   LDA #8
   LDY #&B
   JMP loc_CE2E
@@ -2265,7 +2266,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_CDA3:
+.sub_CDA3
   LDA BOMBMAN_U
   CMP #9
   BCC loc_CDAE
@@ -2273,7 +2274,7 @@ INCLUDE "vars.asm"
   JMP loc_CDCF
 ; ---------------------------------------------------------------------------
 
-.loc_CDAE:
+.loc_CDAE
   LDY BOMBMAN_Y
   LDA MULT_TABY,Y
   STA STAGE_MAP
@@ -2290,7 +2291,7 @@ INCLUDE "vars.asm"
   STA BOMBMAN_U
   DEC BOMBMAN_X
 
-.loc_CDCF:
+.loc_CDCF
   LDA #0
   JMP loc_CE06
 
@@ -2298,7 +2299,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_CDD4:
+.sub_CDD4
   LDA BOMBMAN_U
   CMP #8
   BCS loc_CDDF
@@ -2306,7 +2307,7 @@ INCLUDE "vars.asm"
   JMP loc_CE04
 ; ---------------------------------------------------------------------------
 
-.loc_CDDF:
+.loc_CDDF
   LDY BOMBMAN_Y
   LDA MULT_TABY,Y
   STA STAGE_MAP
@@ -2325,10 +2326,10 @@ INCLUDE "vars.asm"
   STA BOMBMAN_U
   INC BOMBMAN_X
 
-.loc_CE04:
+.loc_CE04
   LDA #&40 ; '@'
 
-.loc_CE06:
+.loc_CE06
   STA byte_2D
   LDA #0
   LDY #3
@@ -2341,7 +2342,7 @@ INCLUDE "vars.asm"
 
 ; �������� ������� ���������� ����� ��� ������ ����� ��������� �����
 
-.ADJUST_BOMBMAN_HPOS:
+.ADJUST_BOMBMAN_HPOS
   LDA BOMBMAN_U
   CMP #8
   BCC ADJUST_RIGHT
@@ -2350,12 +2351,12 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.ADJUST_RIGHT:
+.ADJUST_RIGHT
   INC BOMBMAN_U
   RTS
 ; ---------------------------------------------------------------------------
 
-.DONT_ADJUST:
+.DONT_ADJUST
   RTS
 
 
@@ -2363,7 +2364,7 @@ INCLUDE "vars.asm"
 
 ; �������� ������� ���������� ����� ��� ���� ����� ��������� �����
 
-.ADJUST_BOMBMAN_VPOS:
+.ADJUST_BOMBMAN_VPOS
   LDA BOMBMAN_V
   CMP #8
   BCC ADJUST_DOWN
@@ -2372,18 +2373,18 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.ADJUST_DOWN:
+.ADJUST_DOWN
   INC BOMBMAN_V
   RTS
 ; ---------------------------------------------------------------------------
 
-.DONT_ADJUST2:
+.DONT_ADJUST2
   RTS
 
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_CD39
 
-.loc_CE2E:
+.loc_CE2E
   PHA
   LDA FRAME_CNT
   AND #3
@@ -2399,38 +2400,38 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CE45:
+.loc_CE45
   CPY BOMBMAN_FRAME
   BCC loc_CE4A
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CE4A:
+.loc_CE4A
   STA BOMBMAN_FRAME
   CMP #4
   BCC loc_CE54
   LDA #2
   BNE loc_CE56
 
-.loc_CE54:
+.loc_CE54
   LDA #1
 
-.loc_CE56:
+.loc_CE56
   STA APU_SOUND   ; ��������� ����
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CE59:
+.loc_CE59
   PLA
 
-.INCORRECT_FRAMENUM:
+.INCORRECT_FRAMENUM
   RTS
 
 ; =============== S U B R O U T I N E =======================================
 
 ; ���������� ���������� (�������� ������)
 
-.DRAW_BOMBERMAN:
+.DRAW_BOMBERMAN
   LDA BOMBMAN_FRAME
   CMP #19
   BCS INCORRECT_FRAMENUM
@@ -2454,7 +2455,7 @@ INCLUDE "vars.asm"
   SBC #&80 ; '�'
   TAY
 
-.DONT_SCROLL:
+.DONT_SCROLL
   STY H_SCROLL
   LDA BOMBMAN_X
   ASL A
@@ -2484,7 +2485,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_CEA7:
+.sub_CEA7
   LDA byte_2D
   STA SPR_ATTR
   LDY #3
@@ -2513,16 +2514,16 @@ INCLUDE "vars.asm"
   JMP SPR_DRAW    ; �������� ������ (� �������� A - ���������� ����� ����������� ������ 16x16)
 
 ; ---------------------------------------------------------------------------
-.byte_CED2:
+.byte_CED2
   EQUB &10,&11,&12,&11
 
-.BOMBER_ANIM:
+.BOMBER_ANIM
   EQUB   0,  1,  2,  1,  3,  4,  5,  4,  6,  7,  8,  7,  9, 10, 11, 12
   EQUB  13, 14, 15
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_CC36
 
-.loc_CEE9:
+.loc_CEE9
   LDA #4
   STA APU_SOUND   ; ��������� ����
   LDA #&A
@@ -2547,19 +2548,19 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CF0D:
+.loc_CF0D
   LDA BONUS_BOMBS
   CMP #9
   BEQ loc_CF15
   INC BONUS_BOMBS
 
-.loc_CF15:
+.loc_CF15
   LDA #4
   STA APU_MUSIC
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CF1A:
+.loc_CF1A
   LDA BONUS_POWER
   CMP #&50 ; 'P'
   BEQ loc_CF25
@@ -2567,13 +2568,13 @@ INCLUDE "vars.asm"
   ADC #&10
   STA BONUS_POWER
 
-.loc_CF25:
+.loc_CF25
   LDA #4
   STA APU_MUSIC
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CF2A:
+.loc_CF2A
   LDA #1
   STA BONUS_SPEED
   LDA #4
@@ -2581,7 +2582,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CF33:
+.loc_CF33
   LDA #1
   STA BONUS_NOCLIP
   LDA #4
@@ -2589,7 +2590,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CF3C:
+.loc_CF3C
   LDA #1
   STA BONUS_REMOTE
   LDA #4
@@ -2597,7 +2598,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CF45:
+.loc_CF45
   LDA #1
   STA BONUS_BOMBWALK
   LDA #4
@@ -2605,7 +2606,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CF4E:
+.loc_CF4E
   LDA #1
   STA BONUS_FIRESUIT
   LDA #5
@@ -2613,7 +2614,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CF57:
+.loc_CF57
   LDA #&FF
   STA INVUL_UNK1
   LDA #5
@@ -2623,7 +2624,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_CF60:
+.sub_CF60
   LDA (STAGE_MAP),Y
   BEQ locret_CF7C
   CMP #8
@@ -2639,17 +2640,17 @@ INCLUDE "vars.asm"
   CMP #3
   BEQ loc_CF82
 
-.locret_CF7C:
+.locret_CF7C
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CF7D:
+.loc_CF7D
   LDA BONUS_NOCLIP
   EOR #1
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CF82:
+.loc_CF82
   LDA BONUS_BOMBWALK
   EOR #1
   RTS
@@ -2659,7 +2660,7 @@ INCLUDE "vars.asm"
 
 ; ���������� � A �������� ������ P1 | P2
 
-.GET_INPUT:
+.GET_INPUT
   LDA DEMOPLAY
   BEQ NOT_DEMO
   LDA DEMOKEY_PAD1
@@ -2675,11 +2676,11 @@ INCLUDE "vars.asm"
   JSR DEMO_GETNEXT    ; ������� ��������� ���� �� ������ ������������
   PLA
 
-.SKIP_DEMO_KEY:
+.SKIP_DEMO_KEY
   RTS
 ; ---------------------------------------------------------------------------
 
-.NOT_DEMO:
+.NOT_DEMO
   LDA JOYPAD1
   ORA JOYPAD2
   RTS
@@ -2689,12 +2690,12 @@ INCLUDE "vars.asm"
 
 ; ������� ��������� ���� �� ������ ������������
 
-.DEMO_GETNEXT:
+.DEMO_GETNEXT
   INC DEMOKEY_DATA
   BNE DEMO_GETNEXT_HI
   INC DEMOKEY_DATA+1
 
-.DEMO_GETNEXT_HI:
+.DEMO_GETNEXT_HI
   RTS
 
 
@@ -2702,27 +2703,27 @@ INCLUDE "vars.asm"
 
 ; �������.
 
-.THINK:
+.THINK
   LDA #0
   STA byte_9C
   LDA #&C0 ; 'L'
   STA byte_6B
   LDX #9
 
-.THINK_LOOP:
+.THINK_LOOP
   LDA ENEMY_TYPE,X
   BEQ THINK_NEXT
   CMP #9
   BCS loc_CFC5
   INC byte_9C
 
-.loc_CFC5:
+.loc_CFC5
   LDY byte_5B2,X
   BEQ loc_CFCF
   DEC byte_5B2,X
   BNE THINK_NEXT
 
-.loc_CFCF:
+.loc_CFCF
   ASL A
   TAY
   JSR ENEMY_SAVE  ; �������� �������� �������� ������� �� ��������� ����������
@@ -2739,18 +2740,18 @@ INCLUDE "vars.asm"
   JSR ENEMY_LOAD  ; ����� �������� ����� ��������� THINK �������
   JSR loc_D006
 
-.THINK_NEXT:
+.THINK_NEXT
   DEX
   BPL THINK_LOOP
 
-.THINK_END:
+.THINK_END
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_CFED:
+.sub_CFED
   LDA byte_9D
   CLC
   ADC #&2C ; ','
@@ -2765,14 +2766,14 @@ INCLUDE "vars.asm"
   LDA #0
   BEQ loc_D010
 
-.loc_D006:
+.loc_D006
   LDA M_TYPE
   BEQ THINK_END
   CMP #11
   BEQ loc_D08C
   LDA byte_48
 
-.loc_D010:
+.loc_D010
   STA SPR_ATTR
   LDY #0
   STY byte_50
@@ -2840,11 +2841,11 @@ INCLUDE "vars.asm"
   LDA #12
   STA BOMBMAN_FRAME
 
-.locret_D08B:
+.locret_D08B
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D08C:
+.loc_D08C
   TXA
   PHA
   LDA #0
@@ -2897,7 +2898,7 @@ INCLUDE "vars.asm"
   BCC loc_D0E3
   LDA #&10
 
-.loc_D0E3:
+.loc_D0E3
   STA TEMP_X
   ASL A
   CLC
@@ -2909,7 +2910,7 @@ INCLUDE "vars.asm"
   JSR sub_D0FA
   STY byte_6B
 
-.loc_D0F7:
+.loc_D0F7
   PLA
   TAX
   RTS
@@ -2918,7 +2919,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_D0FA:
+.sub_D0FA
   LDA loc_D121,X
   BEQ loc_D11C
   PHA
@@ -2938,16 +2939,16 @@ INCLUDE "vars.asm"
   ADC #8
   STA SPR_X
 
-.loc_D11C:
+.loc_D11C
   INX
   INY
   DEY
   BNE locret_D123
 
-.loc_D121:
+.loc_D121
   LDY #&FC ; '�'
 
-.locret_D123:
+.locret_D123
   RTS
 
 ; ---------------------------------------------------------------------------
@@ -2968,13 +2969,13 @@ INCLUDE "vars.asm"
   EQUB &FE,&46,&46
   EQUB &FF,&46,&46
 
-.MONSTER_TILE:
+.MONSTER_TILE
   EQUB &18,&19,&1A,&19,&1C,&1D,&1E,&1D,&20,&21,&22,&21,&24,&25,&26,&25
   EQUB &28,&29,&2A,&29,&2C,&2D,&2E,&2D,&30,&31,&32,&31,&34,&35,&36,&35
   EQUB &1B,&1F,&23,&27,&2B,&2F,&33,&37,&14,&15,&16,&17,&38,&39,&3A,&3B
   EQUB &3C,&3D
 
-.MONSTER_ATTR:
+.MONSTER_ATTR
   EQUB   1,  1,  1,  1,  3,  3,  3,  3,  2,  2,  2,  2,  1,  1,  1,  1
   EQUB   3,  3,  3,  3,  2,  2,  2,  2,  1,  1,  1,  1,  1,  2,  1,  2
   EQUB   1,  3,  2,  1,  3,  2,  1,  1,  1,  1,  1,  1,  1,  0,  1,  2
@@ -3028,7 +3029,7 @@ INCLUDE "vars.asm"
 }
 
 ; ---------------------------------------------------------------------------
-.THINK_PROC:
+.THINK_PROC
   EQUW THINK_0-1
   EQUW THINK_1-1
   EQUW THINK_2-1
@@ -3068,11 +3069,11 @@ INCLUDE "vars.asm"
   BCC loc_D285
   LDY #&10
 
-.loc_D285:
+.loc_D285
   LDA MONSTER_ATTR2,Y
   TAX
 
-.loc_D289:
+.loc_D289
   LDA #&C8 ; 'L'
   JSR sub_DD83
   DEX
@@ -3080,17 +3081,17 @@ INCLUDE "vars.asm"
   JMP loc_D29A
 ; ---------------------------------------------------------------------------
 
-.loc_D294:
+.loc_D294
   LDA MONSTER_ATTR2,Y
   JSR sub_DD83
 
-.loc_D29A:
+.loc_D29A
   LDA #&B
   STA M_TYPE
   LDA #&64 ; 'd'
   STA byte_49
 
-.locret_D2A2:
+.locret_D2A2
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_8
@@ -3103,11 +3104,11 @@ INCLUDE "vars.asm"
   LDA #20
   STA byte_49
 
-.locret_D2B3:
+.locret_D2B3
   RTS
 ; ---------------------------------------------------------------------------
 
-.locret_D2B4:
+.locret_D2B4
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_4
@@ -3121,7 +3122,7 @@ INCLUDE "vars.asm"
   JMP loc_D310
 ; ---------------------------------------------------------------------------
 
-.locret_D2C8:
+.locret_D2C8
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_2
@@ -3138,11 +3139,11 @@ INCLUDE "vars.asm"
   BCS loc_D2E4
   JSR TURN_HORIZONTALLY
 
-.loc_D2E4:
+.loc_D2E4
   JMP loc_D33F
 ; ---------------------------------------------------------------------------
 
-.locret_D2E7:
+.locret_D2E7
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_1
@@ -3159,7 +3160,7 @@ INCLUDE "vars.asm"
   BCS loc_D303
   JSR TURN_VERTICALLY
 
-.loc_D303:
+.loc_D303
   JMP loc_D33F
 ; ---------------------------------------------------------------------------
 .THINK_3
@@ -3168,14 +3169,14 @@ INCLUDE "vars.asm"
   JSR sub_D5DA
   JSR sub_D37E
 
-.loc_D310:
+.loc_D310
   DEC byte_4C
   LDA byte_4C
   CMP #&C8 ; 'L'
   JMP loc_D337
 ; ---------------------------------------------------------------------------
 
-.THINK_SKIP:
+.THINK_SKIP
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_5
@@ -3187,7 +3188,7 @@ INCLUDE "vars.asm"
   LDA #0      ; ������ ������ - ������� ��������
   LDY #3
 
-.loc_D325:
+.loc_D325
   JSR sub_D5DA
   JSR sub_D37E
   LDA FRAME_CNT
@@ -3197,12 +3198,12 @@ INCLUDE "vars.asm"
   LDA byte_4C
   CMP #20
 
-.loc_D337:
+.loc_D337
   BCS loc_D33F
   JSR TURN_VERTICALLY
   JSR TURN_HORIZONTALLY
 
-.loc_D33F:
+.loc_D33F
   LDA byte_49
   BEQ loc_D365
   DEC byte_49
@@ -3221,15 +3222,15 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D360:
+.loc_D360
   LDA #0
   STA byte_49
 
-.locret_D364:
+.locret_D364
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D365:
+.loc_D365
   JSR RAND
   PHA
   AND #&18
@@ -3251,14 +3252,14 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_D37E:
+.sub_D37E
   LDY #0
   LDA M_FACE
   CMP #3
   BCC loc_D388
   LDY #&40 ; '@'
 
-.loc_D388:
+.loc_D388
   STY byte_48
   RTS
 
@@ -3273,7 +3274,7 @@ INCLUDE "vars.asm"
   BNE loc_D39C
   LDY #&40 ; '@'
 
-.loc_D39C:
+.loc_D39C
   STY byte_48
   JMP loc_D3AB
 ; ---------------------------------------------------------------------------
@@ -3283,7 +3284,7 @@ INCLUDE "vars.asm"
   JSR sub_D5DA
   JSR sub_D37E
 
-.loc_D3AB:
+.loc_D3AB
   LDA byte_4C
   BEQ loc_D3B4
   DEC byte_4C
@@ -3291,11 +3292,11 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D3B4:
+.loc_D3B4
   JSR TURN_VERTICALLY
   JSR TURN_HORIZONTALLY
 
-.loc_D3BA:
+.loc_D3BA
   LDA M_FACE
   ASL A
   ORA byte_4B
@@ -3316,7 +3317,7 @@ INCLUDE "vars.asm"
   LDA #0
   STA byte_49
 
-.loc_D3E0:
+.loc_D3E0
   INC byte_49
   LDA byte_49
   CMP #&1F
@@ -3325,7 +3326,7 @@ INCLUDE "vars.asm"
   EOR byte_4B
   STA byte_4B
 
-.loc_D3EE:
+.loc_D3EE
   LDA M_FACE
   JSR STEP_MONSTER    ; ������� ��� �������� (� �������� A - ����������� �������)
   BEQ locret_D405
@@ -3338,11 +3339,11 @@ INCLUDE "vars.asm"
   LDA #1
   STA M_FACE
 
-.locret_D405:
+.locret_D405
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D406:
+.loc_D406
   LDA #&60 ; '`'
   STA byte_4C
   LDY M_FACE
@@ -3350,14 +3351,14 @@ INCLUDE "vars.asm"
   STA M_FACE
   RTS
 ; ---------------------------------------------------------------------------
-.byte_D412:
+.byte_D412
   EQUB   0,  3,  4,  1,  2,  1,  4,  4,  2,  1,  3,  2,  4
   EQUB   3,  1,  0,  1,  2,  4,  8
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.TURN_HORIZONTALLY:
+.TURN_HORIZONTALLY
   LDA byte_5C
   BNE NO_VTURN
   LDA M_Y
@@ -3369,17 +3370,17 @@ INCLUDE "vars.asm"
   BCC FACE_RIGHT  ; ���� BX > MX, �� ��������� �������, ����� ��������� ������.
   LDA #3
 
-.FACE_RIGHT:
+.FACE_RIGHT
   STA M_FACE
 
-.NO_VTURN:
+.NO_VTURN
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.TURN_VERTICALLY:
+.TURN_VERTICALLY
   LDA byte_5C
   BNE NO_VTURN
   LDA M_X
@@ -3391,17 +3392,17 @@ INCLUDE "vars.asm"
   BCC FACE_DOWN   ; ���� BY > MY, �� ��������� ����, ����� ��������� �����.
   LDA #2
 
-.FACE_DOWN:
+.FACE_DOWN
   STA M_FACE
 
-.NO_HTURN:
+.NO_HTURN
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_D454:
+.sub_D454
   LDA #0
   STA byte_51
   LDA M_U
@@ -3410,7 +3411,7 @@ INCLUDE "vars.asm"
   LDA M_V
   CMP #8
 
-.loc_D462:
+.loc_D462
   BNE loc_D4BD
   LDY M_Y
   LDA MULT_TABY,Y
@@ -3424,7 +3425,7 @@ INCLUDE "vars.asm"
   LDA #1
   STA byte_51
 
-.loc_D47C:
+.loc_D47C
   DEY
   DEY
   JSR ENEMY_COLLISION
@@ -3433,7 +3434,7 @@ INCLUDE "vars.asm"
   ORA byte_51
   STA byte_51
 
-.loc_D489:
+.loc_D489
   LDY M_Y
   DEY
   LDA MULT_TABY,Y
@@ -3447,7 +3448,7 @@ INCLUDE "vars.asm"
   ORA byte_51
   STA byte_51
 
-.loc_D4A3:
+.loc_D4A3
   LDY M_Y
   INY
   LDA MULT_TABY,Y
@@ -3461,16 +3462,16 @@ INCLUDE "vars.asm"
   ORA byte_51
   STA byte_51
 
-.loc_D4BD:
+.loc_D4BD
   LDA byte_51
 
-.locret_D4BF:
+.locret_D4BF
   RTS
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.ENEMY_COLLISION:
+.ENEMY_COLLISION
   LDA (STAGE_MAP),Y
   BEQ locret_D4BF
   CMP #8
@@ -3482,7 +3483,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.BRICK_WALL:
+.BRICK_WALL
   LDA M_TYPE
   CMP #5      ; �������, ������ � ������� ����� ��������� ������ ��������� �����
   BEQ locret_D4BF
@@ -3496,7 +3497,7 @@ INCLUDE "vars.asm"
 
 ; ������� ��� �������� (� �������� A - ����������� �������)
 
-.STEP_MONSTER:
+.STEP_MONSTER
   LDX #0
   STX byte_4E
   TAX
@@ -3504,25 +3505,25 @@ INCLUDE "vars.asm"
   BNE CASE_NOT_RIGHT
   JSR STEP_ENEMY_RIGHT
 
-.CASE_NOT_RIGHT:
+.CASE_NOT_RIGHT
   TXA
   CMP #3
   BNE CASE_NOT_LEFT
   JSR STEP_ENEMY_LEFT
 
-.CASE_NOT_LEFT:
+.CASE_NOT_LEFT
   TXA
   CMP #2
   BNE CASE_NOT_UP
   JSR STEP_ENEMY_UP
 
-.CASE_NOT_UP:
+.CASE_NOT_UP
   TXA
   CMP #4
   BNE CASE_NOT_DOWN
   JSR STEP_ENEMY_DOWN
 
-.CASE_NOT_DOWN:
+.CASE_NOT_DOWN
   LDA byte_4E
   RTS
 
@@ -3530,7 +3531,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.STEP_ENEMY_DOWN:
+.STEP_ENEMY_DOWN
   LDA M_V
   CMP #8
   BCS loc_D50E
@@ -3538,7 +3539,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D50E:
+.loc_D50E
   LDY M_Y
   INY
   LDA MULT_TABY,Y
@@ -3557,11 +3558,11 @@ INCLUDE "vars.asm"
   STA M_V
   INC M_Y
 
-.locret_D533:
+.locret_D533
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D534:
+.loc_D534
   STA byte_4E
   RTS
 
@@ -3569,7 +3570,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.STEP_ENEMY_UP:
+.STEP_ENEMY_UP
   LDA M_V
   CMP #9
   BCC loc_D540
@@ -3577,7 +3578,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D540:
+.loc_D540
   LDY M_Y
   DEY
   LDA MULT_TABY,Y
@@ -3594,14 +3595,14 @@ INCLUDE "vars.asm"
   STA M_V
   DEC M_Y
 
-.locret_D561:
+.locret_D561
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.STEP_ENEMY_LEFT:
+.STEP_ENEMY_LEFT
   LDA M_U
   CMP #9
   BCC loc_D56B
@@ -3609,7 +3610,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D56B:
+.loc_D56B
   LDY M_Y
   LDA MULT_TABY,Y
   STA STAGE_MAP
@@ -3626,14 +3627,14 @@ INCLUDE "vars.asm"
   STA M_U
   DEC M_X
 
-.locret_D58C:
+.locret_D58C
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.STEP_ENEMY_RIGHT:
+.STEP_ENEMY_RIGHT
   LDA M_U
   CMP #8
   BCS loc_D596
@@ -3641,7 +3642,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D596:
+.loc_D596
   LDY M_Y
   LDA MULT_TABY,Y
   STA STAGE_MAP
@@ -3660,14 +3661,14 @@ INCLUDE "vars.asm"
   STA M_U
   INC M_X
 
-.locret_D5BB:
+.locret_D5BB
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_D5BC:
+.sub_D5BC
   LDA M_U
   CMP #8
   BCC loc_D5C7
@@ -3676,19 +3677,19 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D5C7:
+.loc_D5C7
   INC M_U
   RTS
 ; ---------------------------------------------------------------------------
 
-.locret_D5CA:
+.locret_D5CA
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_D5CB:
+.sub_D5CB
   LDA M_V
   CMP #8
   BCC loc_D5D6
@@ -3697,19 +3698,19 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D5D6:
+.loc_D5D6
   INC M_V
   RTS
 ; ---------------------------------------------------------------------------
 
-.locret_D5D9:
+.locret_D5D9
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_D5DA:
+.sub_D5DA
   PHA
   LDA FRAME_CNT
   AND #7
@@ -3719,18 +3720,18 @@ INCLUDE "vars.asm"
   CMP M_FRAME
   BCC loc_D5EB
 
-.loc_D5E8:
+.loc_D5E8
   STA M_FRAME
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D5EB:
+.loc_D5EB
   CPY M_FRAME
   BCC loc_D5E8
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D5F0:
+.loc_D5F0
   PLA
   RTS
 
@@ -3739,7 +3740,7 @@ INCLUDE "vars.asm"
 
 ; �������� ������ (� �������� A - ���������� ����� ����������� ������ 16x16)
 
-.SPR_DRAW:
+.SPR_DRAW
   STX SPR_SAVEDX
   STY SPR_SAVEDY
   ASL A
@@ -3759,7 +3760,7 @@ INCLUDE "vars.asm"
   BCC INDEX_UNBOUND
   SBC #10
 
-.INDEX_UNBOUND:
+.INDEX_UNBOUND
   ASL A
   ASL A
   ASL A
@@ -3772,12 +3773,12 @@ INCLUDE "vars.asm"
   JMP loc_D629
 ; ---------------------------------------------------------------------------
 
-.loc_D622:
+.loc_D622
   INC SPR_ID
   JSR SPR_WRITE_OBJ_HALF ; ���������� � ������� �������� ���� �� ��������� (8x16) ����������� ������.
   DEC SPR_ID
 
-.loc_D629:
+.loc_D629
   JSR SPR_WRITE_OBJ_HALF ; ���������� � ������� �������� ���� �� ��������� (8x16) ����������� ������.
   LDX SPR_SAVEDX
   LDY SPR_SAVEDY
@@ -3788,7 +3789,7 @@ INCLUDE "vars.asm"
 
 ; ���������� � ������� �������� ���� �� ��������� (8x16) ����������� ������.
 
-.SPR_WRITE_OBJ_HALF:
+.SPR_WRITE_OBJ_HALF
   LDA SPR_Y
   STA SPR_TAB,Y   ; ������� Y �������� �������� � ������� �������� (�������������� �������������).
   LDA SPR_ID
@@ -3826,7 +3827,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.RAND:
+.RAND
   LDA SEED
   ROL A
   ROL A
@@ -3853,7 +3854,7 @@ INCLUDE "vars.asm"
   STA SEED+3
   PLA
 
-.RAND2:
+.RAND2
   EOR SEED+3
   RTS
 
@@ -3861,7 +3862,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.SPAWN_MONSTERS:
+.SPAWN_MONSTERS
   LDA STAGE
   CMP #&1A
   BCC loc_D6A8
@@ -3870,11 +3871,11 @@ INCLUDE "vars.asm"
   LDY #&D8 ; '+'
   BNE loc_D6AC
 
-.loc_D6A8:
+.loc_D6A8
   LDX #lo(MONSTER_TAB)
   LDY #hi(MONSTER_TAB)
 
-.loc_D6AC:
+.loc_D6AC
   STX MTAB_PTR
   STY MTAB_PTR+1
   SEC
@@ -3888,7 +3889,7 @@ INCLUDE "vars.asm"
   TAY
   LDX #9
 
-.loc_D6BE:
+.loc_D6BE
   LDA (MTAB_PTR),Y
   STA ENEMY_TYPE,X
   BEQ loc_D703
@@ -3907,7 +3908,7 @@ INCLUDE "vars.asm"
   STA ENEMY_FACE,X
   STY byte_5A
 
-.loc_D6E2:
+.loc_D6E2
   JSR RAND_COORDS
   LDA TEMP_X
   CMP #5
@@ -3922,7 +3923,7 @@ INCLUDE "vars.asm"
   STA byte_5E4,X
   LDY byte_5A
 
-.loc_D703:
+.loc_D703
   INY
   DEX
   BPL loc_D6BE
@@ -3989,12 +3990,12 @@ INCLUDE "vars.asm"
 
 ; �������� � TILE_TAB ����� ����
 
-.DRAW_TILE:
+.DRAW_TILE
   STX TEMP_X
   STY TEMP_Y
   PHA
 
-.loc_D901:
+.loc_D901
   LDA TILE_CUR
   SEC
   SBC TILE_PTR
@@ -4005,7 +4006,7 @@ INCLUDE "vars.asm"
   LDY TILE_PTR
   LDX #0
 
-.COPY_TILE:
+.COPY_TILE
   LDA &17,X
   STA TILE_TAB,Y
   INY
@@ -4020,7 +4021,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_D924:
+.sub_D924
   TAY
   ASL A
   ASL A
@@ -4034,7 +4035,7 @@ INCLUDE "vars.asm"
   LDY #4
   SBC #16
 
-.loc_D93A:
+.loc_D93A
   STY byte_17
   ASL A
   STA byte_21
@@ -4072,20 +4073,20 @@ INCLUDE "vars.asm"
   TAX
   BEQ loc_D97C
 
-.loc_D974:
+.loc_D974
   ASL byte_1E
   SEC
   ROL byte_1D
   DEX
   BNE loc_D974
 
-.loc_D97C:
+.loc_D97C
   LDA #1
   STA byte_19
   LDA byte_22
   LDX #5
 
-.loc_D984:
+.loc_D984
   ASL A
   ROL byte_19
   DEX
@@ -4096,11 +4097,11 @@ INCLUDE "vars.asm"
   BCC locret_D993
   INC byte_19
 
-.locret_D993:
+.locret_D993
   RTS
 
 ; ---------------------------------------------------------------------------
-.unk_D994:
+.unk_D994
   EQUB   0
   EQUB   0
   EQUB   0
@@ -4151,7 +4152,7 @@ INCLUDE "vars.asm"
   EQUB   2
   EQUB   2
   EQUB   3
-.TILE_MAP:
+.TILE_MAP
   EQUB &5F,&5F,&5F,&5F
   EQUB &64,&65,&66,&67
   EQUB &68,&69,&6A,&6B
@@ -4206,7 +4207,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_DA8E:
+.sub_DA8E
   JSR PPUD
   JSR VBLD
   JSR SETSTAGEPAL
@@ -4225,7 +4226,7 @@ INCLUDE "vars.asm"
   STA byte_20
   LDY #0
 
-.loc_DAB5:
+.loc_DAB5
   JSR WAITVBL
   LDA #&22 ; '"'
   LDX byte_1F
@@ -4235,7 +4236,7 @@ INCLUDE "vars.asm"
   JSR PPU_RESTORE
   LDX #10
 
-.loc_DAC9:
+.loc_DAC9
   JSR WAITVBL
   LDA JOYPAD1
   AND #&8F ; '�'
@@ -4251,7 +4252,7 @@ INCLUDE "vars.asm"
   JSR PPU_RESTORE
   LDX #10
 
-.loc_DAE9:
+.loc_DAE9
   JSR WAITVBL
   LDA JOYPAD1
   AND #&8F ; '�'
@@ -4261,7 +4262,7 @@ INCLUDE "vars.asm"
   JMP loc_DAB5
 ; ---------------------------------------------------------------------------
 
-.loc_DAF8:
+.loc_DAF8
   BMI loc_DB43
   PHA
   LDA #&12
@@ -4275,7 +4276,7 @@ INCLUDE "vars.asm"
   LDA #&51 ; 'Q'
   STA byte_20
 
-.loc_DB0F:
+.loc_DB0F
   LDA byte_20
   CMP #&41 ; 'A'
   BEQ loc_DB1A
@@ -4283,23 +4284,23 @@ INCLUDE "vars.asm"
   JMP loc_DB1E
 ; ---------------------------------------------------------------------------
 
-.loc_DB1A:
+.loc_DB1A
   LDA #&50 ; 'P'
   STA byte_20
 
-.loc_DB1E:
+.loc_DB1E
   JSR WAITUNPRESS ; ����� ���������� ������
   JMP loc_DAB5
 ; ---------------------------------------------------------------------------
 
-.loc_DB24:
+.loc_DB24
   LDA byte_20
   CMP #&3A ; ':'
   BNE loc_DB2E
   LDA #&40 ; '@'
   STA byte_20
 
-.loc_DB2E:
+.loc_DB2E
   LDA byte_20
   CMP #&50 ; 'P'
   BEQ loc_DB39
@@ -4307,18 +4308,18 @@ INCLUDE "vars.asm"
   JMP loc_DB3D
 ; ---------------------------------------------------------------------------
 
-.loc_DB39:
+.loc_DB39
   LDA #&41 ; 'A'
   STA byte_20
 
-.loc_DB3D:
+.loc_DB3D
   JSR WAITUNPRESS ; ����� ���������� ������
 
-.loc_DB40:
+.loc_DB40
   JMP loc_DAB5
 ; ---------------------------------------------------------------------------
 
-.loc_DB43:
+.loc_DB43
   LDA #&11
   STA APU_SQUARE1_REG+3
   LDA byte_20
@@ -4345,11 +4346,11 @@ INCLUDE "vars.asm"
   JMP loc_DAB5
 ; ---------------------------------------------------------------------------
 
-.loc_DB7A:
+.loc_DB7A
   LDX #0
   STX SEED
 
-.loc_DB7E:
+.loc_DB7E
   LDA unk_7F,X
   PHA
   CLC
@@ -4365,11 +4366,11 @@ INCLUDE "vars.asm"
   BNE loc_DB7E
   LDX #0
 
-.loc_DB95:
+.loc_DB95
   LDY #4
   LDA #0
 
-.loc_DB99:
+.loc_DB99
   CLC
   ADC unk_7F,X
   INX
@@ -4395,7 +4396,7 @@ INCLUDE "vars.asm"
   ADC byte_1F
   LDX #4
 
-.loc_DBC0:
+.loc_DBC0
   CLC
   ADC byte_8D,X
   DEX
@@ -4404,15 +4405,15 @@ INCLUDE "vars.asm"
   CMP byte_92
   BEQ loc_DBCF
 
-.loc_DBCC:
+.loc_DBCC
   JMP sub_DA8E
 ; ---------------------------------------------------------------------------
 
-.loc_DBCF:
+.loc_DBCF
   LDX #0
   LDY #0
 
-.loc_DBD3:
+.loc_DBD3
   JSR _get_pass_data_var_addr
   LDA unk_7F,Y
   STY TEMP_Y
@@ -4441,7 +4442,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_DBF9:
+.sub_DBF9
   JSR PPUD
   JSR VBLD
   JSR SETSTAGEPAL
@@ -4460,7 +4461,7 @@ INCLUDE "vars.asm"
   LDA #0
   STA byte_1F
 
-.loc_DC26:
+.loc_DC26
   LDA #&31 ; '1'
   JSR sub_CB4E
   INC byte_1F
@@ -4472,7 +4473,7 @@ INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------------
 
-.loc_DC39:
+.loc_DC39
   LDA unk_DC53,Y
   INY
   LDX unk_DC53,Y
@@ -4481,10 +4482,10 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_DC41:
+.sub_DC41
   JSR VRAMADDR
 
-.loc_DC44:
+.loc_DC44
   LDA unk_DC53,Y
   INY
   CMP #0
@@ -4493,11 +4494,11 @@ INCLUDE "vars.asm"
   JMP loc_DC44
 ; ---------------------------------------------------------------------------
 
-.locret_DC52:
+.locret_DC52
   RTS
 
 ; ---------------------------------------------------------------------------
-.unk_DC53:
+.unk_DC53
   EQUB &20
   EQUB &88
   EQUS "CONGRATULATIONS", 0
@@ -4531,7 +4532,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_DD04:
+.sub_DD04
   PHA
   JSR WAITVBL
   LDA #&3F ; '?'
@@ -4543,7 +4544,7 @@ INCLUDE "vars.asm"
   TAX
   LDY #4
 
-.loc_DD15:
+.loc_DD15
   LDA byte_DD22,X
   STA PPU_DATA
   INX
@@ -4552,14 +4553,14 @@ INCLUDE "vars.asm"
   JMP VRAMADDRZ
 
 ; ---------------------------------------------------------------------------
-.byte_DD22:
+.byte_DD22
   EQUB  &F,  0,  0,  0, &F,  0,  0,  0, &F,  0,  0,  0, &F,  0,  0,  0
   EQUB  &F,  0,  0,  0, &F,  0,  0,  0, &F,&15,&36,&21
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.GAME_OVER_SCREEN:
+.GAME_OVER_SCREEN
   JSR PPUD
   JSR VBLD
   JSR SETSTAGEPAL
@@ -4568,7 +4569,7 @@ INCLUDE "vars.asm"
   JSR VRAMADDR
   LDX #8
 
-.loc_DD50:
+.loc_DD50
   LDA aRevoEmag,X ; "REVO:EMAG"
   STA PPU_DATA
   DEX
@@ -4578,10 +4579,11 @@ INCLUDE "vars.asm"
   JMP PPUE
 
 ; ---------------------------------------------------------------------------
-.aRevoEmag:  EQUS "REVO:EMAG"
+.aRevoEmag
+  EQUS "REVO:EMAG"
 ; ---------------------------------------------------------------------------
 
-.loc_DD6B:
+.loc_DD6B
   STX TEMP_X
   STY TEMP_Y
   LDX DEMOPLAY
@@ -4592,7 +4594,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_DD77:
+.sub_DD77
   STX TEMP_X
   STY TEMP_Y
   LDX DEMOPLAY
@@ -4604,19 +4606,19 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_DD83:
+.sub_DD83
   STX TEMP_X
   STY TEMP_Y
   LDX DEMOPLAY
   BNE loc_DDC2
   LDX #6
 
-.loc_DD8D:
+.loc_DD8D
   LDY #0
   CLC
   ADC SCORE,X
 
-.loc_DD92:
+.loc_DD92
   STA SCORE,X
   LDA SCORE,X
   SEC
@@ -4625,7 +4627,7 @@ INCLUDE "vars.asm"
   INY
   BNE loc_DD92
 
-.loc_DD9E:
+.loc_DD9E
   CPY #0
   BEQ loc_DDAA
   TYA
@@ -4634,10 +4636,10 @@ INCLUDE "vars.asm"
   LDA #9
   STA SCORE
 
-.loc_DDAA:
+.loc_DDAA
   LDX #0
 
-.loc_DDAC:
+.loc_DDAC
   LDA SCORE,X
   CMP 1,X
   BCC loc_DDC2
@@ -4646,16 +4648,16 @@ INCLUDE "vars.asm"
   CPX #8
   BNE loc_DDAC
 
-.loc_DDB9:
+.loc_DDB9
   LDX #6
 
-.loc_DDBB:
+.loc_DDBB
   LDA SCORE,X
   STA 1,X
   DEX
   BPL loc_DDBB
 
-.loc_DDC2:
+.loc_DDC2
   LDX TEMP_X
   LDY TEMP_Y
   RTS
@@ -4665,14 +4667,14 @@ INCLUDE "vars.asm"
 
 ; ���������� ������ "TIME" � "LEFT XX"
 
-.TIME_AND_LIFE:
+.TIME_AND_LIFE
   LDA #&20 ; ' '
   LDX #0
   JSR VRAMADDR
   LDX #&80 ; '�'
   LDA #&3A ; ':'
 
-.loc_DDD2:
+.loc_DDD2
   STA PPU_DATA
   DEX
   BNE loc_DDD2
@@ -4681,7 +4683,7 @@ INCLUDE "vars.asm"
   JSR VRAMADDR
   LDX #3
 
-.loc_DDE1:
+.loc_DDE1
   LDA aEmit,X     ; "EMIT"
   STA PPU_DATA
   DEX
@@ -4699,7 +4701,7 @@ INCLUDE "vars.asm"
   JSR VRAMADDR
   LDX #3
 
-.loc_DE07:
+.loc_DE07
   LDA aTfel,X     ; "TFEL"
   STA PPU_DATA
   DEX
@@ -4708,13 +4710,15 @@ INCLUDE "vars.asm"
   JMP PUTNUMBER   ; ������� ����������� �����, �������� � �������� A.
 
 ; ---------------------------------------------------------------------------
-.aEmit:      EQUS "EMIT"
-.aTfel:      EQUS "TFEL"
+.aEmit
+  EQUS "EMIT"
+.aTfel
+  EQUS "TFEL"
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.STAGE_SCREEN:
+.STAGE_SCREEN
   JSR PPUD
   JSR VBLD
   LDA #0
@@ -4725,7 +4729,7 @@ INCLUDE "vars.asm"
   JSR VRAMADDR
   LDX #4
 
-.PUT_STAGE_STR:
+.PUT_STAGE_STR
   LDA aEgats,X    ; "EGATS"
   STA PPU_DATA
   DEX
@@ -4739,12 +4743,13 @@ INCLUDE "vars.asm"
   JMP PPUE
 
 ; ---------------------------------------------------------------------------
-.aEgats:     EQUS "EGATS"
+.aEgats
+  EQUS "EGATS"
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.BONUS_STAGE_SCREEN:
+.BONUS_STAGE_SCREEN
   JSR PPUD
   JSR VBLD
   LDA #0
@@ -4755,7 +4760,7 @@ INCLUDE "vars.asm"
   JSR VRAMADDR
   LDX #&A
 
-.PUT_BONUS_MSG:
+.PUT_BONUS_MSG
   LDA aEgatsSunob,X   ; "EGATS:SUNOB"
   STA PPU_DATA
   DEX
@@ -4764,12 +4769,13 @@ INCLUDE "vars.asm"
   JMP PPUE
 
 ; ---------------------------------------------------------------------------
-.aEgatsSunob:    EQUS "EGATS:SUNOB"
+.aEgatsSunob
+  EQUS "EGATS:SUNOB"
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.DRAWMENU:
+.DRAWMENU
   JSR PPUD
   JSR CLS
   JSR WAITVBL
@@ -4778,7 +4784,7 @@ INCLUDE "vars.asm"
   JSR VRAMADDR
   LDX #0
 
-.loc_DE95:
+.loc_DE95
   LDA MENUPAL,X
   STA PPU_DATA
   INX
@@ -4792,19 +4798,19 @@ INCLUDE "vars.asm"
   LDX #&40 ; '@'
   LDA #&B0 ; '-'
 
-.loc_DEB1:
+.loc_DEB1
   STA PPU_DATA
   DEX
   BNE loc_DEB1
   LDX #0
 
-.loc_DEB9:
+.loc_DEB9
   LDA MAINMENU_HI,X
   STA PPU_DATA
   INX
   BNE loc_DEB9
 
-.loc_DEC2:
+.loc_DEC2
   LDA MAINMENU_LO,X
   STA PPU_DATA
   INX
@@ -4814,7 +4820,7 @@ INCLUDE "vars.asm"
   JSR VRAMADDR
   LDX #0
 
-.loc_DED4:
+.loc_DED4
   LDA TOPSCORE,X
   BNE loc_DEE4
   LDA #&3A ; ':'
@@ -4824,7 +4830,7 @@ INCLUDE "vars.asm"
   BNE loc_DED4
   BEQ loc_DEF1
 
-.loc_DEE4:
+.loc_DEE4
   LDA TOPSCORE,X
   CLC
   ADC #&30 ; '0'
@@ -4833,7 +4839,7 @@ INCLUDE "vars.asm"
   CPX #7
   BNE loc_DEE4
 
-.loc_DEF1:
+.loc_DEF1
   LDA #&30 ; '0'
   STA PPU_DATA
   STA PPU_DATA
@@ -4843,21 +4849,21 @@ INCLUDE "vars.asm"
   LDX #&20 ; ' '
   LDA #0
 
-.loc_DF04:
+.loc_DF04
   STA PPU_DATA
   DEX
   BNE loc_DF04
   LDX #8
   LDA #&50 ; 'P'
 
-.loc_DF0E:
+.loc_DF0E
   STA PPU_DATA
   DEX
   BNE loc_DF0E
   LDX #&18
   LDA #&55 ; 'U'
 
-.loc_DF18:
+.loc_DF18
   STA PPU_DATA
   DEX
   BNE loc_DF18
@@ -4869,7 +4875,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.SETSTAGEPAL:
+.SETSTAGEPAL
   LDA #0
   STA H_SCROLL
   JSR WAITVBL
@@ -4878,7 +4884,7 @@ INCLUDE "vars.asm"
   JSR VRAMADDR
   LDX #0
 
-.loc_DF37:
+.loc_DF37
   LDA STAGEPAL,X
   STA PPU_DATA
   INX
@@ -4891,17 +4897,17 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.DRAW_TIME:
+.DRAW_TIME
   LDY #&30 ; '0'
   SEC
 
-.loc_DF4B:
+.loc_DF4B
   SBC #100
   BCC loc_DF52
   INY
   BNE loc_DF4B
 
-.loc_DF52:
+.loc_DF52
   ADC #&64 ; 'd'
   CPY #&30 ; '0'
   BNE loc_DF76
@@ -4913,23 +4919,23 @@ INCLUDE "vars.asm"
 
 ; ������� ����������� �����, �������� � �������� A.
 
-.PUTNUMBER:
+.PUTNUMBER
   LDY #&30 ; '0'
   SEC         ; &30 - ����� �� 0 �� 9
 
-.DECADES:
+.DECADES
   SBC #10     ; ��������� ���������� �������� � Y
   BCC DONE_DECADES
   INY
   BNE DECADES     ; ��������� ���������� �������� � Y
 
-.DONE_DECADES:
+.DONE_DECADES
   ADC #&3A ; ':'
   CPY #&30 ; '0'      ; ���� ����� �� 0 �� 9, �� ������� ������ ������ ���������� ��������
   BNE PUTNUMB2
   LDY #&3A ; ':'      ; &3A - ��� ������.
 
-.PUTNUMB2:
+.PUTNUMB2
   STY PPU_DATA
   STA PPU_DATA
   RTS
@@ -4937,33 +4943,33 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR DRAW_TIME
 
-.loc_DF76:
+.loc_DF76
   STY PPU_DATA
   LDY #&30 ; '0'
   SEC
 
-.loc_DF7C:
+.loc_DF7C
   SBC #10
   BCC loc_DF83
   INY
   BNE loc_DF7C
 
-.loc_DF83:
+.loc_DF83
   ADC #&3A ; ':'
   STY PPU_DATA
   STA PPU_DATA
   RTS
 
 ; ---------------------------------------------------------------------------
-.STAGEPAL:
+.STAGEPAL
   EQUB  &F,  0, &F,&30
-.MENUPAL:
+.MENUPAL
   EQUB  &F,  5,&30,&28, &F,  0, &F,&30
   EQUB  &F,  6,&26,&37, &F, &F, &F, &F
-.byte_DFA0:
+.byte_DFA0
   EQUB   5,  0,  9,  4, &D,  7,  2,  6
   EQUB  &A, &F, &C,  3,  8, &B, &E,  1
-.MAINMENU_HI:
+.MAINMENU_HI
   EQUB &B0,&B0,&DF,&C0,&C1,&C1,&C2,&C0,&C1,&C1,&C1,&C2,&C0,&B6,&E9,&B8
   EQUB &C2,&C0,&C1,&C1,&C2,&C0,&C1,&C1,&C2,&C0,&C1,&C1,&C2,&E9,&F8,&B0
   EQUB &B0,&B0,&DF,&C1,&D9,&D3,&B3,&C1,&D9,&CB,&D3,&B3,&C1,&C5,&C6,&C1
@@ -4980,7 +4986,7 @@ INCLUDE "vars.asm"
   EQUB &C3,&C7,&C1,&F1,&C3,&C7,&C1,&C1,&C3,&B4,&CF,&B2,&C3,&EB,&F8,&B0
   EQUB &B0,&B0,&DF,&CA,&CB,&CB,&CB,&CE,&CB,&CB,&CB,&CB,&CE,&D8,&E9,&E9
   EQUB &EA,&CE,&CB,&CB,&CB,&CE,&CB,&CB,&CB,&CE,&D8,&E9,&EA,&CD,&F8,&B0
-.MAINMENU_LO:
+.MAINMENU_LO
   EQUB &B0,&B0,&DF,&E9,&E9,&E9,&E9,&E9,&E9,&E9,&C0,&B6,&E9,&B8,&C2,&C0
   EQUB &C1,&C1,&C2,&C0,&BC,&E4,&C2,&E9,&E9,&E9,&E9,&E9,&E9,&E9,&F8,&B0
   EQUB &B0,&B0,&DF,&E9,&E9,&E9,&E9,&E9,&E9,&E9,&C1,&C5,&C6,&C1,&B3,&C1
@@ -5018,24 +5024,24 @@ INCLUDE "vars.asm"
 
 ; ���������� ����� � ���� (��������� �����, ��������)
 
-.DRAWMENUTEXT:
+.DRAWMENUTEXT
   LDY #0
   LDX #5
 
-.NEXTSTRING:
+.NEXTSTRING
   JSR NEXTCHAR
   STA PPU_ADDRESS
   JSR NEXTCHAR
   STA PPU_ADDRESS
 
-.CONTINUEDRAW:
+.CONTINUEDRAW
   JSR NEXTCHAR
   CMP #&FF
   BEQ BREAKDRAW
   STA PPU_DATA
   BNE CONTINUEDRAW
 
-.BREAKDRAW:
+.BREAKDRAW
   DEX
   BNE NEXTSTRING
   RTS
@@ -5044,13 +5050,13 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.NEXTCHAR:
+.NEXTCHAR
   LDA MENUTEXT,Y
   INY
   RTS
 
 ; ---------------------------------------------------------------------------
-.MENUTEXT:
+.MENUTEXT
   EQUB &22
   EQUB &69
   EQUS "START",&B0,&B0,&B0,"CONTINUE"
@@ -5074,19 +5080,21 @@ INCLUDE "vars.asm"
   EQUS "NINTENDO",&B0,"OF",&B0,"AMERICA",&B0,"INC"
   EQUB &FD
   EQUB &FF
-.STAGE_ROWS: EQUB   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1
+
+.STAGE_ROWS
+  EQUB   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1
   EQUB   1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1
   EQUB   1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  1
 
-.MULT_TABY:
+.MULT_TABY
   EQUB   0,&20,&40,&60,&80,&A0,&C0,&E0,  0,&20,&40,&60,&80
-.MULT_TABX:
+.MULT_TABX
   EQUB   2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  3
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_E2BD:
+.sub_E2BD
   LDA BONUS_POWER
   LSR A
   LSR A
@@ -5107,7 +5115,7 @@ INCLUDE "vars.asm"
   LDA #3
   STA byte_1F
 
-.loc_E2DB:
+.loc_E2DB
   JSR sub_E33C
   JSR _get_pass_data_var_addr
   LDA TEMP_X
@@ -5134,7 +5142,7 @@ INCLUDE "vars.asm"
   STY SEED
   LDX #0
 
-.loc_E30A:
+.loc_E30A
   JSR _get_pass_data_var_addr
   LDA (STAGE_MAP),Y
   AND #&F
@@ -5152,7 +5160,7 @@ INCLUDE "vars.asm"
   JSR VRAMADDR
   LDX #2
 
-.loc_E32B:
+.loc_E32B
   LDA _passworf_buffer,X
   TAY
   LDA aAofkcpgelbhmjd,Y ; "AOFKCPGELBHMJDNI"
@@ -5167,13 +5175,13 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_E33C:
+.sub_E33C
   LDA #4
   STA byte_20
   LDA #0
   STA TEMP_X
 
-.loc_E344:
+.loc_E344
   JSR _get_pass_data_var_addr
   LDA (STAGE_MAP),Y
   CLC
@@ -5187,7 +5195,7 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-._get_pass_data_var_addr:
+._get_pass_data_var_addr
   LDA _pass_data_vars,X
   STA STAGE_MAP
   INX
@@ -5197,7 +5205,7 @@ INCLUDE "vars.asm"
   RTS
 
 ; ---------------------------------------------------------------------------
-._pass_data_vars:
+._pass_data_vars
   EQUW   &67,  &77,  &DD,  &61,  &99,  &66,  &DC,  &64,  &79,  &9A
   EQUW   &74,  &63,  &75,  &62,  &9B,  &65,  &94,  &DE,  &76,  &95
 
@@ -5205,13 +5213,13 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_E399
 
-.locret_E398:
+.locret_E398
   RTS
 
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_E399:
+.sub_E399
   LDA byte_9C
   BNE loc_E3A7
   LDA byte_B1
@@ -5220,7 +5228,7 @@ INCLUDE "vars.asm"
   LDA #6
   STA APU_SOUND   ; ��������� ����
 
-.loc_E3A7:
+.loc_E3A7
   LDA byte_A8
   BEQ loc_E3E7
   CMP #2
@@ -5233,7 +5241,7 @@ INCLUDE "vars.asm"
   LDA #2
   STA byte_A8
 
-.loc_E3BD:
+.loc_E3BD
   JSR sub_CFED
   LDA byte_AA
   CMP BOMBMAN_X
@@ -5251,18 +5259,18 @@ INCLUDE "vars.asm"
   JMP loc_E3E2
 ; ---------------------------------------------------------------------------
 
-.loc_E3DF:
+.loc_E3DF
   JSR sub_DD77
 
-.loc_E3E2:
+.loc_E3E2
   LDA #2
   STA byte_A8
 
-.locret_E3E6:
+.locret_E3E6
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E3E7:
+.loc_E3E7
   LDA BOMBMAN_X
   CMP #1
   BNE loc_E401
@@ -5273,14 +5281,14 @@ INCLUDE "vars.asm"
   JMP loc_E416
 ; ---------------------------------------------------------------------------
 
-.loc_E3F8:
+.loc_E3F8
   CMP #&B
   BNE loc_E401
   INC byte_A2
   JMP loc_E416
 ; ---------------------------------------------------------------------------
 
-.loc_E401:
+.loc_E401
   CMP #&1D
   BNE loc_E416
   LDA BOMBMAN_Y
@@ -5290,12 +5298,12 @@ INCLUDE "vars.asm"
   JMP loc_E416
 ; ---------------------------------------------------------------------------
 
-.loc_E410:
+.loc_E410
   CMP #&B
   BNE loc_E416
   INC byte_A3
 
-.loc_E416:
+.loc_E416
   LDA BOMBMAN_X
   CMP #1
   BEQ loc_E434
@@ -5312,7 +5320,7 @@ INCLUDE "vars.asm"
   STA byte_A2
   STA byte_A3
 
-.loc_E434:
+.loc_E434
   LDX byte_9D
   BEQ loc_E448
   DEX
@@ -5328,13 +5336,13 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E448:
+.loc_E448
   LDA byte_9E
   BNE locret_E467
   LDA byte_9F
   BEQ locret_E467
 
-.loc_E450:
+.loc_E450
   LDA byte_A8
   BNE locret_E467
   LDA #1
@@ -5347,11 +5355,11 @@ INCLUDE "vars.asm"
   LDA TEMP_Y
   STA byte_AB
 
-.locret_E467:
+.locret_E467
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E468:
+.loc_E468
   LDA byte_9C
   BNE locret_E467
   LDA byte_A0
@@ -5365,7 +5373,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E47D:
+.loc_E47D
   LDA byte_9C
   BNE locret_E467
   LDA byte_A4
@@ -5373,14 +5381,14 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E486:
+.loc_E486
   LDA byte_A5
   CMP #&F8 ; '�'
   BCS loc_E450
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E48D:
+.loc_E48D
   LDA byte_9F
   BEQ locret_E467
   LDA byte_A6
@@ -5389,7 +5397,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E498:
+.loc_E498
   LDA byte_9E
   BNE locret_E467
   LDA STAGE
@@ -5400,7 +5408,7 @@ INCLUDE "vars.asm"
   BEQ loc_E4A8
   BCS locret_E467
 
-.loc_E4A8:
+.loc_E4A8
   LDA byte_A7
   CMP #3
   BEQ loc_E450
@@ -5410,24 +5418,24 @@ INCLUDE "vars.asm"
 ; =============== S U B R O U T I N E =======================================
 
 
-.sub_E4AF:
+.sub_E4AF
   LDA STAGE
   AND #7
   CMP #6
   BCC loc_E4B9
   AND #1
 
-.loc_E4B9:
+.loc_E4B9
   STA byte_9D
   RTS
 
 ; ---------------------------------------------------------------------------
-.byte_E4BC:
+.byte_E4BC
   EQUB   1,  2,&64,&32,  3,&C8
 
 INCLUDE "sound.asm"
 
-.DEMO_KEYDATA:
+.DEMO_KEYDATA
   EQUB &3D,  1,  3,&81,  3,&80,&1B,  4,  6,&84,&1B,  4,  2,  5,&34,  1,  8,&41,&13,  1
   EQUB   1,  0,  6,  1,  1,  0, &F,  1,  1,  0,  3,  1,  1,  0,&11,  1,  6,&81,&1B,  1
   EQUB   3,&81, &E,  1,&1A,  0,&11,  1,  5,&81,&16,  1,  2,  0,  1,  1,&11,  4,&10,  0
@@ -5459,11 +5467,11 @@ INCLUDE "sound.asm"
 ORG     &F000
 INCBIN "boom.bin"
 
-.DUMMY:
+.DUMMY
   EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
 ; ---------------------------------------------------------------------------
 
-.IRQ:
+.IRQ
   RTI
 ; ---------------------------------------------------------------------------
   EQUW NMI
