@@ -179,6 +179,7 @@ APU_SOUND_MOD       = &E1
 APU_SDELAY          = &E4
 
 _passworf_buffer    = &0180
+stage_buffer        = &0200
 BOMB_ACTIVE         = &03A0
 BOMB_X              = &03AA
 BOMB_Y              = &03B4
