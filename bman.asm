@@ -2,6 +2,7 @@ ORG &C000
 
 .ROMSTART
 
+INCLUDE "consts.asm"
 INCLUDE "nesregs.asm"
 INCLUDE "vars.asm"
 
@@ -1722,9 +1723,9 @@ INCLUDE "vars.asm"
 ; ��������� �������� �����
 
 .BUILD_CONCRET_WALLS
-  LDA #0
+  LDA #lo(stage_buffer)
   STA STAGE_MAP
-  LDA #2
+  LDA #hi(stage_buffer)
   STA STAGE_MAP+1
   LDY #0
   LDX #0
@@ -5087,9 +5088,15 @@ INCLUDE "vars.asm"
   EQUB   1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  1
 
 .MULT_TABY
-  EQUB   0,&20,&40,&60,&80,&A0,&C0,&E0,  0,&20,&40,&60,&80
+  EQUB lo(stage_buffer+(MAP_WIDTH*0)),lo(stage_buffer+(MAP_WIDTH*1)),lo(stage_buffer+(MAP_WIDTH*2)),lo(stage_buffer+(MAP_WIDTH*3))
+  EQUB lo(stage_buffer+(MAP_WIDTH*4)),lo(stage_buffer+(MAP_WIDTH*5)),lo(stage_buffer+(MAP_WIDTH*6)),lo(stage_buffer+(MAP_WIDTH*7))
+  EQUB lo(stage_buffer+(MAP_WIDTH*8)),lo(stage_buffer+(MAP_WIDTH*9)),lo(stage_buffer+(MAP_WIDTH*10)),lo(stage_buffer+(MAP_WIDTH*11))
+  EQUB lo(stage_buffer+(MAP_WIDTH*12))
 .MULT_TABX
-  EQUB   2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  3
+  EQUB hi(stage_buffer+(MAP_WIDTH*0)),hi(stage_buffer+(MAP_WIDTH*1)),hi(stage_buffer+(MAP_WIDTH*2)),hi(stage_buffer+(MAP_WIDTH*3))
+  EQUB hi(stage_buffer+(MAP_WIDTH*4)),hi(stage_buffer+(MAP_WIDTH*5)),hi(stage_buffer+(MAP_WIDTH*6)),hi(stage_buffer+(MAP_WIDTH*7))
+  EQUB hi(stage_buffer+(MAP_WIDTH*8)),hi(stage_buffer+(MAP_WIDTH*9)),hi(stage_buffer+(MAP_WIDTH*10)),hi(stage_buffer+(MAP_WIDTH*11))
+  EQUB hi(stage_buffer+(MAP_WIDTH*12))
 
 ; =============== S U B R O U T I N E =======================================
 
