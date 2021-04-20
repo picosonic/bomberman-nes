@@ -1907,7 +1907,7 @@ INCLUDE "vars.asm"
   CLC
   ADC #&20 ; ' '
   STA PPU_ADDRESS
-  LDA &D9C8,X
+  LDA TILE_MAP+2,X
   STA PPU_DATA
   LDA TILE_MAP+3,X
   STA PPU_DATA
@@ -2978,7 +2978,9 @@ INCLUDE "vars.asm"
   EQUB   1,  1,  1,  1,  3,  3,  3,  3,  2,  2,  2,  2,  1,  1,  1,  1
   EQUB   3,  3,  3,  3,  2,  2,  2,  2,  1,  1,  1,  1,  1,  2,  1,  2
   EQUB   1,  3,  2,  1,  3,  2,  1,  1,  1,  1,  1,  1,  1,  0,  1,  2
-  EQUB   3,  1,  1,  2,  4,  8, &A,&14,&28,&50,&64,&C8,  2,  4,  5, &A
+  EQUB   3
+.MONSTER_ATTR2
+  EQUB   1,  1,  2,  4,  8, &A,&14,&28,&50,&64,&C8,  2,  4,  5, &A
   EQUB &14,&28
 
 ; =============== S U B R O U T I N E =======================================
@@ -3067,7 +3069,7 @@ INCLUDE "vars.asm"
   LDY #&10
 
 .loc_D285:
-  LDA &D1B7,Y
+  LDA MONSTER_ATTR2,Y
   TAX
 
 .loc_D289:
@@ -3079,7 +3081,7 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_D294:
-  LDA &D1B7,Y
+  LDA MONSTER_ATTR2,Y
   JSR sub_DD83
 
 .loc_D29A:
