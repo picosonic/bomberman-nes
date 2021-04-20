@@ -914,7 +914,7 @@ INCLUDE "vars.asm"
   JSR PPU_RESET
   JSR sub_DBF9
   JSR BUILD_CONCRET_WALLS ; ��������� �������� �����
-  LDA #8
+  LDA #SPR_HALFSIZE
   STA BOMBMAN_U
   STA BOMBMAN_V
   LDA #0
@@ -973,7 +973,7 @@ INCLUDE "vars.asm"
   LDA #1
   STA BOMBMAN_X
   STA BOMBMAN_Y
-  LDA #8
+  LDA #SPR_HALFSIZE
   STA BOMBMAN_U
   STA BOMBMAN_V
   LDA #0
@@ -1286,7 +1286,7 @@ INCLUDE "vars.asm"
   LDA FIRE_ACTIVE,X
   CMP #&87 ; '�'
   BNE loc_C7A4
-  LDA #0
+  LDA #MAP_EMPTY
   STA FIRE_ACTIVE,X
   STA (STAGE_MAP),Y
   BEQ loc_C7A4
@@ -1295,7 +1295,7 @@ INCLUDE "vars.asm"
   LDA (STAGE_MAP),Y
   TAY
   BEQ loc_C838
-  CPY #2
+  CPY #MAP_BRICK
   BNE loc_C7DE
   INC byte_A4
   LDA #&80 ; '�'
@@ -1304,7 +1304,7 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_C7DE
-  CPY #3
+  CPY #MAP_BOMB
   BNE loc_C7EE
   LDA byte_4D6,X
   ORA #&10
@@ -1314,10 +1314,10 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_C7EE
-  CPY #4
+  CPY #MAP_HIDDEN_EXIT
   BNE loc_C800
   LDY byte_1F
-  LDA #8
+  LDA #MAP_EXIT
   STA (STAGE_MAP),Y
   LDA #&28 ; '('
   JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
@@ -1325,10 +1325,10 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_C800
-  CPY #5
+  CPY #MAP_HIDDEN_BONUS
   BNE loc_C815
   LDY byte_1F
-  LDA #6
+  LDA #MAP_BONUS
   STA (STAGE_MAP),Y
   LDA #&28 ; '('
   CLC
@@ -1338,12 +1338,12 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_C815
-  CPY #8
+  CPY #MAP_EXIT
   BEQ loc_C828
-  CPY #6
+  CPY #MAP_BONUS
   BNE loc_C830
   LDY byte_1F
-  LDA #0
+  LDA #MAP_EMPTY
   STA (STAGE_MAP),Y
   JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
   DEC byte_A7
@@ -1438,7 +1438,7 @@ INCLUDE "vars.asm"
   LDA EXIT_ENEMY_TYPE
   STA ENEMY_TYPE,Y
   STA ENEMY_FRAME,Y
-  LDA #8
+  LDA #SPR_HALFSIZE
   STA ENEMY_U,Y
   STA ENEMY_V,Y
   JSR RAND
@@ -1480,7 +1480,7 @@ INCLUDE "vars.asm"
   ASL A
   ASL A
   STA ENEMY_FRAME,Y
-  LDA #8
+  LDA #SPR_HALFSIZE
   STA ENEMY_U,Y
   STA ENEMY_V,Y
   JSR RAND
@@ -2061,10 +2061,10 @@ INCLUDE "vars.asm"
 
 .loc_CC63
   LDA BOMBMAN_U
-  CMP #8
+  CMP #SPR_HALFSIZE
   BNE loc_CCA4    ; ��������� �������� �������
   LDA BOMBMAN_V
-  CMP #8
+  CMP #SPR_HALFSIZE
   BNE loc_CCA4    ; ��������� �������� �������
   LDY BOMBMAN_Y
   STY byte_20
@@ -2075,11 +2075,11 @@ INCLUDE "vars.asm"
   LDY BOMBMAN_X
   STY byte_1F
   LDA (STAGE_MAP),Y
-  CMP #8
+  CMP #MAP_EXIT
   BEQ loc_CC95
-  CMP #6
+  CMP #MAP_BONUS
   BNE loc_CCA4    ; ��������� �������� �������
-  LDA #0
+  LDA #MAP_EMPTY
   STA (STAGE_MAP),Y
   JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
   JMP loc_CEE9
@@ -2199,7 +2199,7 @@ INCLUDE "vars.asm"
 
 .sub_CD39
   LDA BOMBMAN_V
-  CMP #8
+  CMP #SPR_HALFSIZE
   BCS loc_CD44
   INC BOMBMAN_V
   JMP loc_CD69
@@ -2302,7 +2302,7 @@ INCLUDE "vars.asm"
 
 .sub_CDD4
   LDA BOMBMAN_U
-  CMP #8
+  CMP #SPR_HALFSIZE
   BCS loc_CDDF
   INC BOMBMAN_U
   JMP loc_CE04
@@ -2345,7 +2345,7 @@ INCLUDE "vars.asm"
 
 .ADJUST_BOMBMAN_HPOS
   LDA BOMBMAN_U
-  CMP #8
+  CMP #SPR_HALFSIZE
   BCC ADJUST_RIGHT
   BEQ DONT_ADJUST
   DEC BOMBMAN_U
@@ -2367,7 +2367,7 @@ INCLUDE "vars.asm"
 
 .ADJUST_BOMBMAN_VPOS
   LDA BOMBMAN_V
-  CMP #8
+  CMP #SPR_HALFSIZE
   BCC ADJUST_DOWN
   BEQ DONT_ADJUST2
   DEC BOMBMAN_V
@@ -2761,7 +2761,7 @@ INCLUDE "vars.asm"
   STA M_X
   LDA byte_AB
   STA M_Y
-  LDA #8
+  LDA #SPR_HALFSIZE
   STA M_U
   STA M_V
   LDA #0
@@ -3407,10 +3407,10 @@ INCLUDE "vars.asm"
   LDA #0
   STA byte_51
   LDA M_U
-  CMP #8
+  CMP #SPR_HALFSIZE
   BNE loc_D462
   LDA M_V
-  CMP #8
+  CMP #SPR_HALFSIZE
 
 .loc_D462
   BNE loc_D4BD
@@ -3534,7 +3534,7 @@ INCLUDE "vars.asm"
 
 .STEP_ENEMY_DOWN
   LDA M_V
-  CMP #8
+  CMP #SPR_HALFSIZE
   BCS loc_D50E
   INC M_V
   RTS
@@ -3637,7 +3637,7 @@ INCLUDE "vars.asm"
 
 .STEP_ENEMY_RIGHT
   LDA M_U
-  CMP #8
+  CMP #SPR_HALFSIZE
   BCS loc_D596
   INC M_U
   RTS
@@ -3671,7 +3671,7 @@ INCLUDE "vars.asm"
 
 .sub_D5BC
   LDA M_U
-  CMP #8
+  CMP #SPR_HALFSIZE
   BCC loc_D5C7
   BEQ locret_D5CA
   DEC M_U
@@ -3692,7 +3692,7 @@ INCLUDE "vars.asm"
 
 .sub_D5CB
   LDA M_V
-  CMP #8
+  CMP #SPR_HALFSIZE
   BCC loc_D5D6
   BEQ locret_D5D9
   DEC M_V
@@ -3899,7 +3899,7 @@ INCLUDE "vars.asm"
   ASL A
   ASL A
   STA ENEMY_FRAME,X
-  LDA #8      ; ��������� ������� �� ������ ������ (8; 8)
+  LDA #SPR_HALFSIZE
   STA ENEMY_U,X
   STA ENEMY_V,X
   JSR RAND
