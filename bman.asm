@@ -12,8 +12,8 @@ INCLUDE "vars.asm"
   STA PPU_CTRL_REG2
   STA PPU_CTRL_REG1
   CLD
-  LDX #&FF
-  TXS
+
+  LDX #&FF:TXS ; Clear stack
 
 .WAIT_VBLANK1
   LDA PPU_STATUS
@@ -1877,7 +1877,7 @@ INCLUDE "vars.asm"
   LDX #0
 
 .loc_CB55
-  LDA &17,X
+  LDA byte_17,X
   STA TILE_TAB,X
   INX
   CPX #8
@@ -4008,7 +4008,7 @@ INCLUDE "vars.asm"
   LDX #0
 
 .COPY_TILE
-  LDA &17,X
+  LDA byte_17,X
   STA TILE_TAB,Y
   INY
   INX
@@ -4329,7 +4329,7 @@ INCLUDE "vars.asm"
   AND #&F
   TAX
   LDA byte_DFA0,X
-  STA &7F,Y
+  STA unk_7F,Y
   JSR WAITVBL
   LDA #&22 ; '"'
   LDX byte_1F
@@ -5213,10 +5213,11 @@ INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------------
 ._pass_data_vars
-  EQUW   &67,  &77,  &DD,  &61,  &99,  &66,  &DC,  &64,  &79,  &9A
-  EQUW   &74,  &63,  &75,  &62,  &9B,  &65,  &94,  &DE,  &76,  &95
+  EQUW   SCORE+6,  BONUS_REMOTE,  byte_DD,  SCORE,  byte_99,  SCORE+5,  byte_DC,  SCORE+3,  BONUS_FIRESUIT,  byte_9A
+  EQUW   BONUS_BOMBS,  SCORE+2,  BONUS_SPEED,  SCORE+1,  byte_9B,  SCORE+4,  byte_94,  byte_DE,  BONUS_NOCLIP,  byte_95
 
-.aAofkcpgelbhmjd:EQUS "AOFKCPGELBHMJDNI"
+.aAofkcpgelbhmjd
+  EQUS "AOFKCPGELBHMJDNI"
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_E399
 
