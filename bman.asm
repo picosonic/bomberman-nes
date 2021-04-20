@@ -5,7 +5,6 @@ ORG &C000
 INCLUDE "nesregs.asm"
 INCLUDE "vars.asm"
 
-
 .RESET
   SEI
   LDA #0
@@ -2968,11 +2967,13 @@ INCLUDE "vars.asm"
   EQUB &FD,&46,&46
   EQUB &FE,&46,&46
   EQUB &FF,&46,&46
+
 .MONSTER_TILE:
   EQUB &18,&19,&1A,&19,&1C,&1D,&1E,&1D,&20,&21,&22,&21,&24,&25,&26,&25
   EQUB &28,&29,&2A,&29,&2C,&2D,&2E,&2D,&30,&31,&32,&31,&34,&35,&36,&35
   EQUB &1B,&1F,&23,&27,&2B,&2F,&33,&37,&14,&15,&16,&17,&38,&39,&3A,&3B
   EQUB &3C,&3D
+
 .MONSTER_ATTR:
   EQUB   1,  1,  1,  1,  3,  3,  3,  3,  2,  2,  2,  2,  1,  1,  1,  1
   EQUB   3,  3,  3,  3,  2,  2,  2,  2,  1,  1,  1,  1,  1,  2,  1,  2
@@ -2982,90 +2983,71 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; �������� �������� �������� ������� �� ��������� ����������
-
-.ENEMY_SAVE:
+.ENEMY_SAVE
+{
   STX M_ID
-  LDA ENEMY_TYPE,X
-  STA M_TYPE
-  LDA ENEMY_X,X
-  STA M_X
-  LDA ENEMY_U,X
-  STA M_U
-  LDA ENEMY_Y,X
-  STA M_Y
-  LDA ENEMY_V,X
-  STA M_V
-  LDA ENEMY_FRAME,X
-  STA M_FRAME
-  LDA byte_5B2,X
-  STA byte_47
-  LDA byte_5BC,X
-  STA byte_48
-  LDA byte_5C6,X
-  STA byte_49
-  LDA ENEMY_FACE,X
-  STA M_FACE
-  LDA byte_5DA,X
-  STA byte_4B
-  LDA byte_5E4,X
-  STA byte_4C
-  RTS
 
+  LDA ENEMY_TYPE,X:STA M_TYPE
+  LDA ENEMY_X,X:STA M_X
+  LDA ENEMY_U,X:STA M_U
+  LDA ENEMY_Y,X:STA M_Y
+  LDA ENEMY_V,X:STA M_V
+  LDA ENEMY_FRAME,X:STA M_FRAME
+  LDA byte_5B2,X:STA byte_47
+  LDA byte_5BC,X:STA byte_48
+  LDA byte_5C6,X:STA byte_49
+  LDA ENEMY_FACE,X:STA M_FACE
+  LDA byte_5DA,X:STA byte_4B
+  LDA byte_5E4,X:STA byte_4C
+
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 
-; ������������ ������ ������� �� ��������� ����������
-
-.ENEMY_LOAD:
+.ENEMY_LOAD
+{
   LDX M_ID
-  LDA M_TYPE
-  STA ENEMY_TYPE,X
-  LDA M_X
-  STA ENEMY_X,X
-  LDA M_U
-  STA ENEMY_U,X
-  LDA M_Y
-  STA ENEMY_Y,X
-  LDA M_V
-  STA ENEMY_V,X
-  LDA M_FRAME
-  STA ENEMY_FRAME,X
-  LDA byte_47
-  STA byte_5B2,X
-  LDA byte_48
-  STA byte_5BC,X
-  LDA byte_49
-  STA byte_5C6,X
-  LDA M_FACE
-  STA ENEMY_FACE,X
-  LDA byte_4B
-  STA byte_5DA,X
-  LDA byte_4C
 
-.loc_D242:
-  STA byte_5E4,X
+  LDA M_TYPE:STA ENEMY_TYPE,X
+  LDA M_X:STA ENEMY_X,X
+  LDA M_U:STA ENEMY_U,X
+  LDA M_Y:STA ENEMY_Y,X
+  LDA M_V:STA ENEMY_V,X
+  LDA M_FRAME:STA ENEMY_FRAME,X
+  LDA byte_47:STA byte_5B2,X
+  LDA byte_48:STA byte_5BC,X
+  LDA byte_49:STA byte_5C6,X
+  LDA M_FACE:STA ENEMY_FACE,X
+  LDA byte_4B:STA byte_5DA,X
+  LDA byte_4C:STA byte_5E4,X
+
   RTS
+}
 
 ; ---------------------------------------------------------------------------
-.THINK_PROC: EQUW &D320     ; ������� ��������
-  EQUW &D2E7     ; ����� ������
-  EQUW &D2C8     ; �����
-  EQUW &D305     ; �������
-  EQUW &D2B4     ; �������
-  EQUW &D319     ; ������
-  EQUW &D3A0     ; ��������
-  EQUW &D38A     ; �������
-  EQUW &D2A2
-  EQUW &D264
-  EQUW &D25B
+.THINK_PROC:
+  EQUW THINK_0-1
+  EQUW THINK_1-1
+  EQUW THINK_2-1
+  EQUW THINK_3-1
+  EQUW THINK_4-1
+  EQUW THINK_5-1
+  EQUW THINK_6-1
+  EQUW THINK_7-1
+  EQUW THINK_8-1
+  EQUW THINK_9-1
+  EQUW THINK_A-1
+
 ; ---------------------------------------------------------------------------
+.THINK_A
   DEC byte_49
   BNE locret_D2A2
   LDA #0
   STA M_TYPE
   RTS
 ; ---------------------------------------------------------------------------
+.THINK_9
   DEC byte_49
   BNE locret_D2A2
   LDA #10
@@ -3109,6 +3091,7 @@ INCLUDE "vars.asm"
 .locret_D2A2:
   RTS
 ; ---------------------------------------------------------------------------
+.THINK_8
   DEC byte_49
   BNE locret_D2B3
   LDA #10
@@ -3125,6 +3108,7 @@ INCLUDE "vars.asm"
 .locret_D2B4:
   RTS
 ; ---------------------------------------------------------------------------
+.THINK_4
   LDA #&10        ; ����� ������ - �������
   LDY #&13
   JSR sub_D5DA
@@ -3138,6 +3122,7 @@ INCLUDE "vars.asm"
 .locret_D2C8:
   RTS
 ; ---------------------------------------------------------------------------
+.THINK_2
   LDA #8      ; ������ ������ - �����
   LDY #&B
   JSR sub_D5DA
@@ -3158,6 +3143,7 @@ INCLUDE "vars.asm"
 .locret_D2E7:
   RTS
 ; ---------------------------------------------------------------------------
+.THINK_1
   LDA #4      ; ������ ������ - ����� ������
   LDY #7
   JSR sub_D5DA
@@ -3174,6 +3160,7 @@ INCLUDE "vars.asm"
 .loc_D303:
   JMP loc_D33F
 ; ---------------------------------------------------------------------------
+.THINK_3
   LDA #&C     ; ��������� ������ - �������
   LDY #&F
   JSR sub_D5DA
@@ -3189,10 +3176,12 @@ INCLUDE "vars.asm"
 .THINK_SKIP:
   RTS
 ; ---------------------------------------------------------------------------
+.THINK_5
   LDA #20     ; ������ ������ - ������
   LDY #23
   JMP loc_D325
 ; ---------------------------------------------------------------------------
+.THINK_0
   LDA #0      ; ������ ������ - ������� ��������
   LDY #3
 
@@ -3272,6 +3261,7 @@ INCLUDE "vars.asm"
   RTS
 
 ; ---------------------------------------------------------------------------
+.THINK_7
   LDA #&1C        ; ������� ������ - �������
   LDY #&1F
   JSR sub_D5DA
@@ -3285,6 +3275,7 @@ INCLUDE "vars.asm"
   STY byte_48
   JMP loc_D3AB
 ; ---------------------------------------------------------------------------
+.THINK_6
   LDA #&18        ; ������� ������ - ��������
   LDY #&1B
   JSR sub_D5DA
@@ -5204,8 +5195,10 @@ INCLUDE "vars.asm"
   RTS
 
 ; ---------------------------------------------------------------------------
-._pass_data_vars:EQUW   &67,  &77,  &DD,  &61,  &99,  &66,  &DC,  &64,  &79,  &9A
+._pass_data_vars:
+  EQUW   &67,  &77,  &DD,  &61,  &99,  &66,  &DC,  &64,  &79,  &9A
   EQUW   &74,  &63,  &75,  &62,  &9B,  &65,  &94,  &DE,  &76,  &95
+
 .aAofkcpgelbhmjd:EQUS "AOFKCPGELBHMJDNI"
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_E399
