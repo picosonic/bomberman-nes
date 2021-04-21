@@ -10,7 +10,7 @@
 
 ; =============== S U B R O U T I N E =======================================
 
-; ��������� �������
+; Play melody
 
 .APU_PLAY_MELODY
   LDA APU_DISABLE
@@ -21,7 +21,7 @@
   CMP #&B
   BCS APU_STOP
   STA APU_TEMP
-  ORA #&80 ; '�'
+  ORA #&80
   STA APU_MUSIC
   DEC APU_TEMP
   LDA APU_TEMP
@@ -42,27 +42,38 @@
   STA byte_D3
   LDA APU_MELODIES_TAB+1,Y ; 1: TITLE
   STA byte_D4
+
   LDA #0
+
   STA APU_CNT
   STA APU_CNT+1
   STA APU_CNT+2
+
   STA byte_D5
+
   STA byte_CD
   STA byte_CD+1
   STA byte_CD+2
+
   STA byte_D0
   STA byte_D0+1
   STA byte_D0+2
+
   LDA #1
+
   STA byte_B6
   STA byte_B6+1
   STA byte_B6+2
+
   STA byte_B9
   STA byte_B9+1
   STA byte_B9+2
+
   STA byte_D6
   STA byte_D6+1
   STA byte_D6+2
+
+  ; Hard code pulse channel sweep to 8 (negate, i.e. disable sweep)
   LDA #8
   STA APU_SWEEP
   STA APU_SWEEP+1
@@ -106,7 +117,7 @@
   STA APU_TEMP
   INC APU_CNT,X
   LDA APU_TEMP
-  BMI CONTROL_EQUB
+  BMI CONTROL_BYTE
   LDA byte_B9,X
   STA byte_B6,X
   CPX #2
@@ -121,7 +132,7 @@
 .FIX_TRIANGLE
   ASL A
   BPL FIX_DELAY
-  LDA #&7F ; ''
+  LDA #&7F
 
 .FIX_DELAY
   STA byte_D6,X
@@ -146,10 +157,10 @@
   BEQ loc_E59D
 
 .loc_E593
-  LDA #&9F ; '�'
+  LDA #&9F
   CPX #2
   BNE loc_E5A1
-  LDA #&7F ; ''
+  LDA #&7F
   BNE loc_E5A1
 
 .loc_E59D
@@ -157,7 +168,7 @@
   ORA byte_D3,X
 
 .loc_E5A1
-  STA &4000,Y
+  STA APU_REG_BASE,Y ; Channel - flags
   LDA byte_CD,X
   CMP #2
   BNE loc_E5AB
@@ -168,28 +179,28 @@
   CPX #2
   BCS SET_WAVELEN
   LDA APU_SWEEP,X
-  STA &4001,Y
+  STA APU_REG_BASE+1,Y ; Pulse channel - sweep unit (hard coded to 8)
 
 .SET_WAVELEN
   LDA APU_TEMP
   ASL A
   TAX
   LDA WAVELEN_TAB,X
-  STA &4002,Y
+  STA APU_REG_BASE+2,Y ; Channel - timer low
   LDA WAVELEN_TAB+1,X
   ORA #8
-  STA &4003,Y
+  STA APU_REG_BASE+3,Y ; Channel - timer high
 
 .ABORT_WRITE
   RTS
 ; ---------------------------------------------------------------------------
 
-.CONTROL_EQUB
-  AND #&F0 ; '�'
-  CMP #&F0 ; '�'
+.CONTROL_BYTE
+  AND #&F0
+  CMP #&F0
   BEQ EXEC_EFFECT
   LDA APU_TEMP
-  AND #&7F ; ''
+  AND #&7F
   STA byte_B9,X
   JMP APU_WRITE_REGS
 ; ---------------------------------------------------------------------------
@@ -282,7 +293,7 @@
 
 ; =============== S U B R O U T I N E =======================================
 
-; �������� ��������� APU
+; Bring up the state of the APU
 
 .APU_RESET
   LDA #0
@@ -301,7 +312,7 @@
 
 ; =============== S U B R O U T I N E =======================================
 
-; ��������� ����
+; Play sound
 
 .APU_PLAY_SOUND
   LDX #2
@@ -314,7 +325,7 @@
 .MUTE_NEXT_CHAN
   DEX
   BPL MUTE_CHANNEL
-  LDA APU_SOUND   ; ��������� ����
+  LDA APU_SOUND   ; Play sound
   BMI UPDATE_SOUND
   CMP #7
   BCS WRONG_SOUND ; >= 7
@@ -323,14 +334,14 @@
   LDX APU_PATTERN
   BEQ START_SOUND
   TXA
-  ORA #&80 ; '�'
-  STA APU_SOUND   ; ��������� ����
+  ORA #&80
+  STA APU_SOUND   ; Play sound
   BNE UPDATE_SOUND
 
 .START_SOUND
   STA APU_PATTERN
-  ORA #&80 ; '�'
-  STA APU_SOUND   ; ��������� ����
+  ORA #&80
+  STA APU_SOUND   ; Play sound
   LDA #0
   STA APU_SOUND_MOD
   STA APU_SOUND_MOD+1
@@ -361,7 +372,7 @@
 
 ; ---------------------------------------------------------------------------
 .MOD_SOUND_TAB
-  EQUW APU_RESET-1   ; �������� ��������� APU
+  EQUW APU_RESET-1   ; Bring up the state of the APU
   EQUW S1_START-1
   EQUW S2_START-1
   EQUW S3_START-1
@@ -406,7 +417,7 @@
   STA APU_NOISE_REG+3
   LDA #&FF
   STA APU_SQUARE2_REG
-  LDA #&84 ; '�'
+  LDA #&84
   STA APU_SQUARE2_REG+1
   LDA #0
   STA APU_SQUARE2_REG+2
@@ -420,13 +431,13 @@
 .S3_UPDATE
   DEC APU_SDELAY
   BNE locret_E727
-  LDA #&DF ; '-'
+  LDA #&DF
   STA APU_SQUARE2_REG
-  LDA #&84 ; '�'
+  LDA #&84
   STA APU_SQUARE2_REG+1
   LDA #0
   STA APU_SQUARE2_REG+2
-  LDA #&81 ; '�'
+  LDA #&81
   STA APU_SQUARE2_REG+3
   LDA #0
   STA APU_PATTERN
@@ -456,9 +467,9 @@
 
 .S4_PITCH2
   DEC APU_SDELAY+1
-  LDA #&84 ; '�'
+  LDA #&84
   STA APU_SQUARE2_REG
-  LDA #&8B ; '�'
+  LDA #&8B
   STA APU_SQUARE2_REG+1
   LDX APU_SDELAY+1
   LDA S4_PITCH_TAB,X
@@ -477,26 +488,27 @@
 ; ---------------------------------------------------------------------------
 
 .S5_START
-  LDA #&30 ; '0'
+  LDA #&30
   STA APU_SOUND_MOD+1
   LDA #9
   STA APU_NOISE_REG
   LDA #7
   STA APU_NOISE_REG+2
-  LDA #&30 ; '0'
+  LDA #&30
   STA APU_NOISE_REG+3
   LDA #&1F
   STA APU_SQUARE2_REG
-  LDA #&8F ; '�'
+  LDA #&8F
   STA APU_SQUARE2_REG+1
   LDA #0
   STA APU_SQUARE2_REG+2
-  LDA #&33 ; '3'
+  LDA #&33
   STA APU_SQUARE2_REG+3
   LDA #0
   STA APU_PATTERN
   RTS
 ; ---------------------------------------------------------------------------
+; 6 = PAUSE / UNPAUSE
 
 .S6_START
   LDA #&1D
