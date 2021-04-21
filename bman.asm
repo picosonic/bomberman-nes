@@ -5255,8 +5255,6 @@ INCLUDE "vars.asm"
   EQUB hi(stage_buffer+(MAP_WIDTH*8)),hi(stage_buffer+(MAP_WIDTH*9)),hi(stage_buffer+(MAP_WIDTH*10)),hi(stage_buffer+(MAP_WIDTH*11))
   EQUB hi(stage_buffer+(MAP_WIDTH*12))
 
-; *** COMMENTS UP TO HERE ***
-
 ; =============== S U B R O U T I N E =======================================
 .sub_E2BD
   LDA BONUS_POWER
@@ -5265,15 +5263,18 @@ INCLUDE "vars.asm"
   LSR A
   LSR A
   STA byte_DC
+
   LDA STAGE
   AND #&F
   STA byte_DD
+
   LDA STAGE
   LSR A
   LSR A
   LSR A
   LSR A
   STA byte_DE
+
   LDY #0
   LDX #0
   LDA #3
@@ -5306,6 +5307,7 @@ INCLUDE "vars.asm"
   CLC
   ADC TEMP_X
   STA byte_95
+
   LDY #0
   STY SEED
   LDX #0
@@ -5321,11 +5323,13 @@ INCLUDE "vars.asm"
   AND #&F
   STA _passworf_buffer,X
   STA SEED
-  CPX #&28 ; '('
+  CPX #&28
   BNE loc_E30A
-  LDA #&23 ; '#'
-  LDX #6
+
+  ; Set screen position to write next character to
+  LDA #&23:LDX #6
   JSR VRAMADDR
+
   LDX #2
 
 .loc_E32B
@@ -5335,7 +5339,7 @@ INCLUDE "vars.asm"
   STA PPU_DATA
   INX
   INX
-  CPX #&2A ; '*'
+  CPX #&2A
   BNE loc_E32B
   RTS
 
@@ -5394,8 +5398,9 @@ INCLUDE "vars.asm"
   LDA byte_B1
   BNE loc_E3A7
   INC byte_B1
-  LDA #6
-  STA APU_SOUND   ; ��������� ����
+
+  ; Play sound 6
+  LDA #6:STA APU_SOUND
 
 .loc_E3A7
   LDA byte_A8
@@ -5418,11 +5423,12 @@ INCLUDE "vars.asm"
   LDA BOMBMAN_Y
   CMP byte_AB
   BNE locret_E3E6
-  LDA #4
-  STA APU_SOUND   ; ��������� ����
+
+  ; Play sound 4
+  LDA #4:STA APU_SOUND
   LDX byte_9D
   LDA byte_E4BC,X
-  CMP #&64 ; 'd'
+  CMP #100
   BCC loc_E3DF
   JSR loc_DD6B
   JMP loc_E3E2
@@ -5491,107 +5497,102 @@ INCLUDE "vars.asm"
 
 .loc_E434
   LDX byte_9D
-  BEQ loc_E448
-  DEX
-  BEQ loc_E468
-  DEX
-  BEQ loc_E47D
-  DEX
-  BEQ loc_E486
-  DEX
-  BEQ loc_E48D
-  DEX
-  BEQ loc_E498
+  BEQ loc_E448 ; Branch if 9D = 0 "Bonus target"
+  DEX:BEQ loc_E468 ; Branch if 9D = 1 "Goddess mask"
+  DEX:BEQ loc_E47D ; Branch if 9D = 2 "Nakamoto-san"
+  DEX:BEQ loc_E486 ; Branch if 9D = 3 "Famicom"
+  DEX:BEQ loc_E48D ; Branch if 9D = 4 "Cola bottle"
+  DEX:BEQ loc_E498 ; Branch if 9D = 5 "Dezeniman-san"
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E448
+; Reveal the exit and walk over it without defeating any enemies
+.loc_E448 ; 9D = 0 "Bonus target"
   LDA byte_9E
-  BNE locret_E467
+  BNE locret_E467 ; Skip if 9E != 0
   LDA byte_9F
-  BEQ locret_E467
+  BEQ locret_E467 ; Skip if 9F == 0
 
 .loc_E450
   LDA byte_A8
-  BNE locret_E467
-  LDA #1
-  STA byte_A8
-  LDA #0
-  STA byte_A9
-  JSR RAND_COORDS
-  LDA TEMP_X
-  STA byte_AA
-  LDA TEMP_Y
-  STA byte_AB
+  BNE locret_E467 ; Skip if A8 != 0
+  LDA #1:STA byte_A8
+  LDA #0:STA byte_A9
+  JSR RAND_COORDS ; Place bonus item randomly
+  LDA TEMP_X:STA byte_AA
+  LDA TEMP_Y:STA byte_AB
 
 .locret_E467
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E468
+; Defeat every enemy and circle the outer ring of the level
+.loc_E468 ; 9D = 1 "Goddess mask"
   LDA byte_9C
-  BNE locret_E467
+  BNE locret_E467 ; Skip if 9C != 0
   LDA byte_A0
-  BEQ locret_E467
+  BEQ locret_E467 ; Skip if A0 == 0
   LDA byte_A1
-  BEQ locret_E467
+  BEQ locret_E467 ; Skip if A1 == 0
   LDA byte_A2
-  BEQ locret_E467
+  BEQ locret_E467 ; Skip if A2 == 0
   LDA byte_A3
-  BNE loc_E450
+  BNE loc_E450 ; Skip if A3 != 0
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E47D
+; Kill every enemy without blowing up any walls
+.loc_E47D ; 9D = 2 "Nakamoto-san"
   LDA byte_9C
-  BNE locret_E467
+  BNE locret_E467 ; Skip if 9C != 0
   LDA byte_A4
-  BEQ loc_E450
+  BEQ loc_E450 ; Skip if A4 != 0
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E486
+; Kill every enemy, then create 248 chain reactions with your bombs (one chain reaction = one bomb detonating another)
+.loc_E486 ; 9D = 3 "Famicom"
   LDA byte_A5
-  CMP #&F8 ; '�'
-  BCS loc_E450
+  CMP #248
+  BCS loc_E450 ; Skip if A5 < 248
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E48D
+; Reveal the exit, walk over it, and don't let go of the d pad for 15 seconds while making sure not to defeat any enemies
+.loc_E48D ; 9D = 4 "Cola bottle"
   LDA byte_9F
-  BEQ locret_E467
+  BEQ locret_E467 ; Skip if 9F == 0
   LDA byte_A6
-  CMP #&F8 ; '�'
-  BCS loc_E450
+  CMP #248
+  BCS loc_E450 ; Skip if A6 < 248
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_E498
+; Destroy every wall and bomb the exit thrice while making sure not to defeat any enemies (including those that come out of the door)
+.loc_E498 ; 9D = 5 "Dezeniman-san"
   LDA byte_9E
-  BNE locret_E467
-  LDA STAGE
-  ASL A
-  CLC
-  ADC #&32 ; '2'
+  BNE locret_E467 ; Skip if 9E != 0
+
+  LDA STAGE:ASL A:CLC:ADC #50
   CMP byte_A4
-  BEQ loc_E4A8
-  BCS locret_E467
+  BEQ loc_E4A8 ; Branch if A4 != (STAGE * 2) + 50
+  BCS locret_E467 ; Skip if A4 >= above
 
 .loc_E4A8
   LDA byte_A7
   CMP #3
-  BEQ loc_E450
+  BEQ loc_E450 ; Skip if A7 != 3
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
-
+; Calculate which bonus item can be acheived for current level
 
 .sub_E4AF
   LDA STAGE
   AND #7
   CMP #6
-  BCC loc_E4B9
+  BCC loc_E4B9 ; < 6
   AND #1
 
 .loc_E4B9
