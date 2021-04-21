@@ -48,24 +48,24 @@
   STA APU_CNT+2
   STA byte_D5
   STA byte_CD
-  STA byte_CE
-  STA byte_CF
+  STA byte_CD+1
+  STA byte_CD+2
   STA byte_D0
-  STA byte_D1
-  STA byte_D2
+  STA byte_D0+1
+  STA byte_D0+2
   LDA #1
   STA byte_B6
   STA byte_B6+1
   STA byte_B6+2
   STA byte_B9
-  STA byte_BA
-  STA byte_BB
+  STA byte_B9+1
+  STA byte_B9+2
   STA byte_D6
-  STA byte_D7
-  STA byte_D8
+  STA byte_D6+1
+  STA byte_D6+2
   LDA #8
-  STA byte_D9
-  STA byte_DA
+  STA APU_SWEEP
+  STA APU_SWEEP+1
 
 .UPDATE_MELODY
   LDA #2
@@ -167,7 +167,7 @@
 .loc_E5AB
   CPX #2
   BCS SET_WAVELEN
-  LDA byte_D9,X
+  LDA APU_SWEEP,X
   STA &4001,Y
 
 .SET_WAVELEN

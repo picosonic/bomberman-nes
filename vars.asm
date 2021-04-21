@@ -1,4 +1,10 @@
+; Game variables
+
+; Zero Page ($0000-$00FF).
+
+; 7 bytes BCD
 TOPSCORE            = &01
+
 SOFT_RESET_FLAG     = &08
 CLEAR_TOPSCORE1     = &09
 CLEAR_TOPSCORE2     = &0A
@@ -14,6 +20,7 @@ JOYPAD2             = &13
 TILE_CUR            = &14
 TILE_PTR            = &15
 TILE_CNT            = &16
+
 byte_17             = &17
 byte_18             = &18
 byte_19             = &19
@@ -80,17 +87,27 @@ EXIT_ENEMY_TYPE     = &5B
 byte_5C             = &5C
 byte_5D             = &5D
 byte_5E             = &5E
+
+; Title screen cursor, either 0 or 1
 CURSOR              = &5F
+
 STAGE_STARTED       = &60
+
+; 7 bytes BCD
 SCORE               = &61
-unk_64              = &64
+
 LIFELEFT            = &68
 FPS                 = &69
 IS_SECOND_PASSED    = &6A
 byte_6B             = &6B
+
+; Number of frames @ 60Hz to stay on title screen, counting down to demo start
 DEMO_WAIT_HI        = &70
 DEMO_WAIT_LO        = &71
+
+; Are we on title screen 0 or 1
 INMENU              = &72
+
 BONUS_POWER         = &73
 BONUS_BOMBS         = &74
 BONUS_SPEED         = &75
@@ -98,10 +115,12 @@ BONUS_NOCLIP        = &76
 BONUS_REMOTE        = &77
 BONUS_BOMBWALK      = &78
 BONUS_FIRESUIT      = &79
+
 INVUL_UNK1          = &7A
 LAST_INPUT          = &7B
 INVUL_UNK2          = &7D
 BONUS_ENEMY_TYPE    = &7E
+; Password is stored here (20 bytes) .. $92
 unk_7F              = &7F
 unk_80              = &80
 byte_83             = &83
@@ -109,7 +128,10 @@ byte_87             = &87
 byte_88             = &88
 byte_8D             = &8D
 byte_92             = &92
+
+; Time in seconds left to play
 TIMELEFT            = &93
+
 byte_94             = &94
 byte_95             = &95
 MTAB_PTR            = &97
@@ -141,36 +163,58 @@ APU_DISABLE         = &B2
 APU_CHAN            = &B3
 APU_TEMP            = &B4
 APU_MUSIC           = &B5
+
+; ?? for each of the 3 channels
 byte_B6             = &B6
+
+; ?? for each of the 3 channels
 byte_B9             = &B9
-byte_BA             = &BA
-byte_BB             = &BB
+
 APU_CHANDAT         = &BC
+
 unk_BD              = &BD
 unk_C0              = &C0
+
 APU_PTR             = &C2
+
+; Counters for each of the 3 channels through their respective melody data
 APU_CNT             = &C4
+
+; Melody data counter when in sustain for each of the 3 channels
 unk_C7              = &C7
-unk_C8              = &C8
+
+; Sustain countdown for each of the 3 channels
 unk_CA              = &CA
+
+; ?? for each of the 3 channels
 byte_CD             = &CD
-byte_CE             = &CE
-byte_CF             = &CF
+
+; ?? (FF or 00) for each of the 3 channels
 byte_D0             = &D0
-byte_D1             = &D1
-byte_D2             = &D2
+
+; Cache for second and third bytes from melody table
 byte_D3             = &D3
 byte_D4             = &D4
+
 byte_D5             = &D5
+
+; ?? for each of the 3 channels
 byte_D6             = &D6
-byte_D7             = &D7
-byte_D8             = &D8
-byte_D9             = &D9
-byte_DA             = &DA
+
+; Hard coded to 08 for each of the 2 pulse channels to disable sweep
+APU_SWEEP           = &D9
+
 SPR_TAB_TOGGLE      = &DB
+
+; Used for BONUS_POWER calculations with resume codes
 byte_DC             = &DC
+
+; Used for low byte of STAGE in resume codes
 byte_DD             = &DD
+
+; Used for high byte of STAGE in resume codes
 byte_DE             = &DE
+
 APU_SOUND           = &DF
 APU_PATTERN         = &E0
 TEMP_ADDR           = &E0
@@ -178,14 +222,18 @@ APU_CHAN_DIS        = &E1
 APU_SOUND_MOD       = &E1
 APU_SDELAY          = &E4
 
+; Lower memory ($0100-$07FF).
 _passworf_buffer    = &0180
 stage_buffer        = &0200
+
+; Bomb vars (up to 10 bombs)
 BOMB_ACTIVE         = &03A0
 BOMB_X              = &03AA
 BOMB_Y              = &03B4
 BOMB_TIME_LEFT      = &03BE
 byte_3C8            = &03C8
 BOMB_TIME_ELAPSED   = &03D2
+
 FIRE_ACTIVE         = &03E6
 FIRE_X              = &0436
 FIRE_Y              = &0486
