@@ -59,3 +59,10 @@ MAX_ENEMY = 10
 
 ; Password related
 MAX_PW_CHARS = 20
+
+; Misc
+END_OF_STRING = &FF
+
+; Tiles
+COPYRIGHT = &FE
+FULLSTOP = &FD
