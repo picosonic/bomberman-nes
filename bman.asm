@@ -688,9 +688,10 @@ INCLUDE "vars.asm"
   BPL CLEAR_SCORE_LOOP
 
 .loc_C3C7
-  LDA #&10
-  STA BONUS_POWER
+  ; Default bomb radius
+  LDA #&10:STA BONUS_POWER
 
+  ; Clear bonus items
   LDA #NO
   STA BONUS_BOMBS
   STA BONUS_REMOTE
@@ -701,13 +702,12 @@ INCLUDE "vars.asm"
 
   LDA DEMOPLAY
   BEQ loc_C40A
+
   ; Enhance capabilites for demo playback
-  LDA #9
-  STA BONUS_BOMBS
-  LDA #&40 ; '@'
-  STA BONUS_POWER
-  LDA #1
-  STA BONUS_REMOTE
+  LDA #9:STA BONUS_BOMBS
+  LDA #&40:STA BONUS_POWER
+  LDA #YES:STA BONUS_REMOTE
+
   LDA #0
   STA APU_MASTERCTRL_REG
   STA SEED
@@ -715,14 +715,14 @@ INCLUDE "vars.asm"
   STA SEED+2
   STA SEED+3
   STA FRAME_CNT
-  LDA #&F4
-  STA DEMOKEY_DATA
-  LDA #&ED
-  STA DEMOKEY_DATA+1
-  LDA DEMO_KEYDATA
-  STA DEMOKEY_TIMEOUT
-  LDA DEMO_KEYDATA+1
-  STA DEMOKEY_PAD1
+
+  ; Set pointer to next DEMO data to read
+  LDA #lo(DEMO_KEYDATA+2):STA DEMOKEY_DATA
+  LDA #hi(DEMO_KEYDATA+2):STA DEMOKEY_DATA+1
+
+  ; Read first two bits of DEMO data
+  LDA DEMO_KEYDATA:STA DEMOKEY_TIMEOUT
+  LDA DEMO_KEYDATA+1:STA DEMOKEY_PAD1
 
 .loc_C40A
   LDA #NO
@@ -734,17 +734,20 @@ INCLUDE "vars.asm"
   STA byte_B1
   STA byte_A8
   STA STAGE_STARTED
-  STA byte_9E ; Enemies defeated
+
+  ; Initialise extra bonus criteria
+  STA ENEMIES_DEFEATED ; Enemies defeated
   STA byte_9F ; Exit dwell time ?
-  STA byte_9C ; Remaining enemies
-  STA byte_A0 ; Visits to top left square
-  STA byte_A1 ; Visits to top right square
-  STA byte_A2 ; Visits to bottom left square
-  STA byte_A3 ; Visits to bottom right square
-  STA byte_A4 ; Number of bricks blown up
-  STA byte_A5 ; Number of chain reactions
+  STA ENEMIES_LEFT ; Remaining enemies
+  STA VISITS_TOP_LEFT ; Visits to top left square
+  STA VISITS_TOP_RIGHT ; Visits to top right square
+  STA VISITS_BOTTOM_LEFT ; Visits to bottom left square
+  STA VISITS_BOTTOM_RIGHT ; Visits to bottom right square
+  STA BRICKS_BLOWN_UP ; Number of bricks blown up
+  STA CHAIN_REACTIONS ; Number of chain reactions
   STA byte_A6 ; Something pressed on gamepad timer
   STA byte_A7 ; Number of times exit has been bombed ?
+
   JSR STAGE_SCREEN
 
   ; Play melody 2 to end
@@ -1278,13 +1281,14 @@ INCLUDE "vars.asm"
   LDA ENEMY_Y,Y
   CMP byte_20
   BNE loc_C74E
-  INC byte_9E
+  INC ENEMIES_DEFEATED
 
+  ; Reset visit counters
   LDA #0
-  STA byte_A0
-  STA byte_A1
-  STA byte_A2
-  STA byte_A3
+  STA VISITS_TOP_LEFT
+  STA VISITS_TOP_RIGHT
+  STA VISITS_BOTTOM_LEFT
+  STA VISITS_BOTTOM_RIGHT
 
   LDA #&64
   STA byte_5C6,Y
@@ -1378,7 +1382,7 @@ INCLUDE "vars.asm"
   BEQ loc_C838
   CPY #MAP_BRICK
   BNE loc_C7DE
-  INC byte_A4
+  INC BRICKS_BLOWN_UP
   LDA #&80
   STA FIRE_ACTIVE,X
   JMP loc_C8A6
@@ -1683,10 +1687,10 @@ INCLUDE "vars.asm"
 .loc_C999
   AND #7
   JSR sub_C9B6
-  LDA byte_A5
+  LDA CHAIN_REACTIONS
   CMP #&FF
   BEQ loc_C9A6
-  INC byte_A5
+  INC CHAIN_REACTIONS
 
 .loc_C9A6
   JSR PLAY_BOOM_SOUND ; Play explosion sound
@@ -2200,12 +2204,13 @@ INCLUDE "vars.asm"
 
 .loc_CC95
   INC byte_9F
-  LDA #0
-  STA byte_A6
-  LDA byte_9C
+
+  LDA #0:STA byte_A6
+
+  LDA ENEMIES_LEFT
   BNE loc_CCA4
-  LDA #1
-  STA byte_5E
+
+  LDA #1:STA byte_5E
 
 .locret_CCA3
   RTS
@@ -2221,7 +2226,8 @@ INCLUDE "vars.asm"
 .FAST_MOVE
   JSR GET_INPUT   ; Return to A to set the buttons P1 | P2
   BNE CASE_RIGHT
-  STA byte_A6
+
+  STA byte_A6 ; Nothing pressed, so reset key timer
   STA LAST_INPUT
 
 .CASE_RIGHT
@@ -2503,6 +2509,7 @@ INCLUDE "vars.asm"
 ; START OF FUNCTION CHUNK FOR sub_CD39
 
 .loc_CE2E
+  ; Limit to once per 4 frames
   PHA
   LDA FRAME_CNT
   AND #3
@@ -2510,10 +2517,13 @@ INCLUDE "vars.asm"
   BNE loc_CE59
   LDA FRAME_CNT
   PLA
-  INC byte_A6
+
+  INC byte_A6 ; Count 
+
   INC BOMBMAN_FRAME
   CMP BOMBMAN_FRAME
   BCC loc_CE45
+
   STA BOMBMAN_FRAME
   RTS
 ; ---------------------------------------------------------------------------
@@ -2830,7 +2840,7 @@ INCLUDE "vars.asm"
 
 .THINK
   LDA #0
-  STA byte_9C
+  STA ENEMIES_LEFT
   LDA #&C0
   STA byte_6B
   LDX #MAX_ENEMY-1
@@ -2840,7 +2850,7 @@ INCLUDE "vars.asm"
   BEQ THINK_NEXT
   CMP #9
   BCS loc_CFC5
-  INC byte_9C
+  INC ENEMIES_LEFT
 
 .loc_CFC5
   LDY byte_5B2,X
@@ -4597,28 +4607,22 @@ INCLUDE "vars.asm"
   LDA unk_7F,Y
   STY TEMP_Y
 
-  ; Clear map here
-  LDY #MAP_EMPTY:STA (STAGE_MAP),Y
+  ; Clear password data address offset
+  LDY #0:STA (STAGE_MAP),Y
 
   LDY TEMP_Y
   INY
   CPY #MAX_PW_CHARS
   BNE loc_DBD3
 
-  LDA byte_DC
-  ASL A
-  ASL A
-  ASL A
-  ASL A
+  ; Determine bomb radius
+  LDA byte_DC:ASL A:ASL A:ASL A:ASL A
   STA BONUS_POWER
 
-  LDA byte_DE
-  ASL A
-  ASL A
-  ASL A
-  ASL A
-  ORA byte_DD
+  ; Determine stage number
+  LDA byte_DE:ASL A:ASL A:ASL A:ASL A:ORA byte_DD
   STA STAGE
+
   RTS
 
 
@@ -5222,22 +5226,22 @@ INCLUDE "vars.asm"
   EQUB &B0,&B0,&DF,&E9,&E9,&E9,&E9,&E9,&E9,&E9,&CA,&D8,&E9,&E9,&EA,&CE
   EQUB &D8,&E9,&EA,&CE,&D8,&F3,&CB,&CD,&E9,&E9,&E9,&E9,&E9,&E9,&F8,&B0
 
-  EQUB &B0 ; -
-  EQUB &B0 ; -
-  EQUB &F4 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
-  EQUB &F9 ; �
+  EQUB &B0
+  EQUB &B0
+  EQUB &F4
+  EQUB &F9
+  EQUB &F9
+  EQUB &F9
+  EQUB &F9
+  EQUB &F9
+  EQUB &F9
+  EQUB &F9
+  EQUB &F9
+  EQUB &F9
+  EQUB &F9
+  EQUB &F9
+  EQUB &F9
+  EQUB &F9
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -5255,8 +5259,11 @@ INCLUDE "vars.asm"
 
 .CONTINUEDRAW
   JSR NEXTCHAR
-  CMP #&FF
+
+  ; Check for end of string
+  CMP #END_OF_STRING
   BEQ BREAKDRAW
+
   STA PPU_DATA
   BNE CONTINUEDRAW
 
@@ -5279,27 +5286,27 @@ INCLUDE "vars.asm"
   EQUB &22
   EQUB &69
   EQUS "START",&B0,&B0,&B0,"CONTINUE"
-  EQUB &FF
+  EQUB END_OF_STRING
 
   EQUB &22
   EQUB &AA
   EQUS "TOP"
-  EQUB &FF
+  EQUB END_OF_STRING
 
   EQUB &22
   EQUB &E3
-  EQUS "TM",&B0,"AND",&B0,&FE,&B0,"1987",&B0,"HUDSON",&B0,"SOFT"
-  EQUB &FF
+  EQUS "TM",&B0,"AND",&B0,COPYRIGHT,&B0,"1987",&B0,"HUDSON",&B0,"SOFT"
+  EQUB END_OF_STRING
 
   EQUB &23
   EQUB &2A
   EQUS "LICENSED",&B0,"BY"
-  EQUB &FF
+  EQUB END_OF_STRING
 
   EQUB &23
   EQUB &64
-  EQUS "NINTENDO",&B0,"OF",&B0,"AMERICA",&B0,"INC",&FD
-  EQUB &FF
+  EQUS "NINTENDO",&B0,"OF",&B0,"AMERICA",&B0,"INC",FULLSTOP
+  EQUB END_OF_STRING
 
 .STAGE_ROWS
   EQUB   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1
@@ -5455,7 +5462,7 @@ INCLUDE "vars.asm"
 
 
 .sub_E399
-  LDA byte_9C
+  LDA ENEMIES_LEFT
   BNE loc_E3A7
   LDA byte_B1
   BNE loc_E3A7
@@ -5514,14 +5521,14 @@ INCLUDE "vars.asm"
   LDA BOMBMAN_Y
   CMP #1
   BNE loc_E3F8
-  INC byte_A0
+  INC VISITS_TOP_LEFT
   JMP loc_E416
 ; ---------------------------------------------------------------------------
 
 .loc_E3F8
   CMP #&B
   BNE loc_E401
-  INC byte_A2
+  INC VISITS_BOTTOM_LEFT
   JMP loc_E416
 ; ---------------------------------------------------------------------------
 
@@ -5531,14 +5538,14 @@ INCLUDE "vars.asm"
   LDA BOMBMAN_Y
   CMP #1
   BNE loc_E410
-  INC byte_A1
+  INC VISITS_TOP_RIGHT
   JMP loc_E416
 ; ---------------------------------------------------------------------------
 
 .loc_E410
   CMP #&B
   BNE loc_E416
-  INC byte_A3
+  INC VISITS_BOTTOM_RIGHT
 
 .loc_E416
   LDA BOMBMAN_X
@@ -5553,10 +5560,10 @@ INCLUDE "vars.asm"
   BEQ loc_E434
 
   LDA #0
-  STA byte_A0
-  STA byte_A1
-  STA byte_A2
-  STA byte_A3
+  STA VISITS_TOP_LEFT
+  STA VISITS_TOP_RIGHT
+  STA VISITS_BOTTOM_LEFT
+  STA VISITS_BOTTOM_RIGHT
 
 .loc_E434
   LDX byte_9D
@@ -5571,7 +5578,7 @@ INCLUDE "vars.asm"
 
 ; Reveal the exit and walk over it without defeating any enemies
 .loc_E448 ; 9D = 0 "Bonus target"
-  LDA byte_9E
+  LDA ENEMIES_DEFEATED
   BNE locret_E467 ; Skip if 9E != 0
   LDA byte_9F
   BEQ locret_E467 ; Skip if 9F == 0
@@ -5591,37 +5598,37 @@ INCLUDE "vars.asm"
 
 ; Defeat every enemy and circle the outer ring of the level
 .loc_E468 ; 9D = 1 "Goddess mask"
-  LDA byte_9C
+  LDA ENEMIES_LEFT
   BNE locret_E467 ; Skip if 9C != 0
-  LDA byte_A0
+  LDA VISITS_TOP_LEFT
   BEQ locret_E467 ; Skip if A0 == 0
-  LDA byte_A1
+  LDA VISITS_TOP_RIGHT
   BEQ locret_E467 ; Skip if A1 == 0
-  LDA byte_A2
+  LDA VISITS_BOTTOM_LEFT
   BEQ locret_E467 ; Skip if A2 == 0
-  LDA byte_A3
+  LDA VISITS_BOTTOM_RIGHT
   BNE loc_E450 ; Skip if A3 != 0
   RTS
 ; ---------------------------------------------------------------------------
 
 ; Kill every enemy without blowing up any walls
 .loc_E47D ; 9D = 2 "Nakamoto-san"
-  LDA byte_9C
+  LDA ENEMIES_LEFT
   BNE locret_E467 ; Skip if 9C != 0
-  LDA byte_A4
+  LDA BRICKS_BLOWN_UP
   BEQ loc_E450 ; Skip if A4 != 0
   RTS
 ; ---------------------------------------------------------------------------
 
 ; Kill every enemy, then create 248 chain reactions with your bombs (one chain reaction = one bomb detonating another)
 .loc_E486 ; 9D = 3 "Famicom"
-  LDA byte_A5
+  LDA CHAIN_REACTIONS
   CMP #248
   BCS loc_E450 ; Skip if A5 < 248
   RTS
 ; ---------------------------------------------------------------------------
 
-; Reveal the exit, walk over it, and don't let go of the d pad for 15 seconds while making sure not to defeat any enemies
+; Reveal the exit, walk over it, and don't let go of the d pad for 16.5 seconds while making sure not to defeat any enemies
 .loc_E48D ; 9D = 4 "Cola bottle"
   LDA byte_9F
   BEQ locret_E467 ; Skip if 9F == 0
@@ -5633,11 +5640,11 @@ INCLUDE "vars.asm"
 
 ; Destroy every wall and bomb the exit thrice while making sure not to defeat any enemies (including those that come out of the door)
 .loc_E498 ; 9D = 5 "Dezeniman-san"
-  LDA byte_9E
+  LDA ENEMIES_DEFEATED
   BNE locret_E467 ; Skip if 9E != 0
 
   LDA STAGE:ASL A:CLC:ADC #50
-  CMP byte_A4
+  CMP BRICKS_BLOWN_UP
   BEQ loc_E4A8 ; Branch if A4 != (STAGE * 2) + 50
   BCS locret_E467 ; Skip if A4 >= above
 
