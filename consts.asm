@@ -1,3 +1,13 @@
+; Hardware
+HW_FPS = 60
+
+; Booleans for flags
+NO = 0
+YES = 1
+DISABLE = 0
+ENABLE = 1
+
+; Input
 PAD_RIGHT  = &01
 PAD_LEFT   = &02
 PAD_DOWN   = &04
@@ -7,19 +17,26 @@ PAD_SELECT = &20
 PAD_B      = &40
 PAD_A      = &80
 
+; Sprites
 SPR_SIZE = 16
 SPR_HALFSIZE = SPR_SIZE/2
 
+; Stage
+SECONDSPERLEVEL = 200
+SECONDSPERBONUSLEVEL = 30
+LIVESPERLEVEL = 3
+
+; Maps
 MAP_LEVELS = 50
 
 MAP_WIDTH = 32
 MAP_HEIGHT = 13
 
-MAP_HERE   = &00
-MAP_RIGHT  = &01
-MAP_UP     = &02
-MAP_LEFT   = &03
-MAP_DOWN   = &04
+MAP_HERE   = 0
+MAP_RIGHT  = 1
+MAP_UP     = 2
+MAP_LEFT   = 3
+MAP_DOWN   = 4
 
 MAP_EMPTY        = 0
 MAP_CONCRETE     = 1
@@ -29,3 +46,10 @@ MAP_HIDDEN_EXIT  = 4
 MAP_HIDDEN_BONUS = 5
 MAP_BONUS        = 6
 MAP_EXIT         = 8
+
+; Bomb related
+MAX_BOMB = 10
+MAX_FIRE = (MAX_BOMB*8)
+
+; Enemy related
+MAX_ENEMY = 10

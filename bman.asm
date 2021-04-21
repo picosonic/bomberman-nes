@@ -182,7 +182,7 @@ INCLUDE "vars.asm"
   BEQ TICK_FPS
   INC FPS
   LDA FPS
-  CMP #60
+  CMP #HW_FPS
   BCC TICK_FPS
   LDA #0
   STA IS_SECOND_PASSED
@@ -198,7 +198,7 @@ INCLUDE "vars.asm"
   BNE SET_SCROLL_REG
   LDA #&E
   STA APU_DELTA_REG
-  LDA #0
+  LDA #DISABLE
   STA BOOM_SOUND
   LDA #&C0
   STA APU_DELTA_REG+2
@@ -358,7 +358,7 @@ INCLUDE "vars.asm"
   LDA #&23:LDX #&C0
   JSR VRAMADDR
 
-  LDX #&40 ; '@'
+  LDX #&40
   LDA #0
 
 .CLEAR_AT
@@ -484,9 +484,10 @@ INCLUDE "vars.asm"
 .PPU_RESTORE
   LDA LAST_2001
   STA PPU_CTRL_REG2
-  LDA #0
-  LDX #0
+
+  LDA #0:LDX #0
   JSR VRAMADDR
+
   LDA #0
   STA PPU_SCROLL_REG
   STA PPU_SCROLL_REG
@@ -522,9 +523,9 @@ INCLUDE "vars.asm"
 
 
 .PAL_RESET
-  LDA #&3F
-  LDX #0
+  LDA #&3F:LDX #0
   JSR VRAMADDR
+
   LDY #32
 
 .PAL_RESET_LOOP
@@ -603,8 +604,9 @@ INCLUDE "vars.asm"
   LDA #0
   STA SPR_TAB_TOGGLE
   JSR APU_RESET   ; Reset APU
-  LDA #1
-  STA APU_MUSIC
+
+  ; Play melody 1
+  LDA #1:STA APU_MUSIC
 
 .GAME_MENU
   LDX #&FF:TXS ; Clear stack
@@ -619,8 +621,8 @@ INCLUDE "vars.asm"
   STA DEMO_WAIT_HI
   JSR DRAWMENU
   JSR VBLE
-  LDA #1
-  STA INMENU
+
+  LDA #YES:STA INMENU
 
 .WAIT_RELEASE
   LDA JOYPAD1
@@ -661,10 +663,10 @@ INCLUDE "vars.asm"
   JSR sub_DA8E ; Password entry screen
 
 .loc_C3A3
-  LDA #0
-  STA INMENU
+  LDA #NO:STA INMENU
+
   JSR WAITUNPRESS ; Await button release
-  LDA #2
+  LDA #LIVESPERLEVEL-1
   STA LIFELEFT
   LDA DEMOPLAY
   BNE loc_C3B6
@@ -676,6 +678,7 @@ INCLUDE "vars.asm"
   STA STAGE
   LDA DEMOPLAY
   BNE loc_C3C7
+
   LDX #6
   LDA #0
 
@@ -687,13 +690,15 @@ INCLUDE "vars.asm"
 .loc_C3C7
   LDA #&10
   STA BONUS_POWER
-  LDA #0
+
+  LDA #NO
   STA BONUS_BOMBS
   STA BONUS_REMOTE
   STA BONUS_SPEED
   STA BONUS_NOCLIP
   STA BONUS_FIRESUIT
   STA DEBUG
+
   LDA DEMOPLAY
   BEQ loc_C40A
   ; Enhance capabilites for demo playback
@@ -720,7 +725,7 @@ INCLUDE "vars.asm"
   STA DEMOKEY_PAD1
 
 .loc_C40A
-  LDA #0
+  LDA #NO
   STA BONUS_BOMBWALK
   STA INVUL_UNK1
 
@@ -754,7 +759,7 @@ INCLUDE "vars.asm"
   JSR SPAWN       ; Spawn enemies
   JSR sub_E4AF
   JSR PICTURE_ON  ; Turn on screen and display
-  LDA #200
+  LDA #SECONDSPERLEVEL
   STA TIMELEFT
 
 .STAGE_LOOP
@@ -783,7 +788,8 @@ INCLUDE "vars.asm"
 .loc_C481
   LDA DEMOPLAY
   BNE loc_C4C3
-  LDA #0
+
+  LDA #NO
   STA BONUS_NOCLIP
   STA BONUS_BOMBWALK
   STA BONUS_REMOTE
@@ -794,32 +800,41 @@ INCLUDE "vars.asm"
   LDA #8:STA APU_MUSIC
   JSR WAITTUNE
 
+  ; Loose a life
   DEC LIFELEFT
+
   BMI GAME_OVER
   JMP START_STAGE
 ; ---------------------------------------------------------------------------
 
 .GAME_OVER
-  LDA #0
-  STA STAGE_STARTED
-  JSR GAME_OVER_SCREEN
-  LDA #9
-  STA APU_MUSIC
+  LDA #NO:STA STAGE_STARTED
 
+  ; Write "GAME OVER"
+  JSR GAME_OVER_SCREEN
+
+  ; Play melody 9
+  LDA #9:STA APU_MUSIC
+
+  ; Allow pressing of START to skip melody playback
 .GAME_OVER_WAIT
   LDA JOYPAD1
-  AND #&10
+  AND #PAD_START
   BNE GAME_OVER_END
+
+  ; Keep waiting until melody finishes
   LDA APU_MUSIC
   BNE GAME_OVER_WAIT
 
 .GAME_OVER_END
-  LDA #0
-  STA APU_MUSIC
+  ; Stop melody playing
+  LDA #DISABLE:STA APU_MUSIC
 
+  ; Wait until any key pressed
 .WAIT_PRESS
   LDA JOYPAD1
   BEQ WAIT_PRESS
+
   JMP GAME_MENU
 ; ---------------------------------------------------------------------------
 
@@ -828,8 +843,9 @@ INCLUDE "vars.asm"
   BEQ NEXT_STAGE
 
 .loc_C4C3
-  LDA #0
-  STA APU_MUSIC
+  ; Stop melody playing
+  LDA #DISABLE:STA APU_MUSIC
+
   INC byte_B0
   LDA byte_B0
   AND #3
@@ -846,12 +862,17 @@ INCLUDE "vars.asm"
   LDA #10:STA APU_MUSIC
   JSR WAITTUNE
 
+  ; Gain a life
   INC LIFELEFT
+
+  ; Move on to next stage
   INC STAGE
+
   LDY #0
   LDA STAGE
   CMP #MAP_LEVELS+1
   BNE SELECT_BONUS_MONSTER ; Select the monster type for the bonus level
+
   JMP END_GAME
 ; ---------------------------------------------------------------------------
 
@@ -874,8 +895,7 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .START_BONUS_STAGE
-  LDA #0
-  STA STAGE_STARTED
+  LDA #NO:STA STAGE_STARTED
   JSR BONUS_STAGE_SCREEN
 
   ; Play melody 2 to the end
@@ -896,7 +916,7 @@ INCLUDE "vars.asm"
   STA INVUL_UNK2
 
   ; Allow 30 seconds for bonus level
-  LDA #30:STA TIMELEFT
+  LDA #SECONDSPERBONUSLEVEL:STA TIMELEFT
 
 .BONUS_STAGE_LOOP
   JSR PAUSED      ; Check for START pressed, if so pause
@@ -924,9 +944,10 @@ INCLUDE "vars.asm"
   LDA #10:STA APU_MUSIC
   JSR WAITTUNE
 
-  LDA #0
+  LDA #NO
   STA INVUL_UNK2
   STA INVUL_UNK1
+
   JMP START_STAGE
 ; ---------------------------------------------------------------------------
 
@@ -934,16 +955,20 @@ INCLUDE "vars.asm"
   JSR PPU_RESET
   JSR sub_DBF9
   JSR BUILD_CONCRETE_WALLS ; Reset level map
+
   LDA #SPR_HALFSIZE
   STA BOMBMAN_U
   STA BOMBMAN_V
+
   LDA #0
   STA STAGE_STARTED
   STA BOMBMAN_X
   LDA #9
   STA BOMBMAN_Y
-  LDA #7
-  STA APU_MUSIC
+
+  ; Play melody 7
+  LDA #7:STA APU_MUSIC
+
   JSR SPRE
   JSR VBLE
 
@@ -981,26 +1006,31 @@ INCLUDE "vars.asm"
 .WAIT_BUTTON
   LDA JOYPAD1
   BEQ WAIT_BUTTON
-  LDA #1
-  STA STAGE
+
+  ; Set current stage to 1
+  LDA #1:STA STAGE
+
   JMP START_STAGE
 
 ; =============== S U B R O U T I N E =======================================
 
-; Spawn enemies
+; Spawn game entities
 
 .SPAWN
   LDA #1
   STA BOMBMAN_X
   STA BOMBMAN_Y
+
   LDA #SPR_HALFSIZE
   STA BOMBMAN_U
   STA BOMBMAN_V
+
   LDA #0
   STA BOMBMAN_FRAME
   STA byte_5D
   STA byte_5C
   STA byte_5E
+
   JSR STAGE_CLEANUP
   JSR SPAWN_MONSTERS
   JSR sub_CB06
@@ -1009,8 +1039,9 @@ INCLUDE "vars.asm"
   LDX STAGE
   LDA EXIT_ENEMY_TAB-1,X ; This table contains the type of monsters that are placed from the door after the explosion
   STA EXIT_ENEMY_TYPE
-  LDA #1
-  STA STAGE_STARTED
+
+  LDA #YES:STA STAGE_STARTED
+
   RTS
 
 
@@ -1072,7 +1103,7 @@ INCLUDE "vars.asm"
   LDA #6
   STA APU_SOUND
 
-  LDA #0:STA APU_DISABLE
+  LDA #NO:STA APU_DISABLE
 
   ; Wait for START to be released again
   JSR WAITUNPRESS
@@ -1229,11 +1260,12 @@ INCLUDE "vars.asm"
 
   LDA #1
   STA byte_5C
+
   LDA #12
   STA BOMBMAN_FRAME
 
 .loc_C705
-  LDY #9
+  LDY #MAX_ENEMY-1
 
 .loc_C707
   LDA ENEMY_TYPE,Y
@@ -1247,20 +1279,27 @@ INCLUDE "vars.asm"
   CMP byte_20
   BNE loc_C74E
   INC byte_9E
+
   LDA #0
   STA byte_A0
   STA byte_A1
   STA byte_A2
   STA byte_A3
+
   LDA #&64
   STA byte_5C6,Y
+
   LDA ENEMY_TYPE,Y
   STA ENEMY_FACE,Y
+
   LDA IS_SECOND_PASSED
   STA byte_5DA,Y
+
   INC IS_SECOND_PASSED
+
   LDA #9
   STA ENEMY_TYPE,Y
+
   LDA ENEMY_FRAME,Y
   LSR A
   LSR A
@@ -1382,11 +1421,14 @@ INCLUDE "vars.asm"
 .loc_C815
   CPY #MAP_EXIT ; Was this an exit door?
   BEQ loc_C828
+
   CPY #MAP_BONUS ; Was this a bonus item?
   BNE loc_C830
+
   LDY byte_1F
   LDA #MAP_EMPTY ; Remove from map
   STA (STAGE_MAP),Y
+
   JSR DRAW_TILE   ; Add a new tile to TILE_TAB
   DEC byte_A7
 
@@ -1396,8 +1438,7 @@ INCLUDE "vars.asm"
   JMP loc_C830
 
 .loc_C830
-  LDA #0
-  STA FIRE_ACTIVE,X
+  LDA #NO:STA FIRE_ACTIVE,X
 
 .loc_C835
   JMP loc_C8A6
@@ -1443,11 +1484,14 @@ INCLUDE "vars.asm"
   ADC #&10
   CMP BONUS_POWER
   BCC loc_C89E
-  LDA #0
+
+  LDA #NO
   STA FIRE_ACTIVE,Y
+
   LDA byte_526,X
   ORA #&80
   STA byte_526,X
+
   JMP loc_C8A1
 ; ---------------------------------------------------------------------------
 
@@ -1477,25 +1521,32 @@ INCLUDE "vars.asm"
 .loc_C8AF
   LDA ENEMY_TYPE,Y
   BNE loc_C8E9
+
   LDA EXIT_ENEMY_TYPE
   STA ENEMY_TYPE,Y
   STA ENEMY_FRAME,Y
+
   LDA #SPR_HALFSIZE
   STA ENEMY_U,Y
   STA ENEMY_V,Y
+
   JSR RAND
   AND #3
   CLC
   ADC #1
   STA ENEMY_FACE,Y
+
   LDA byte_1F
   STA ENEMY_X,Y
+
   LDA byte_20
   STA ENEMY_Y,Y
+
   LDA #0
   STA byte_5DA,Y
   STA byte_5C6,Y
   STA byte_5E4,Y
+
   LDA #&1E
   STA byte_5B2,Y
 
@@ -1515,32 +1566,41 @@ INCLUDE "vars.asm"
 .SPAWN_BMONSTR
   LDA ENEMY_TYPE,Y
   BNE NEXT_BMONSTR
+
   LDA BONUS_ENEMY_TYPE
   STA ENEMY_TYPE,Y
+
   SEC
   SBC #1
   ASL A
   ASL A
   STA ENEMY_FRAME,Y
+
   LDA #SPR_HALFSIZE
   STA ENEMY_U,Y
   STA ENEMY_V,Y
+
   JSR RAND
   AND #3
   CLC
   ADC #1
   STA ENEMY_FACE,Y
+
   STY byte_5A
   JSR RAND_COORDS
+
   LDY byte_5A
   LDA TEMP_X
   STA ENEMY_X,Y
+
   LDA TEMP_Y
   STA ENEMY_Y,Y
+
   LDA #0
   STA byte_5DA,Y
   STA byte_5C6,Y
   STA byte_5E4,Y
+
   LDA #&1E
   STA byte_5B2,Y
 
@@ -1555,16 +1615,17 @@ INCLUDE "vars.asm"
 ; Bring up all bombs
 
 .DETONATE
-  LDX #9
+  LDX #MAX_BOMB-1
 
 .DETONATE_LOOP
   LDA BOMB_ACTIVE,X
   BEQ DETONATE_NEXT
+
+  ; Create pointer to map row where this bomb is
   LDY BOMB_Y,X
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   STY byte_20
   LDY BOMB_X,X
   STY byte_1F
@@ -1573,10 +1634,9 @@ INCLUDE "vars.asm"
   JSR PLAY_BOOM_SOUND ; Play explosion sound
 
   ; Remove from map
-  LDA #0:STA (STAGE_MAP),Y
+  LDA #MAP_EMPTY:STA (STAGE_MAP),Y
 
-  LDA #0
-  STA BOMB_ACTIVE,X
+  LDA #DISABLE:STA BOMB_ACTIVE,X
   RTS
 ; ---------------------------------------------------------------------------
 
@@ -1591,7 +1651,7 @@ INCLUDE "vars.asm"
 ; Bomb timer operation
 
 .BOMB_TICK
-  LDX #9
+  LDX #MAX_BOMB-1
 
 .BOMB_TICK_LOOP
   LDA BOMB_ACTIVE,X
@@ -1607,7 +1667,7 @@ INCLUDE "vars.asm"
   STY byte_1F
   LDA (STAGE_MAP),Y
 
-  CMP #3
+  CMP #MAP_BOMB
   BNE loc_C999
 
   INC BOMB_TIME_ELAPSED,X
@@ -1632,10 +1692,10 @@ INCLUDE "vars.asm"
   JSR PLAY_BOOM_SOUND ; Play explosion sound
 
   ; Remove from map
-  LDA #0:STA (STAGE_MAP),Y
+  LDA #MAP_EMPTY:STA (STAGE_MAP),Y
 
   ; Set this bomb slot as inactive
-  LDA #0:STA BOMB_ACTIVE,X
+  LDA #DISABLE:STA BOMB_ACTIVE,X
 
 .BOMB_TICK_NEXT
   DEX
@@ -1712,7 +1772,7 @@ INCLUDE "vars.asm"
 ; Draw animation of the bombs
 
 .BOMB_ANIMATE
-  LDX #9
+  LDX #MAX_BOMB-1
 
 .BOMB_ANIM_LOOP
   ; Skip inactive bombs
@@ -1752,10 +1812,10 @@ INCLUDE "vars.asm"
   JSR BUILD_CONCRETE_WALLS ; Create a clean level
 
   ; Randomly place exit door (hidden by brick)
-  JSR RAND_COORDS:LDA #4:STA (STAGE_MAP),Y
+  JSR RAND_COORDS:LDA #MAP_HIDDEN_EXIT:STA (STAGE_MAP),Y
 
   ; Randomly place bonus item (hidden by brick)
-  JSR RAND_COORDS:LDA #5:STA (STAGE_MAP),Y
+  JSR RAND_COORDS:LDA #MAP_HIDDEN_BONUS:STA (STAGE_MAP),Y
 
   ; Calculate number of bricks to add as (STAGE*2) + 50
   LDA #50
@@ -1767,7 +1827,7 @@ INCLUDE "vars.asm"
 
 .NEXT_BRICK
   ; Randomly place a brick
-  JSR RAND_COORDS:LDA #2:STA (STAGE_MAP),Y
+  JSR RAND_COORDS:LDA #MAP_BRICK:STA (STAGE_MAP),Y
 
   ; Loop if more bricks to place
   DEC byte_1F:BNE NEXT_BRICK
@@ -1868,10 +1928,13 @@ INCLUDE "vars.asm"
 
 .sub_CB06
   JSR PPUD
+
   LDA #0
   STA byte_20
+
   LDA #0
   STA word_26
+
   LDA #2
   STA word_26+1
   LDY #0
@@ -1983,15 +2046,15 @@ INCLUDE "vars.asm"
 
 
 .STAGE_CLEANUP
-  LDX #9
-  LDA #0
+  LDX #MAX_BOMB-1
+  LDA #NO
 
 .CLEAN_BOMBS
   STA BOMB_ACTIVE,X
   DEX
   BPL CLEAN_BOMBS
 
-  LDX #79
+  LDX #MAX_FIRE-1
 
 .CLEAN_EXPLO
   STA FIRE_ACTIVE,X
@@ -2004,8 +2067,8 @@ INCLUDE "vars.asm"
 ; Remove all monsters from the stage
 
 .KILL_ENEMY
-  LDA #0
-  LDX #9
+  LDA #DISABLE
+  LDX #MAX_ENEMY-1
 
 .KILL_LOOP
   STA ENEMY_TYPE,X
@@ -2226,20 +2289,18 @@ INCLUDE "vars.asm"
 
 .PLACE_BOMB
   ; Place a bomb on the map
-  LDA #3:STA (STAGE_MAP),Y
+  LDA #MAP_BOMB:STA (STAGE_MAP),Y
 
-  LDA BOMBMAN_X
-  STA BOMB_X,X
-  LDA BOMBMAN_Y
-  STA BOMB_Y,X
-  LDA #0
-  STA BOMB_TIME_ELAPSED,X
-  LDA #0
-  STA byte_3C8,X
-  LDA #160
-  STA BOMB_TIME_LEFT,X
-  LDA #1
-  STA BOMB_ACTIVE,X
+  ; Save current bomberman X,Y and bomb X,Y
+  LDA BOMBMAN_X:STA BOMB_X,X
+  LDA BOMBMAN_Y:STA BOMB_Y,X
+
+  LDA #0:STA BOMB_TIME_ELAPSED,X
+  LDA #0:STA byte_3C8,X
+  LDA #160:STA BOMB_TIME_LEFT,X
+
+  ; Set bomb as enabled
+  LDA #ENABLE:STA BOMB_ACTIVE,X
 
   ; Play sound 3
   LDA #3:STA APU_SOUND
@@ -2772,7 +2833,7 @@ INCLUDE "vars.asm"
   STA byte_9C
   LDA #&C0
   STA byte_6B
-  LDX #9
+  LDX #MAX_ENEMY-1
 
 .THINK_LOOP
   LDA ENEMY_TYPE,X
@@ -3297,7 +3358,7 @@ INCLUDE "vars.asm"
   STA M_FACE
   LDA #0
   STA byte_4C
-  LDA #&60 ; '`'
+  LDA #&60
   STA byte_49
   RTS
 ; ---------------------------------------------------------------------------
@@ -3986,7 +4047,7 @@ INCLUDE "vars.asm"
   CLC
   ADC TEMP_X
   TAY
-  LDX #9
+  LDX #MAX_ENEMY-1
 
 .loc_D6BE
   LDA (MTAB_PTR),Y
@@ -4451,7 +4512,7 @@ INCLUDE "vars.asm"
   STA byte_20
   INC byte_1F
   INY
-  CPY #&14
+  CPY #MAX_PW_CHARS
   BEQ loc_DB7A ; Branch if we have 20 characters
   JSR WAITUNPRESS ; Wait for button release
   JMP loc_DAB5 ; Jump back to read next character
@@ -4474,7 +4535,7 @@ INCLUDE "vars.asm"
   PLA
   STA SEED
   INX
-  CPX #&14
+  CPX #MAX_PW_CHARS
   BNE loc_DB7E ; Loop for 20 characters
 
   LDX #0
@@ -4537,11 +4598,11 @@ INCLUDE "vars.asm"
   STY TEMP_Y
 
   ; Clear map here
-  LDY #0:STA (STAGE_MAP),Y
+  LDY #MAP_EMPTY:STA (STAGE_MAP),Y
 
   LDY TEMP_Y
   INY
-  CPY #&14
+  CPY #MAX_PW_CHARS
   BNE loc_DBD3
 
   LDA byte_DC
@@ -4578,10 +4639,9 @@ INCLUDE "vars.asm"
   JSR loc_DC39
   JSR loc_DC39
   JSR loc_DC39
-  LDA #&A
-  STA byte_20
-  LDA #0
-  STA byte_1F
+
+  LDA #&A:STA byte_20
+  LDA #0:STA byte_1F
 
 .loc_DC26
   LDA #&31
@@ -4657,9 +4717,10 @@ INCLUDE "vars.asm"
 .sub_DD04
   PHA
   JSR WAITVBL
-  LDA #&3F
-  LDX #&1C
+
+  LDA #&3F:LDX #&1C
   JSR VRAMADDR
+
   PLA
   ASL A
   ASL A
@@ -5337,9 +5398,9 @@ INCLUDE "vars.asm"
   TAY
   LDA aAofkcpgelbhmjd,Y ; "AOFKCPGELBHMJDNI"
   STA PPU_DATA
-  INX
-  INX
-  CPX #&2A
+
+  INX:INX
+  CPX #(MAX_PW_CHARS+1)*2
   BNE loc_E32B
   RTS
 
@@ -5489,6 +5550,7 @@ INCLUDE "vars.asm"
   BEQ loc_E434
   CMP #&B
   BEQ loc_E434
+
   LDA #0
   STA byte_A0
   STA byte_A1
@@ -5624,6 +5686,7 @@ INCLUDE "sound.asm"
   EQUB   1,  0,  8,  8,  1,  0,  3,  8,  2,&88,  1,  0,  2,&88,  1,  0,&14,  8,  5,&88
   EQUB   4,  8,  2,  0,&1B,  1,  7,&81,&18,  1,  6,&81,&15,  1,  2,  9,&10,  8, &A,&40
   EQUB &1A,  0, &A,  4,  1,  0,  6,  4,  1,  0,&1E,  2,  6,  0,&10,  8,  3,&84,&FF,&FF
+
   EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
   EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
   EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
