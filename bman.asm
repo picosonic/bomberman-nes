@@ -146,7 +146,7 @@ INCLUDE "vars.asm"
 .DRAW_SCORE_BLANK
   LDA SCORE,X     ; Skip leading zeroes
   BNE DRAW_SCORE_NUM
-  LDA #&3A ; Blank character instead of zero
+  LDA #':' ; Blank character instead of zero
   STA PPU_DATA
   INX
   CPX #7
@@ -156,7 +156,7 @@ INCLUDE "vars.asm"
 .DRAW_SCORE_NUM
   LDA SCORE,X
   CLC
-  ADC #&30 ; '0'      ; Number 0...9
+  ADC #'0'      ; Number 0...9
   STA PPU_DATA
   INX
   CPX #7
@@ -240,7 +240,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-
+; Set graphics pointer to absolute address in A:X
 .VRAMADDR
   STA PPU_ADDRESS
   STX PPU_ADDRESS
@@ -5245,7 +5245,7 @@ INCLUDE "vars.asm"
 
 .DRAWMENUTEXT
   LDY #0
-  LDX #5
+  LDX #5 ; Number of strings to draw
 
 .NEXTSTRING
   JSR NEXTCHAR
@@ -5280,24 +5280,25 @@ INCLUDE "vars.asm"
   EQUB &69
   EQUS "START",&B0,&B0,&B0,"CONTINUE"
   EQUB &FF
+
   EQUB &22
   EQUB &AA
   EQUS "TOP"
   EQUB &FF
+
   EQUB &22
   EQUB &E3
-  EQUS "TM",&B0,"AND",&B0
-  EQUB &FE
-  EQUB &B0,"1987",&B0,"HUDSON",&B0,"SOFT"
+  EQUS "TM",&B0,"AND",&B0,&FE,&B0,"1987",&B0,"HUDSON",&B0,"SOFT"
   EQUB &FF
+
   EQUB &23
   EQUB &2A
   EQUS "LICENSED",&B0,"BY"
   EQUB &FF
+
   EQUB &23
   EQUB &64
-  EQUS "NINTENDO",&B0,"OF",&B0,"AMERICA",&B0,"INC"
-  EQUB &FD
+  EQUS "NINTENDO",&B0,"OF",&B0,"AMERICA",&B0,"INC",&FD
   EQUB &FF
 
 .STAGE_ROWS

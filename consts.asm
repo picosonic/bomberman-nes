@@ -1,5 +1,8 @@
 ; Hardware
 HW_FPS = 60
+TILE_OFFS = &2000
+TILE_WIDTH = 32
+TILE_HEIGHT = 30
 
 ; Booleans for flags
 NO = 0
@@ -53,3 +56,6 @@ MAX_FIRE = (MAX_BOMB*8)
 
 ; Enemy related
 MAX_ENEMY = 10
+
+; Password related
+MAX_PW_CHARS = 20
