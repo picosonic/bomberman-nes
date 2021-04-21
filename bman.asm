@@ -883,7 +883,7 @@ INCLUDE "vars.asm"
   JSR WAITTUNE
 
   JSR VBLD
-  JSR BUILD_CONCRET_WALLS ; Build level
+  JSR BUILD_CONCRETE_WALLS ; Build level
   JSR SPAWN       ; Spawn enemies
   JSR PICTURE_ON  ; Turn on screen and display
   JSR STAGE_CLEANUP
@@ -933,7 +933,7 @@ INCLUDE "vars.asm"
 .END_GAME
   JSR PPU_RESET
   JSR sub_DBF9
-  JSR BUILD_CONCRET_WALLS ; Reset level map
+  JSR BUILD_CONCRETE_WALLS ; Reset level map
   LDA #SPR_HALFSIZE
   STA BOMBMAN_U
   STA BOMBMAN_V
@@ -1470,8 +1470,6 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ******** COMMENTS UP TO HERE ********
-
 
 .sub_C8AD
   LDY #9
@@ -1509,7 +1507,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ���� ���������� �������� � �������� ������ ������ 10, �� �������� ���
+; If the number of monsters in the bonus level is less than 10, then add more
 
 .RESPAWN_BONUS_ENEMY
   LDY #9
@@ -1554,7 +1552,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ��������� ��� �����
+; Bring up all bombs
 
 .DETONATE
   LDX #9
@@ -1572,9 +1570,11 @@ INCLUDE "vars.asm"
   STY byte_1F
   LDA #0
   JSR sub_C9B6
-  JSR PLAY_BOOM_SOUND ; ������������� ���� ������ �����
-  LDA #0
-  STA (STAGE_MAP),Y
+  JSR PLAY_BOOM_SOUND ; Play explosion sound
+
+  ; Remove from map
+  LDA #0:STA (STAGE_MAP),Y
+
   LDA #0
   STA BOMB_ACTIVE,X
   RTS
@@ -1588,7 +1588,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ��������� ������� ���� � ��������� ������
+; Bomb timer operation
 
 .BOMB_TICK
   LDX #9
@@ -1596,22 +1596,28 @@ INCLUDE "vars.asm"
 .BOMB_TICK_LOOP
   LDA BOMB_ACTIVE,X
   BEQ BOMB_TICK_NEXT
+
+  ; Create pointer to bomb row within level map
   LDY BOMB_Y,X
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   STY byte_20
   LDY BOMB_X,X
   STY byte_1F
   LDA (STAGE_MAP),Y
+
   CMP #3
   BNE loc_C999
+
   INC BOMB_TIME_ELAPSED,X
+
   LDA BONUS_REMOTE
   BNE BOMB_TICK_NEXT
+
   DEC BOMB_TIME_LEFT,X
   BNE BOMB_TICK_NEXT
+
   LDA #0
 
 .loc_C999
@@ -1623,11 +1629,13 @@ INCLUDE "vars.asm"
   INC byte_A5
 
 .loc_C9A6
-  JSR PLAY_BOOM_SOUND ; ������������� ���� ������ �����
-  LDA #0
-  STA (STAGE_MAP),Y
-  LDA #0
-  STA BOMB_ACTIVE,X
+  JSR PLAY_BOOM_SOUND ; Play explosion sound
+
+  ; Remove from map
+  LDA #0:STA (STAGE_MAP),Y
+
+  ; Set this bomb slot as inactive
+  LDA #0:STA BOMB_ACTIVE,X
 
 .BOMB_TICK_NEXT
   DEX
@@ -1641,23 +1649,24 @@ INCLUDE "vars.asm"
 
 
 .sub_C9B6
+  ; Cache X and Y regs
   STX byte_2F
   STY byte_30
+
   TAY
-  LDA byte_C9DE,Y
+  LDA byte_C9DE,Y ; Load from lookup table
   STA byte_2E
-  LDA #1
-  JSR sub_C9E3
-  LDA #2
-  JSR sub_C9E3
-  LDA #3
-  JSR sub_C9E3
-  LDA #4
-  JSR sub_C9E3
-  LDA #0
-  JSR sub_C9E3
+
+  LDA #1:JSR sub_C9E3
+  LDA #2:JSR sub_C9E3
+  LDA #3:JSR sub_C9E3
+  LDA #4:JSR sub_C9E3
+  LDA #0:JSR sub_C9E3
+
+  ; Restore X and Y regs
   LDX byte_2F
   LDY byte_30
+
   RTS
 
 ; ---------------------------------------------------------------------------
@@ -1672,7 +1681,7 @@ INCLUDE "vars.asm"
   BEQ BOMB_TICK_END
   STA byte_31
   TAX
-  LDY #&4F ; 'O'
+  LDY #&4F
   JSR sub_CBE5
   BMI locret_CA10
   LDA byte_20
@@ -1700,20 +1709,21 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ���������� �������� ����
+; Draw animation of the bombs
 
 .BOMB_ANIMATE
   LDX #9
 
 .BOMB_ANIM_LOOP
-  LDA BOMB_ACTIVE,X
-  BEQ BOMB_ANIM_NEXT  ; ���� ����� �� �����������, ����������
+  ; Skip inactive bombs
+  LDA BOMB_ACTIVE,X:BEQ BOMB_ANIM_NEXT
+
   LDA BOMB_X,X
   STA byte_1F
   LDA BOMB_Y,X
   STA byte_20
   LDA BOMB_TIME_ELAPSED,X
-  AND #&F     ; �������� �� ��������
+  AND #&F     ; Animation
   BNE BOMB_ANIM_NEXT
   LDA BOMB_TIME_ELAPSED,X
   LSR A
@@ -1722,8 +1732,8 @@ INCLUDE "vars.asm"
   LSR A
   AND #3
   TAY
-  LDA BOMB_ANIM,Y ; ������� ���� �������� �� �������
-  JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
+  LDA BOMB_ANIM,Y ; Selection animation frame from table
+  JSR DRAW_TILE   ; Add to TILE_TAB
 
 .BOMB_ANIM_NEXT
   DEX
@@ -1736,17 +1746,19 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ������������� ����� ������ � ���������
+; Generate a level stage
 
 .BUILD_MAP
-  JSR BUILD_CONCRET_WALLS ; ��������� �������� �����
-  JSR RAND_COORDS
-  LDA #4
-  STA (STAGE_MAP),Y
-  JSR RAND_COORDS
-  LDA #5
-  STA (STAGE_MAP),Y
-  LDA #&32 ; '2'
+  JSR BUILD_CONCRETE_WALLS ; Create a clean level
+
+  ; Randomly place exit door (hidden by brick)
+  JSR RAND_COORDS:LDA #4:STA (STAGE_MAP),Y
+
+  ; Randomly place bonus item (hidden by brick)
+  JSR RAND_COORDS:LDA #5:STA (STAGE_MAP),Y
+
+  ; Calculate number of bricks to add as (STAGE*2) + 50
+  LDA #50
   CLC
   ADC STAGE
   CLC
@@ -1754,62 +1766,54 @@ INCLUDE "vars.asm"
   STA byte_1F
 
 .NEXT_BRICK
-  JSR RAND_COORDS
-  LDA #2
-  STA (STAGE_MAP),Y
-  DEC byte_1F
-  BNE NEXT_BRICK
+  ; Randomly place a brick
+  JSR RAND_COORDS:LDA #2:STA (STAGE_MAP),Y
+
+  ; Loop if more bricks to place
+  DEC byte_1F:BNE NEXT_BRICK
+
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
-; ��������� �������� �����
+; Reset level map to just the concrete walls
 
-.BUILD_CONCRET_WALLS
+.BUILD_CONCRETE_WALLS
   LDA #lo(stage_buffer)
   STA STAGE_MAP
   LDA #hi(stage_buffer)
   STA STAGE_MAP+1
+
   LDY #0
-  LDX #0
-  JSR STAGE_ROW
-  LDX #&20 ; ' '
-  JSR STAGE_ROW
-  LDX #&40 ; '@'
-  JSR STAGE_ROW
-  LDX #&20 ; ' '
-  JSR STAGE_ROW
-  LDX #&40 ; '@'
-  JSR STAGE_ROW
-  LDX #&20 ; ' '
-  JSR STAGE_ROW
-  LDX #&40 ; '@'
-  JSR STAGE_ROW
-  LDX #&20 ; ' '
-  JSR STAGE_ROW
-  LDX #&40 ; '@'
-  JSR STAGE_ROW
-  LDX #&20 ; ' '
-  JSR STAGE_ROW
-  LDX #&40 ; '@'
-  JSR STAGE_ROW
-  LDX #&20 ; ' '
-  JSR STAGE_ROW
-  LDX #0
+
+  LDX #&00:JSR STAGE_ROW ; Top wall
+  LDX #MAP_WIDTH:JSR STAGE_ROW ; Blank row
+  LDX #MAP_WIDTH*2:JSR STAGE_ROW ; Alternate concrete
+  LDX #MAP_WIDTH:JSR STAGE_ROW ; ...
+  LDX #MAP_WIDTH*2:JSR STAGE_ROW
+  LDX #MAP_WIDTH:JSR STAGE_ROW
+  LDX #MAP_WIDTH*2:JSR STAGE_ROW
+  LDX #MAP_WIDTH:JSR STAGE_ROW
+  LDX #MAP_WIDTH*2:JSR STAGE_ROW
+  LDX #MAP_WIDTH:JSR STAGE_ROW
+  LDX #MAP_WIDTH*2:JSR STAGE_ROW
+  LDX #MAP_WIDTH:JSR STAGE_ROW
+  LDX #&00 ; Bottom wall
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
 .STAGE_ROW
-  LDA #&20 ; ' '
-  STA TEMP_X
+  LDA #MAP_WIDTH:STA TEMP_X
 
 .STAGE_CELL
   LDA STAGE_ROWS,X
   STA (STAGE_MAP),Y
   INC STAGE_MAP
+
+  ; Check for page overflow
   BNE HI_PART
   INC STAGE_MAP+1
 
@@ -1902,13 +1906,13 @@ INCLUDE "vars.asm"
 .loc_CB38
   INC byte_1F
   LDA byte_1F
-  AND #&20 ; ' '
+  AND #&20
   BEQ loc_CB1B
   INC byte_20
   LDA byte_20
   CMP #13
   BNE loc_CB17
-  JSR TIME_AND_LIFE   ; ���������� ������ "TIME" � "LEFT XX"
+  JSR TIME_AND_LIFE   ; Arrange the lines "TIME" and "LEFT XX"
   JMP PPU_RESTORE
 
 
@@ -1950,13 +1954,13 @@ INCLUDE "vars.asm"
   STA PPU_ADDRESS
   LDA TILE_TAB+1
   CLC
-  ADC #&20 ; ' '
+  ADC #&20
   STA PPU_ADDRESS
   LDA TILE_MAP+2,X
   STA PPU_DATA
   LDA TILE_MAP+3,X
   STA PPU_DATA
-  LDA #&23 ; '#'
+  LDA #&23
   ORA TILE_TAB
   PHA
   STA PPU_ADDRESS
@@ -1986,6 +1990,7 @@ INCLUDE "vars.asm"
   STA BOMB_ACTIVE,X
   DEX
   BPL CLEAN_BOMBS
+
   LDX #79
 
 .CLEAN_EXPLO
@@ -1996,7 +2001,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ������� ���� �������� � �����
+; Remove all monsters from the stage
 
 .KILL_ENEMY
   LDA #0
@@ -2029,19 +2034,17 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ���������� ��������� �� ������� ������ �����
+; Create pointer to row specified in Y within level map
 
 .FIX_STAGE_PTR
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
-; ������������� ���� ������ �����
+; Play explosion sound
 
 .PLAY_BOOM_SOUND
   LDA #1
@@ -2063,7 +2066,7 @@ INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------------
 .EXIT_ENEMY_TAB
-  EQUB   2,  1,  5,  3,  1,  1,  2,  5,  6,  4 ; � ���� ������� ���������� ��� �������, ������� �������� �� ����� ����� ������
+  EQUB   2,  1,  5,  3,  1,  1,  2,  5,  6,  4 ; ; This table contains the type of monsters that are placed from the door after the explosion
   EQUB   1,  1,  5,  6,  2,  4,  1,  6,  1,  5
   EQUB   6,  5,  1,  5,  6,  8,  2,  1,  5,  7
   EQUB   4,  1,  5,  8,  6,  7,  5,  2,  4,  8
@@ -2071,7 +2074,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ��������� ������� �� ������
+; Pressing the buttons
 
 .sub_CC36
   LDA INVUL_UNK2
@@ -2106,10 +2109,10 @@ INCLUDE "vars.asm"
 .loc_CC63
   LDA BOMBMAN_U
   CMP #SPR_HALFSIZE
-  BNE loc_CCA4    ; ��������� �������� �������
+  BNE loc_CCA4
   LDA BOMBMAN_V
   CMP #SPR_HALFSIZE
-  BNE loc_CCA4    ; ��������� �������� �������
+  BNE loc_CCA4
   LDY BOMBMAN_Y
   STY byte_20
   LDA MULT_TABY,Y
@@ -2122,10 +2125,13 @@ INCLUDE "vars.asm"
   CMP #MAP_EXIT
   BEQ loc_CC95
   CMP #MAP_BONUS
-  BNE loc_CCA4    ; ��������� �������� �������
-  LDA #MAP_EMPTY
-  STA (STAGE_MAP),Y
-  JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
+  BNE loc_CCA4
+
+  ; Clear the map here
+  LDA #MAP_EMPTY:STA (STAGE_MAP),Y
+
+  JSR DRAW_TILE   ; Add to TILE_TAB
+
   JMP loc_CEE9
 ; ---------------------------------------------------------------------------
 
@@ -2134,7 +2140,7 @@ INCLUDE "vars.asm"
   LDA #0
   STA byte_A6
   LDA byte_9C
-  BNE loc_CCA4    ; ��������� �������� �������
+  BNE loc_CCA4
   LDA #1
   STA byte_5E
 
@@ -2143,55 +2149,55 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_CCA4
-  LDA BONUS_SPEED ; ��������� �������� �������
+  LDA BONUS_SPEED
   BNE FAST_MOVE
   LDA FRAME_CNT
-  AND #3      ; ��� �������� �������� ������ ������ ������ 1 ��� � 4 �����
+  AND #3      ; Without fast move, slow to a quarter of the speed
   BEQ locret_CCA3
 
 .FAST_MOVE
-  JSR GET_INPUT   ; ���������� � A �������� ������ P1 | P2
+  JSR GET_INPUT   ; Return to A to set the buttons P1 | P2
   BNE CASE_RIGHT
   STA byte_A6
   STA LAST_INPUT
 
 .CASE_RIGHT
   TAX
-  AND #1      ; ������
+  AND #1      ; Right
   BEQ CASE_LEFT
   JSR sub_CDD4
 
 .CASE_LEFT
   TXA
-  AND #2      ; �����
+  AND #2      ; Left
   BEQ CASE_UP
   JSR sub_CDA3
 
 .CASE_UP
   TXA
-  AND #8      ; �����
+  AND #8      ; Up
   BEQ CASE_DOWN
   JSR sub_CD70
 
 .CASE_DOWN
   TXA
-  AND #4      ; ����
+  AND #4      ; Down
   BEQ CASE_ACTION
   JSR sub_CD39
 
 .CASE_ACTION
   TXA
-  AND #&80 ; '�'      ; A
+  AND #&80 ; A
   BNE CASE_A
-  LDA BONUS_REMOTE    ; ������ ���� � ������� ���� ����� ���������
+  LDA BONUS_REMOTE    ; Use remote detinator (if you have it)
   BEQ CASE_NOTHING
   LDA LAST_INPUT
   BNE CASE_NOTHING
   TXA
-  AND #&40 ; '@'      ; B
+  AND #&40 ; B
   BEQ CASE_NOTHING
   STA LAST_INPUT
-  JSR DETONATE    ; ��������� ��� �����
+  JSR DETONATE    ; Explode the bombs
 
 .CASE_NOTHING
   RTS
@@ -2205,9 +2211,9 @@ INCLUDE "vars.asm"
   STA STAGE_MAP+1
   LDY BOMBMAN_X
   LDA (STAGE_MAP),Y
-  BNE CASE_NOTHING    ; �� ���� ����� ��� ��� �� ����, �� ������� �����
-  JSR ADJUST_BOMBMAN_HPOS ; �������� ������� ���������� ����� ��� ������ ����� ��������� �����
-  JSR ADJUST_BOMBMAN_VPOS ; �������� ������� ���������� ����� ��� ���� ����� ��������� �����
+  BNE CASE_NOTHING    ; Don't allow bomb placement if map is not empty here
+  JSR ADJUST_BOMBMAN_HPOS ; Adjust bomberman horizontal position
+  JSR ADJUST_BOMBMAN_VPOS ; Adjust bomberman vertical position
   LDX BONUS_BOMBS
 
 .CHECK_AMMO_LEFT
@@ -2219,8 +2225,9 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .PLACE_BOMB
-  LDA #3
-  STA (STAGE_MAP),Y
+  ; Place a bomb on the map
+  LDA #3:STA (STAGE_MAP),Y
+
   LDA BOMBMAN_X
   STA BOMB_X,X
   LDA BOMBMAN_Y
@@ -2233,12 +2240,14 @@ INCLUDE "vars.asm"
   STA BOMB_TIME_LEFT,X
   LDA #1
   STA BOMB_ACTIVE,X
-  LDA #3
-  STA APU_SOUND   ; ��������� ����
+
+  ; Play sound 3
+  LDA #3:STA APU_SOUND
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
+; Move down
 
 
 .sub_CD39
@@ -2259,7 +2268,7 @@ INCLUDE "vars.asm"
   LDY BOMBMAN_X
   JSR sub_CF60
   BNE loc_CD69
-  JSR ADJUST_BOMBMAN_HPOS ; �������� ������� ���������� ����� ��� ������ ����� ��������� �����
+  JSR ADJUST_BOMBMAN_HPOS ; Adjust bomberman horizontal position
   INC BOMBMAN_V
   LDA BOMBMAN_V
   CMP #&10
@@ -2275,6 +2284,7 @@ INCLUDE "vars.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
+; Move up
 
 
 .sub_CD70
@@ -2295,7 +2305,7 @@ INCLUDE "vars.asm"
   LDY BOMBMAN_X
   JSR sub_CF60
   BNE loc_CD9C
-  JSR ADJUST_BOMBMAN_HPOS ; �������� ������� ���������� ����� ��� ������ ����� ��������� �����
+  JSR ADJUST_BOMBMAN_HPOS ; Adjust bomberman horizontal position
   DEC BOMBMAN_V
   BPL loc_CD9C
   LDA #&F
@@ -2309,6 +2319,7 @@ INCLUDE "vars.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
+; Move left
 
 
 .sub_CDA3
@@ -2329,7 +2340,7 @@ INCLUDE "vars.asm"
   DEY
   JSR sub_CF60
   BNE loc_CDCF
-  JSR ADJUST_BOMBMAN_VPOS ; �������� ������� ���������� ����� ��� ���� ����� ��������� �����
+  JSR ADJUST_BOMBMAN_VPOS ; Adjust bomberman vertical position
   DEC BOMBMAN_U
   BPL loc_CDCF
   LDA #&F
@@ -2337,11 +2348,12 @@ INCLUDE "vars.asm"
   DEC BOMBMAN_X
 
 .loc_CDCF
-  LDA #0
+  LDA #0 ; Show sprite normally (not flipped horizontally)
   JMP loc_CE06
 
 
 ; =============== S U B R O U T I N E =======================================
+; Move right
 
 
 .sub_CDD4
@@ -2362,7 +2374,7 @@ INCLUDE "vars.asm"
   INY
   JSR sub_CF60
   BNE loc_CE04
-  JSR ADJUST_BOMBMAN_VPOS ; �������� ������� ���������� ����� ��� ���� ����� ��������� �����
+  JSR ADJUST_BOMBMAN_VPOS ; Adjust bomberman vertical position
   INC BOMBMAN_U
   LDA BOMBMAN_U
   CMP #&10
@@ -2372,7 +2384,7 @@ INCLUDE "vars.asm"
   INC BOMBMAN_X
 
 .loc_CE04
-  LDA #&40 ; '@'
+  LDA #&40 ; Flip sprite horizontally
 
 .loc_CE06
   STA byte_2D
@@ -2381,11 +2393,11 @@ INCLUDE "vars.asm"
   JMP loc_CE2E
 
 ; ---------------------------------------------------------------------------
-  EQUB &60 ; `
+  EQUB &60 ; ? Is this a rogue RTS ?
 
 ; =============== S U B R O U T I N E =======================================
 
-; �������� ������� ���������� ����� ��� ������ ����� ��������� �����
+; Adjust bomberman horizontal position
 
 .ADJUST_BOMBMAN_HPOS
   LDA BOMBMAN_U
@@ -2407,7 +2419,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; �������� ������� ���������� ����� ��� ���� ����� ��������� �����
+; Adjust bomberman vertical position
 
 .ADJUST_BOMBMAN_VPOS
   LDA BOMBMAN_V
@@ -2462,7 +2474,7 @@ INCLUDE "vars.asm"
   LDA #1
 
 .loc_CE56
-  STA APU_SOUND   ; ��������� ����
+  STA APU_SOUND   ; Play sound 1 or 2 depending on bomberman animation frame
   RTS
 ; ---------------------------------------------------------------------------
 
@@ -2474,7 +2486,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ���������� ���������� (�������� ������)
+; Draw bomberman
 
 .DRAW_BOMBERMAN
   LDA BOMBMAN_FRAME
@@ -2487,7 +2499,7 @@ INCLUDE "vars.asm"
   LDA BOMBMAN_X
   CMP #8
   BCC DONT_SCROLL
-  LDY #&F0 ; '�'
+  LDY #&F0
   CMP #23
   BCS DONT_SCROLL
   ASL A
@@ -2497,7 +2509,7 @@ INCLUDE "vars.asm"
   CLC
   ADC BOMBMAN_U
   SEC
-  SBC #&80 ; '�'
+  SBC #&80
   TAY
 
 .DONT_SCROLL
@@ -2524,7 +2536,7 @@ INCLUDE "vars.asm"
   STA SPR_Y
   LDX BOMBMAN_FRAME
   LDA BOMBER_ANIM,X
-  JMP SPR_DRAW    ; �������� ������ (� �������� A - ���������� ����� ����������� ������ 16x16)
+  JMP SPR_DRAW
 
 
 ; =============== S U B R O U T I N E =======================================
@@ -2555,22 +2567,29 @@ INCLUDE "vars.asm"
   ADC #&17
   STA SPR_Y
   LDX BOMBMAN_FRAME
-  LDA byte_CED2,X
-  JMP SPR_DRAW    ; �������� ������ (� �������� A - ���������� ����� ����������� ������ 16x16)
+  LDA HUMAN_ANIM,X
+  JMP SPR_DRAW
 
 ; ---------------------------------------------------------------------------
-.byte_CED2
+.HUMAN_ANIM
   EQUB &10,&11,&12,&11
 
 .BOMBER_ANIM
-  EQUB   0,  1,  2,  1,  3,  4,  5,  4,  6,  7,  8,  7,  9, 10, 11, 12
-  EQUB  13, 14, 15
+  ; Walk left/right
+  EQUB 0,  1,  2,  1
+  ; Walk down
+  EQUB 3,  4,  5,  4
+  ; Walk up
+  EQUB 6,  7,  8,  7
+  ; Explode
+  EQUB 9, 10, 11, 12, 13, 14, 15
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_CC36
 
 .loc_CEE9
-  LDA #4
-  STA APU_SOUND   ; ��������� ����
+  ; Play sound 4
+  LDA #4:STA APU_SOUND
+
   LDA #&A
   JSR sub_DD83
   LDX EXIT_ENEMY_TYPE
@@ -2607,7 +2626,7 @@ INCLUDE "vars.asm"
 
 .loc_CF1A
   LDA BONUS_POWER
-  CMP #&50 ; 'P'
+  CMP #&50
   BEQ loc_CF25
   CLC
   ADC #&10
@@ -2703,7 +2722,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ���������� � A �������� ������ P1 | P2
+; Return to A to set the buttons P1 | P2
 
 .GET_INPUT
   LDA DEMOPLAY
@@ -2715,10 +2734,10 @@ INCLUDE "vars.asm"
   LDY #0
   LDA (DEMOKEY_DATA),Y
   STA DEMOKEY_TIMEOUT
-  JSR DEMO_GETNEXT    ; ������� ��������� ���� �� ������ ������������
+  JSR DEMO_GETNEXT
   LDA (DEMOKEY_DATA),Y
   STA DEMOKEY_PAD1
-  JSR DEMO_GETNEXT    ; ������� ��������� ���� �� ������ ������������
+  JSR DEMO_GETNEXT
   PLA
 
 .SKIP_DEMO_KEY
@@ -2733,7 +2752,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ������� ��������� ���� �� ������ ������������
+; Read next byte from DEMO input data
 
 .DEMO_GETNEXT
   INC DEMOKEY_DATA
@@ -2746,12 +2765,12 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; �������.
+; Enemy AI
 
 .THINK
   LDA #0
   STA byte_9C
-  LDA #&C0 ; 'L'
+  LDA #&C0
   STA byte_6B
   LDX #9
 
@@ -2771,10 +2790,10 @@ INCLUDE "vars.asm"
 .loc_CFCF
   ASL A
   TAY
-  JSR ENEMY_SAVE  ; �������� �������� �������� ������� �� ��������� ����������
-  LDA #&CF ; '�'
+  JSR ENEMY_SAVE
+  LDA #&CF
   PHA
-  LDA #&E2 ; '�'
+  LDA #&E2
   PHA
   LDA THINK_PROC-1,Y
   PHA
@@ -2782,7 +2801,7 @@ INCLUDE "vars.asm"
   PHA
   RTS
 ; ---------------------------------------------------------------------------
-  JSR ENEMY_LOAD  ; ����� �������� ����� ��������� THINK �������
+  JSR ENEMY_LOAD
   JSR loc_D006
 
 .THINK_NEXT
@@ -2799,7 +2818,7 @@ INCLUDE "vars.asm"
 .sub_CFED
   LDA byte_9D
   CLC
-  ADC #&2C ; ','
+  ADC #&2C
   STA M_FRAME
   LDA byte_AA
   STA M_X
@@ -2849,7 +2868,7 @@ INCLUDE "vars.asm"
   SBC #0
   BNE locret_D08B
   LDA byte_4F
-  CMP #&F8 ; '�'
+  CMP #&F8
   BCS locret_D08B
   STA SPR_X
   LDA M_Y
@@ -2865,9 +2884,9 @@ INCLUDE "vars.asm"
   LDA MONSTER_ATTR,Y
   STA SPR_COL
   LDA MONSTER_TILE,Y
-  JSR SPR_DRAW    ; �������� ������ (� �������� A - ���������� ����� ����������� ������ 16x16)
+  JSR SPR_DRAW
   LDA M_FRAME
-  CMP #&20 ; ' '
+  CMP #&20
   BCS locret_D08B
   LDA byte_5C
   BNE locret_D08B
@@ -2879,8 +2898,10 @@ INCLUDE "vars.asm"
   LDA M_Y
   CMP BOMBMAN_Y
   BNE locret_D08B
-  LDA #5
-  STA APU_SOUND   ; ��������� ����
+
+  ; PLay sound 5
+  LDA #5:STA APU_SOUND
+
   LDA #1
   STA byte_5C
   LDA #12
@@ -2924,7 +2945,7 @@ INCLUDE "vars.asm"
   SBC #0
   BNE loc_D0F7
   LDA byte_4F
-  CMP #&F8 ; '�'
+  CMP #&F8
   BCS loc_D0F7
   STA SPR_X
   LDA M_Y
@@ -2991,7 +3012,7 @@ INCLUDE "vars.asm"
   BNE locret_D123
 
 .loc_D121
-  LDY #&FC ; '�'
+  LDY #&FC
 
 .locret_D123
   RTS
@@ -3015,10 +3036,24 @@ INCLUDE "vars.asm"
   EQUB &FF,&46,&46
 
 .MONSTER_TILE
-  EQUB &18,&19,&1A,&19,&1C,&1D,&1E,&1D,&20,&21,&22,&21,&24,&25,&26,&25
-  EQUB &28,&29,&2A,&29,&2C,&2D,&2E,&2D,&30,&31,&32,&31,&34,&35,&36,&35
-  EQUB &1B,&1F,&23,&27,&2B,&2F,&33,&37,&14,&15,&16,&17,&38,&39,&3A,&3B
-  EQUB &3C,&3D
+  ; Animation sprites (one set for each of the 8 monsters)
+  EQUB &18,&19,&1A,&19
+  EQUB &1C,&1D,&1E,&1D
+  EQUB &20,&21,&22,&21
+  EQUB &24,&25,&26,&25
+  EQUB &28,&29,&2A,&29
+  EQUB &2C,&2D,&2E,&2D
+  EQUB &30,&31,&32,&31
+  EQUB &34,&35,&36,&35
+
+  ; First death sprite (one for each of the 8 monsters)
+  EQUB &1B,&1F,&23,&27,&2B,&2F,&33,&37
+
+  ; Rest of monster death animation sprites
+  EQUB &14,&15,&16,&17
+
+  ; Extra bonus items
+  EQUB &38,&39,&3A,&3B,&3C,&3D
 
 .MONSTER_ATTR
   EQUB   1,  1,  1,  1,  3,  3,  3,  3,  2,  2,  2,  2,  1,  1,  1,  1
@@ -3119,7 +3154,7 @@ INCLUDE "vars.asm"
   TAX
 
 .loc_D289
-  LDA #&C8 ; 'L'
+  LDA #&C8
   JSR sub_DD83
   DEX
   BNE loc_D289
@@ -3133,7 +3168,7 @@ INCLUDE "vars.asm"
 .loc_D29A
   LDA #&B
   STA M_TYPE
-  LDA #&64 ; 'd'
+  LDA #&64
   STA byte_49
 
 .locret_D2A2
@@ -3157,7 +3192,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_4
-  LDA #&10        ; ����� ������ - �������
+  LDA #&10
   LDY #&13
   JSR sub_D5DA
   JSR sub_D37E
@@ -3171,7 +3206,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_2
-  LDA #8      ; ������ ������ - �����
+  LDA #8
   LDY #&B
   JSR sub_D5DA
   JSR sub_D37E
@@ -3180,7 +3215,7 @@ INCLUDE "vars.asm"
   BEQ locret_D2C8
   DEC byte_4C
   LDA byte_4C
-  CMP #&96 ; '�'
+  CMP #&96
   BCS loc_D2E4
   JSR TURN_HORIZONTALLY
 
@@ -3192,7 +3227,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_1
-  LDA #4      ; ������ ������ - ����� ������
+  LDA #4
   LDY #7
   JSR sub_D5DA
   JSR sub_D37E
@@ -3201,7 +3236,7 @@ INCLUDE "vars.asm"
   BEQ locret_D2E7
   DEC byte_4C
   LDA byte_4C
-  CMP #&96 ; '�'
+  CMP #&96
   BCS loc_D303
   JSR TURN_VERTICALLY
 
@@ -3209,7 +3244,7 @@ INCLUDE "vars.asm"
   JMP loc_D33F
 ; ---------------------------------------------------------------------------
 .THINK_3
-  LDA #&C     ; ��������� ������ - �������
+  LDA #&C
   LDY #&F
   JSR sub_D5DA
   JSR sub_D37E
@@ -3217,7 +3252,7 @@ INCLUDE "vars.asm"
 .loc_D310
   DEC byte_4C
   LDA byte_4C
-  CMP #&C8 ; 'L'
+  CMP #&C8
   JMP loc_D337
 ; ---------------------------------------------------------------------------
 
@@ -3225,12 +3260,12 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_5
-  LDA #20     ; ������ ������ - ������
+  LDA #20
   LDY #23
   JMP loc_D325
 ; ---------------------------------------------------------------------------
 .THINK_0
-  LDA #0      ; ������ ������ - ������� ��������
+  LDA #0
   LDY #3
 
 .loc_D325
@@ -3253,7 +3288,7 @@ INCLUDE "vars.asm"
   BEQ loc_D365
   DEC byte_49
   LDA M_FACE
-  JSR STEP_MONSTER    ; ������� ��� �������� (� �������� A - ����������� �������)
+  JSR STEP_MONSTER
   BEQ locret_D364
   CMP #3
   BCC loc_D360
@@ -3282,7 +3317,7 @@ INCLUDE "vars.asm"
   ASL A
   ASL A
   CLC
-  ADC #&20 ; ' '
+  ADC #&20
   STA byte_49
   PLA
   ROL A
@@ -3302,7 +3337,7 @@ INCLUDE "vars.asm"
   LDA M_FACE
   CMP #3
   BCC loc_D388
-  LDY #&40 ; '@'
+  LDY #&40
 
 .loc_D388
   STY byte_48
@@ -3310,21 +3345,21 @@ INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------------
 .THINK_7
-  LDA #&1C        ; ������� ������ - �������
+  LDA #&1C
   LDY #&1F
   JSR sub_D5DA
   LDY #0
   LDA M_FRAME
   CMP #&1D
   BNE loc_D39C
-  LDY #&40 ; '@'
+  LDY #&40
 
 .loc_D39C
   STY byte_48
   JMP loc_D3AB
 ; ---------------------------------------------------------------------------
 .THINK_6
-  LDA #&18        ; ������� ������ - ��������
+  LDA #&18
   LDY #&1B
   JSR sub_D5DA
   JSR sub_D37E
@@ -3373,7 +3408,7 @@ INCLUDE "vars.asm"
 
 .loc_D3EE
   LDA M_FACE
-  JSR STEP_MONSTER    ; ������� ��� �������� (� �������� A - ����������� �������)
+  JSR STEP_MONSTER
   BEQ locret_D405
   CMP #3
   BCS loc_D406
@@ -3389,7 +3424,7 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_D406
-  LDA #&60 ; '`'
+  LDA #&60
   STA byte_4C
   LDY M_FACE
   LDA byte_D412,Y
@@ -3408,11 +3443,11 @@ INCLUDE "vars.asm"
   BNE NO_VTURN
   LDA M_Y
   CMP BOMBMAN_Y
-  BNE NO_VTURN    ; ���� BY != MY, �� �����
+  BNE NO_VTURN    ; IF BY != MY, then return
   LDA M_X
   CMP BOMBMAN_X
   LDA #1
-  BCC FACE_RIGHT  ; ���� BX > MX, �� ��������� �������, ����� ��������� ������.
+  BCC FACE_RIGHT  ; IF BX > MX, flip right, or first flip left
   LDA #3
 
 .FACE_RIGHT
@@ -3430,11 +3465,11 @@ INCLUDE "vars.asm"
   BNE NO_VTURN
   LDA M_X
   CMP BOMBMAN_X
-  BNE NO_HTURN    ; ���� BX != MX, �� �����
+  BNE NO_HTURN    ; IF BX != MX, then return
   LDA M_Y
   CMP BOMBMAN_Y
   LDA #4
-  BCC FACE_DOWN   ; ���� BY > MY, �� ��������� ����, ����� ��������� �����.
+  BCC FACE_DOWN   ; IF BY > MY, then flip down, or first flip up
   LDA #2
 
 .FACE_DOWN
@@ -3517,20 +3552,30 @@ INCLUDE "vars.asm"
 
 
 .ENEMY_COLLISION
+  ; Look what's here on the map
   LDA (STAGE_MAP),Y
+
+  ; Is it empty?
   BEQ locret_D4BF
+
+  ; Is it an exit door?
   CMP #MAP_EXIT
   BEQ locret_D4BF
+
+  ; Is it a bonus item?
   CMP #MAP_BONUS
   BEQ locret_D4BF
+
+  ; Is is a brick wall?
   CMP #MAP_BRICK
   BEQ BRICK_WALL
+
   RTS
 ; ---------------------------------------------------------------------------
 
 .BRICK_WALL
   LDA M_TYPE
-  CMP #5      ; �������, ������ � ������� ����� ��������� ������ ��������� �����
+  CMP #5      ; Enemies 5/6/8 can walk through brick walls
   BEQ locret_D4BF
   CMP #6
   BEQ locret_D4BF
@@ -3540,7 +3585,6 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ������� ��� �������� (� �������� A - ����������� �������)
 
 .STEP_MONSTER
   LDX #0
@@ -3783,8 +3827,6 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; �������� ������ (� �������� A - ���������� ����� ����������� ������ 16x16)
-
 .SPR_DRAW
   STX SPR_SAVEDX
   STY SPR_SAVEDY
@@ -3794,7 +3836,7 @@ INCLUDE "vars.asm"
   STA SPR_ID
   PLA
   ASL A
-  AND #&E0 ; '�'
+  AND #&E0
   ORA SPR_ID
   STA SPR_ID
   LDA SPR_TAB_INDEX
@@ -3813,18 +3855,18 @@ INCLUDE "vars.asm"
   TAY
   LDA SPR_ATTR
   BNE loc_D622
-  JSR SPR_WRITE_OBJ_HALF ; ���������� � ������� �������� ���� �� ��������� (8x16) ����������� ������.
+  JSR SPR_WRITE_OBJ_HALF
   INC SPR_ID
   JMP loc_D629
 ; ---------------------------------------------------------------------------
 
 .loc_D622
   INC SPR_ID
-  JSR SPR_WRITE_OBJ_HALF ; ���������� � ������� �������� ���� �� ��������� (8x16) ����������� ������.
+  JSR SPR_WRITE_OBJ_HALF
   DEC SPR_ID
 
 .loc_D629
-  JSR SPR_WRITE_OBJ_HALF ; ���������� � ������� �������� ���� �� ��������� (8x16) ����������� ������.
+  JSR SPR_WRITE_OBJ_HALF
   LDX SPR_SAVEDX
   LDY SPR_SAVEDY
   RTS
@@ -3832,40 +3874,52 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ���������� � ������� �������� ���� �� ��������� (8x16) ����������� ������.
-
 .SPR_WRITE_OBJ_HALF
-  LDA SPR_Y
-  STA SPR_TAB,Y   ; ������� Y �������� �������� � ������� �������� (�������������� �������������).
+  ; Upper half of sprite
+  LDA SPR_Y ; OAM byte 0 (Y position)
+  STA SPR_TAB,Y
+
   LDA SPR_ID
   PHA
-  STA SPR_TAB+1,Y
+  STA SPR_TAB+1,Y ; OAM byte 1 (Tile index)
+
   LDA SPR_COL
   ORA SPR_ATTR
-  STA SPR_TAB+2,Y
+  STA SPR_TAB+2,Y ; ; OAM byte 2 (Attributes - Palette 00..03/Priority 20/H-flip 40/V-flip 80)
+
   LDA SPR_X
-  STA SPR_TAB+3,Y
+  STA SPR_TAB+3,Y ; OAM byte 3 (X position)
+
+  ; Lower half of sprite
   LDA SPR_Y
   CLC
   ADC #8
-  STA SPR_TAB+4,Y
+  STA SPR_TAB+4,Y ; Y position + 8 (below)
+
   PLA
   CLC
   ADC #16
-  STA SPR_TAB+5,Y
+  STA SPR_TAB+5,Y ; Tile index + 16
+
   LDA SPR_COL
   ORA SPR_ATTR
-  STA SPR_TAB+6,Y
+  STA SPR_TAB+6,Y ; Attributes
+
   LDA SPR_X
-  STA SPR_TAB+7,Y
+  STA SPR_TAB+7,Y ; X position
+
+  ; Y = Y + 8
   TYA
   CLC
   ADC #8
   TAY
+
+  ; SPR_X = SPR_X + 8
   LDA SPR_X
   CLC
   ADC #8
   STA SPR_X
+
   RTS
 
 
@@ -3876,10 +3930,10 @@ INCLUDE "vars.asm"
   LDA SEED
   ROL A
   ROL A
-  EOR #&41 ; 'A'
+  EOR #&41
   ROL A
   ROL A
-  EOR #&93 ; '�'
+  EOR #&93
   ADC SEED+1
   STA SEED
   ROL A
@@ -3913,7 +3967,7 @@ INCLUDE "vars.asm"
   BCC loc_D6A8
   SBC #&19
   LDX #2
-  LDY #&D8 ; '+'
+  LDY #&D8
   BNE loc_D6AC
 
 .loc_D6A8
@@ -3976,8 +4030,8 @@ INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------------
 
-; ������� ��������� �������� �� ������ �� 50 �������.
-; �� ����� ����� ���������� �������� �� 10 ��������.
+; Table of monsters' operation at every one of the 50 levels
+; On the stage, there is a maximum of up to 10 monsters
 
 .MONSTER_TAB
   EQUB    1, 1, 1, 1, 1, 1, 0, 0, 0, 0
@@ -4033,7 +4087,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; �������� � TILE_TAB ����� ����
+; Add a new tile to TILE_TAB
 
 .DRAW_TILE
   STX TEMP_X
@@ -4089,7 +4143,7 @@ INCLUDE "vars.asm"
   ADC #2
   ASL A
   STA byte_22
-  AND #&FC ; '�'
+  AND #&FC
   ASL A
   STA byte_1B
   LDA byte_21
@@ -4098,9 +4152,9 @@ INCLUDE "vars.asm"
   CLC
   ADC byte_1B
   CLC
-  ADC #&C0 ; 'L'
+  ADC #&C0
   STA byte_1B
-  LDA #&23 ; '#'
+  LDA #&23
   STA byte_1C
   LDA #2
   AND byte_22
@@ -4112,7 +4166,7 @@ INCLUDE "vars.asm"
   ADC byte_23
   ASL A
   PHA
-  LDA #&FC ; '�'
+  LDA #&FC
   STA byte_1D
   PLA
   TAX
@@ -4197,6 +4251,7 @@ INCLUDE "vars.asm"
   EQUB   2
   EQUB   2
   EQUB   3
+
 .TILE_MAP
   EQUB &5F,&5F,&5F,&5F
   EQUB &64,&65,&66,&67
@@ -4250,6 +4305,7 @@ INCLUDE "vars.asm"
   EQUB &68,&69,&6A,&6B
 
 ; =============== S U B R O U T I N E =======================================
+; Password entry screen
 
 
 .sub_DA8E
@@ -4260,155 +4316,167 @@ INCLUDE "vars.asm"
   STA STAGE_STARTED
   STA INMENU
   STA APU_MUSIC
-  LDY #&9F ; '�'
-  LDA #&20 ; ' '
-  LDX #&E7 ; '�'
-  JSR sub_DC41
+  LDY #&9F
+  LDA #&20
+  LDX #&E7
+  JSR sub_DC41 ; Print "ENTER SECRET CODE"
   JSR PPUE
   LDA #6
   STA byte_1F
-  LDA #&3A ; ':'
-  STA byte_20
+  LDA #':'
+  STA byte_20 ; Set current char to "blank"
   LDY #0
 
 .loc_DAB5
   JSR WAITVBL
-  LDA #&22 ; '"'
-  LDX byte_1F
+
+  ; Set screen position where next character will be written
+  LDA #&22:LDX byte_1F
   JSR VRAMADDR
-  LDA byte_20
-  STA PPU_DATA
+
+  ; Write current character
+  LDA byte_20:STA PPU_DATA
+
   JSR PPU_RESTORE
   LDX #10
 
 .loc_DAC9
   JSR WAITVBL
   LDA JOYPAD1
-  AND #&8F ; '�'
+  AND #&8F
   BNE loc_DAF8
   DEX
   BNE loc_DAC9
   JSR WAITVBL
-  LDA #&22 ; '"'
-  LDX byte_1F
+
+  ; Set screen position where next character will be written
+  LDA #&22:LDX byte_1F
   JSR VRAMADDR
+
   LDA #&3B ; ';'
   STA PPU_DATA
+
   JSR PPU_RESTORE
   LDX #10
 
 .loc_DAE9
   JSR WAITVBL
   LDA JOYPAD1
-  AND #&8F ; '�'
-  BNE loc_DAF8
+  AND #&8F
+  BNE loc_DAF8 ; Branch if A/Up/Down/Left/Right is pressed
   DEX
   BNE loc_DAE9
   JMP loc_DAB5
 ; ---------------------------------------------------------------------------
+; Keypress on password screen handler
 
 .loc_DAF8
-  BMI loc_DB43
+  BMI loc_DB43 ; Branch if A button pressed
   PHA
   LDA #&12
   STA APU_SQUARE1_REG+3
   PLA
   CMP #1
-  BEQ loc_DB24
+  BEQ loc_DB24 ; Branch if Right button pressed
   LDA byte_20
-  CMP #&3A ; ':'
-  BNE loc_DB0F
-  LDA #&51 ; 'Q'
+  CMP #':'
+  BNE loc_DB0F ; Branch if current char is "blank"
+  LDA #'Q'
   STA byte_20
 
 .loc_DB0F
   LDA byte_20
-  CMP #&41 ; 'A'
-  BEQ loc_DB1A
-  DEC byte_20
+  CMP #'A'
+  BEQ loc_DB1A ; Branch if current char is "A"
+  DEC byte_20 ; Set current char to one less alphabetically
   JMP loc_DB1E
 ; ---------------------------------------------------------------------------
 
 .loc_DB1A
-  LDA #&50 ; 'P'
-  STA byte_20
+  LDA #'P'
+  STA byte_20 ; Set current char to "P" (wrap around)
 
 .loc_DB1E
-  JSR WAITUNPRESS ; ����� ���������� ������
-  JMP loc_DAB5
+  JSR WAITUNPRESS ; Wait for button release
+  JMP loc_DAB5 ; Jump back to read next character
 ; ---------------------------------------------------------------------------
-
+; Handler for Right button press on password screen
 .loc_DB24
   LDA byte_20
-  CMP #&3A ; ':'
+  CMP #':' ; Branch if current char is not "blank"
   BNE loc_DB2E
-  LDA #&40 ; '@'
-  STA byte_20
+  LDA #'@'
+  STA byte_20 ; Set current char to one before "A"
 
 .loc_DB2E
   LDA byte_20
-  CMP #&50 ; 'P'
-  BEQ loc_DB39
-  INC byte_20
+  CMP #'P'
+  BEQ loc_DB39 ; Branch if current char is "P"
+  INC byte_20 ; Set current char to one more alphabetically
   JMP loc_DB3D
 ; ---------------------------------------------------------------------------
 
 .loc_DB39
-  LDA #&41 ; 'A'
-  STA byte_20
+  LDA #'A'
+  STA byte_20 ; Set current char to "A" (wrap around)
 
 .loc_DB3D
-  JSR WAITUNPRESS ; ����� ���������� ������
+  JSR WAITUNPRESS ; Wait for button release
 
 .loc_DB40
-  JMP loc_DAB5
+  JMP loc_DAB5 ; Jump back to read next character
 ; ---------------------------------------------------------------------------
+; Handler for A button press on password screen
 
 .loc_DB43
   LDA #&11
   STA APU_SQUARE1_REG+3
   LDA byte_20
-  CMP #&3A ; ':'
-  BEQ loc_DB40
+  CMP #':'
+  BEQ loc_DB40 ; Branch if current char is "blank"
   AND #&F
-  TAX
-  LDA byte_DFA0,X
-  STA unk_7F,Y
+  TAX             ; X = current char & 0x0F
+  LDA byte_DFA0,X ; Use lookup for current char
+  STA unk_7F,Y    ; Store this in 0x7F to 0x92
   JSR WAITVBL
-  LDA #&22 ; '"'
-  LDX byte_1F
+
+  ; Set screen position for next character to be written
+  LDA #&22:LDX byte_1F
   JSR VRAMADDR
+
   LDA byte_20
   STA PPU_DATA
   JSR PPU_RESTORE
-  LDA #&3A ; ':'
+  LDA #':' ; Set current char to "blank"
   STA byte_20
   INC byte_1F
   INY
   CPY #&14
-  BEQ loc_DB7A
-  JSR WAITUNPRESS ; ����� ���������� ������
-  JMP loc_DAB5
+  BEQ loc_DB7A ; Branch if we have 20 characters
+  JSR WAITUNPRESS ; Wait for button release
+  JMP loc_DAB5 ; Jump back to read next character
 ; ---------------------------------------------------------------------------
+; Handler for 20 chars of password being entered
 
 .loc_DB7A
   LDX #0
   STX SEED
 
 .loc_DB7E
-  LDA unk_7F,X
+  LDA unk_7F,X ; Load password[X]
   PHA
   CLC
   ADC #7
   CLC
   ADC SEED
   AND #&F
-  STA unk_7F,X
+  STA unk_7F,X ; Save decoded char back to password[X]
   PLA
   STA SEED
   INX
   CPX #&14
-  BNE loc_DB7E
+  BNE loc_DB7E ; Loop for 20 characters
+
   LDX #0
 
 .loc_DB95
@@ -4420,22 +4488,26 @@ INCLUDE "vars.asm"
   ADC unk_7F,X
   INX
   DEY
-  BNE loc_DB99
+  BNE loc_DB99 ; Loop until Y=0 (4 times)
   AND #&F
   CMP unk_7F,X
-  BNE loc_DBCC
+  BNE loc_DBCC ; Branch if password[X] != A
+
   INX
   CPX #&F
-  BNE loc_DB95
-  LDA byte_83
+  BNE loc_DB95 ; Branch if X != $F
+
+  LDA byte_83 ; Load password[4] (checksum 1)
   ASL A
   STA byte_1F
-  LDA byte_88
+
+  LDA byte_88 ; Load password[9] (checksum 2)
   ASL A
   CLC
   ADC byte_1F
   STA byte_1F
-  LDA byte_8D
+
+  LDA byte_8D ; Load password[14] (checksum 3 ?)
   ASL A
   CLC
   ADC byte_1F
@@ -4448,11 +4520,12 @@ INCLUDE "vars.asm"
   BNE loc_DBC0
   AND #&F
   CMP byte_92
-  BEQ loc_DBCF
+  BEQ loc_DBCF ; Branch if password[19] (checksum 4) = A
 
 .loc_DBCC
-  JMP sub_DA8E
+  JMP sub_DA8E ; Read password all over again
 ; ---------------------------------------------------------------------------
+; Valid password has been entered
 
 .loc_DBCF
   LDX #0
@@ -4462,18 +4535,22 @@ INCLUDE "vars.asm"
   JSR _get_pass_data_var_addr
   LDA unk_7F,Y
   STY TEMP_Y
-  LDY #0
-  STA (STAGE_MAP),Y
+
+  ; Clear map here
+  LDY #0:STA (STAGE_MAP),Y
+
   LDY TEMP_Y
   INY
   CPY #&14
   BNE loc_DBD3
+
   LDA byte_DC
   ASL A
   ASL A
   ASL A
   ASL A
   STA BONUS_POWER
+
   LDA byte_DE
   ASL A
   ASL A
@@ -4507,7 +4584,7 @@ INCLUDE "vars.asm"
   STA byte_1F
 
 .loc_DC26
-  LDA #&31 ; '1'
+  LDA #&31
   JSR sub_CB4E
   INC byte_1F
   LDA byte_1F
@@ -4580,7 +4657,7 @@ INCLUDE "vars.asm"
 .sub_DD04
   PHA
   JSR WAITVBL
-  LDA #&3F ; '?'
+  LDA #&3F
   LDX #&1C
   JSR VRAMADDR
   PLA
@@ -4609,9 +4686,11 @@ INCLUDE "vars.asm"
   JSR PPUD
   JSR VBLD
   JSR SETSTAGEPAL
-  LDA #&21 ; '!'
-  LDX #&EA ; '�'
+
+  ; Set screen pointer for next character to write
+  LDA #&21:LDX #&EA
   JSR VRAMADDR
+
   LDX #8
 
 .loc_DD50
@@ -4710,22 +4789,26 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ���������� ������ "TIME" � "LEFT XX"
+; Arrange the lines "TIME" and "LEFT XX"
 
 .TIME_AND_LIFE
-  LDA #&20 ; ' '
-  LDX #0
+
+  ; Set screen pointer for next character to write
+  LDA #&20:LDX #0
   JSR VRAMADDR
-  LDX #&80 ; '�'
+
+  LDX #&80
   LDA #&3A ; ':'
 
 .loc_DDD2
   STA PPU_DATA
   DEX
   BNE loc_DDD2
-  LDA #&20 ; ' '
-  LDX #&41 ; 'A'
+
+  ; Set screen pointer for next character to write
+  LDA #&20:LDX #&41
   JSR VRAMADDR
+
   LDX #3
 
 .loc_DDE1
@@ -4733,17 +4816,22 @@ INCLUDE "vars.asm"
   STA PPU_DATA
   DEX
   BPL loc_DDE1
-  LDA #&3A ; ':'
+  LDA #':'
   STA PPU_DATA
-  LDA #&20 ; ' '
-  LDX #&52 ; 'R'
+
+  ; Set screen pointer for next character to write
+  LDA #&20:LDX #&52
   JSR VRAMADDR
-  LDA #&30 ; '0'
+
+  ; Print two "0" characters
+  LDA #'0'
   STA PPU_DATA
   STA PPU_DATA
-  LDA #&20 ; ' '
-  LDX #&58 ; 'X'
+
+  ; Set screen pointer for next character to write
+  LDA #&20:LDX #&58
   JSR VRAMADDR
+
   LDX #3
 
 .loc_DE07
@@ -4751,8 +4839,9 @@ INCLUDE "vars.asm"
   STA PPU_DATA
   DEX
   BPL loc_DE07
+
   LDA LIFELEFT
-  JMP PUTNUMBER   ; ������� ����������� �����, �������� � �������� A.
+  JMP PUTNUMBER   ; Print number in A
 
 ; ---------------------------------------------------------------------------
 .aEmit
@@ -4769,9 +4858,11 @@ INCLUDE "vars.asm"
   LDA #0
   STA H_SCROLL
   JSR SETSTAGEPAL
-  LDA #&21 ; '!'
-  LDX #&EA ; '�'
+
+  ; Set screen pointer for next character to write
+  LDA #&21:LDX #&EA
   JSR VRAMADDR
+
   LDX #4
 
 .PUT_STAGE_STR
@@ -4779,11 +4870,14 @@ INCLUDE "vars.asm"
   STA PPU_DATA
   DEX
   BPL PUT_STAGE_STR
-  LDA #&21 ; '!'
-  LDX #&F0 ; '�'
+
+  ; Set screen pointer for next character to write
+  LDA #&21:LDX #&F0
   JSR VRAMADDR
+
   LDA STAGE
-  JSR PUTNUMBER   ; ������� ����������� �����, �������� � �������� A.
+  JSR PUTNUMBER   ; Print number in A
+
   JSR VBLE
   JMP PPUE
 
@@ -4800,9 +4894,11 @@ INCLUDE "vars.asm"
   LDA #0
   STA H_SCROLL
   JSR SETSTAGEPAL
-  LDA #&21 ; '!'
-  LDX #&EA ; '�'
+
+  ; Set screen pointer for next character to write
+  LDA #&21:LDX #&EA
   JSR VRAMADDR
+
   LDX #&A
 
 .PUT_BONUS_MSG
@@ -4810,6 +4906,7 @@ INCLUDE "vars.asm"
   STA PPU_DATA
   DEX
   BPL PUT_BONUS_MSG
+
   JSR VBLE
   JMP PPUE
 
@@ -4824,9 +4921,11 @@ INCLUDE "vars.asm"
   JSR PPUD
   JSR CLS
   JSR WAITVBL
-  LDA #&3F ; '?'
-  LDX #0
+
+  ; Set screen pointer for next character to write
+  LDA #&3F:LDX #0
   JSR VRAMADDR
+
   LDX #0
 
 .loc_DE95
@@ -4836,10 +4935,12 @@ INCLUDE "vars.asm"
   CPX #&10
   BNE loc_DE95
   JSR VRAMADDRZ
-  JSR DRAWMENUTEXT    ; ���������� ����� � ���� (��������� �����, ��������)
-  LDA #&20 ; ' '
-  LDX #0
+  JSR DRAWMENUTEXT    ; Write text in menus (author's rights, license)
+
+  ; Set screen pointer for next character to write
+  LDA #&20:LDX #0
   JSR VRAMADDR
+
   LDX #&40 ; '@'
   LDA #&B0 ; '-'
 
@@ -4860,15 +4961,17 @@ INCLUDE "vars.asm"
   STA PPU_DATA
   INX
   BNE loc_DEC2
-  LDA #&22 ; '"'
-  LDX #&AE ; '�'
+
+  ; Set screen pointer for next character to write
+  LDA #&22:LDX #&AE
   JSR VRAMADDR
+
   LDX #0
 
 .loc_DED4
   LDA TOPSCORE,X
   BNE loc_DEE4
-  LDA #&3A ; ':'
+  LDA #':'
   STA PPU_DATA
   INX
   CPX #7
@@ -4878,19 +4981,22 @@ INCLUDE "vars.asm"
 .loc_DEE4
   LDA TOPSCORE,X
   CLC
-  ADC #&30 ; '0'
+  ADC #'0'
   STA PPU_DATA
   INX
   CPX #7
   BNE loc_DEE4
 
 .loc_DEF1
-  LDA #&30 ; '0'
+  ; Print two "0" characters
+  LDA #'0'
   STA PPU_DATA
   STA PPU_DATA
-  LDA #&23 ; '#'
-  LDX #&C0 ; 'L'
+
+  ; Set screen pointer for next character to write
+  LDA #&23:LDX #&C0
   JSR VRAMADDR
+
   LDX #&20 ; ' '
   LDA #0
 
@@ -4899,14 +5005,14 @@ INCLUDE "vars.asm"
   DEX
   BNE loc_DF04
   LDX #8
-  LDA #&50 ; 'P'
+  LDA #'P'
 
 .loc_DF0E
   STA PPU_DATA
   DEX
   BNE loc_DF0E
   LDX #&18
-  LDA #&55 ; 'U'
+  LDA #'U'
 
 .loc_DF18
   STA PPU_DATA
@@ -4924,9 +5030,11 @@ INCLUDE "vars.asm"
   LDA #0
   STA H_SCROLL
   JSR WAITVBL
-  LDA #&3F ; '?'
-  LDX #0
+
+  ; Set screen pointer for next character to write
+  LDA #&3F:LDX #0
   JSR VRAMADDR
+
   LDX #0
 
 .loc_DF37
@@ -4943,7 +5051,7 @@ INCLUDE "vars.asm"
 
 
 .DRAW_TIME
-  LDY #&30 ; '0'
+  LDY #'0'
   SEC
 
 .loc_DF4B
@@ -4953,32 +5061,32 @@ INCLUDE "vars.asm"
   BNE loc_DF4B
 
 .loc_DF52
-  ADC #&64 ; 'd'
-  CPY #&30 ; '0'
+  ADC #100
+  CPY #'0'
   BNE loc_DF76
-  LDY #&3A ; ':'
+  LDY #':'
   STY PPU_DATA
 
 
 ; =============== S U B R O U T I N E =======================================
 
-; ������� ����������� �����, �������� � �������� A.
+; Print number in A.
 
 .PUTNUMBER
-  LDY #&30 ; '0'
-  SEC         ; &30 - ����� �� 0 �� 9
+  LDY #'0'
+  SEC         ; Convert to number 0 to 9
 
 .DECADES
-  SBC #10     ; ��������� ���������� �������� � Y
+  SBC #10     ; Number of days in Y
   BCC DONE_DECADES
   INY
-  BNE DECADES     ; ��������� ���������� �������� � Y
+  BNE DECADES     ; Number of days in Y
 
 .DONE_DECADES
   ADC #&3A ; ':'
-  CPY #&30 ; '0'      ; ���� ����� �� 0 �� 9, �� ������� ������ ������ ���������� ��������
+  CPY #'0'      ; From 0 to 9
   BNE PUTNUMB2
-  LDY #&3A ; ':'      ; &3A - ��� ������.
+  LDY #&3A ; ':'      ; &3A - This was a problem
 
 .PUTNUMB2
   STY PPU_DATA
@@ -5008,12 +5116,15 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 .STAGEPAL
   EQUB  &F,  0, &F,&30
+
 .MENUPAL
   EQUB  &F,  5,&30,&28, &F,  0, &F,&30
   EQUB  &F,  6,&26,&37, &F, &F, &F, &F
+
 .byte_DFA0
   EQUB   5,  0,  9,  4, &D,  7,  2,  6
   EQUB  &A, &F, &C,  3,  8, &B, &E,  1
+
 .MAINMENU_HI
   EQUB &B0,&B0,&DF,&C0,&C1,&C1,&C2,&C0,&C1,&C1,&C1,&C2,&C0,&B6,&E9,&B8
   EQUB &C2,&C0,&C1,&C1,&C2,&C0,&C1,&C1,&C2,&C0,&C1,&C1,&C2,&E9,&F8,&B0
@@ -5031,6 +5142,7 @@ INCLUDE "vars.asm"
   EQUB &C3,&C7,&C1,&F1,&C3,&C7,&C1,&C1,&C3,&B4,&CF,&B2,&C3,&EB,&F8,&B0
   EQUB &B0,&B0,&DF,&CA,&CB,&CB,&CB,&CE,&CB,&CB,&CB,&CB,&CE,&D8,&E9,&E9
   EQUB &EA,&CE,&CB,&CB,&CB,&CE,&CB,&CB,&CB,&CE,&D8,&E9,&EA,&CD,&F8,&B0
+
 .MAINMENU_LO
   EQUB &B0,&B0,&DF,&E9,&E9,&E9,&E9,&E9,&E9,&E9,&C0,&B6,&E9,&B8,&C2,&C0
   EQUB &C1,&C1,&C2,&C0,&BC,&E4,&C2,&E9,&E9,&E9,&E9,&E9,&E9,&E9,&F8,&B0
@@ -5048,6 +5160,7 @@ INCLUDE "vars.asm"
   EQUB &CF,&B2,&C3,&B4,&CF,&BA,&C3,&EB,&E9,&E9,&E9,&E9,&E9,&E9,&F8,&B0
   EQUB &B0,&B0,&DF,&E9,&E9,&E9,&E9,&E9,&E9,&E9,&CA,&D8,&E9,&E9,&EA,&CE
   EQUB &D8,&E9,&EA,&CE,&D8,&F3,&CB,&CD,&E9,&E9,&E9,&E9,&E9,&E9,&F8,&B0
+
   EQUB &B0 ; -
   EQUB &B0 ; -
   EQUB &F4 ; �
@@ -5067,7 +5180,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ���������� ����� � ���� (��������� �����, ��������)
+; Write text in menus (author's rights, license)
 
 .DRAWMENUTEXT
   LDY #0
@@ -5142,9 +5255,9 @@ INCLUDE "vars.asm"
   EQUB hi(stage_buffer+(MAP_WIDTH*8)),hi(stage_buffer+(MAP_WIDTH*9)),hi(stage_buffer+(MAP_WIDTH*10)),hi(stage_buffer+(MAP_WIDTH*11))
   EQUB hi(stage_buffer+(MAP_WIDTH*12))
 
+; *** COMMENTS UP TO HERE ***
+
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_E2BD
   LDA BONUS_POWER
   LSR A
@@ -5173,17 +5286,21 @@ INCLUDE "vars.asm"
   STA (STAGE_MAP),Y
   DEC byte_1F
   BNE loc_E2DB
+
   JSR sub_E33C
+
   LDA byte_99
   ASL A
   CLC
   ADC TEMP_X
   STA TEMP_X
+
   LDA byte_9A
   ASL A
   CLC
   ADC TEMP_X
   STA TEMP_X
+
   LDA byte_9B
   ASL A
   CLC
