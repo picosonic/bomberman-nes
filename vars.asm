@@ -132,7 +132,7 @@ byte_92             = &92
 ; Time in seconds left to play
 TIMELEFT            = &93
 
-byte_94             = &94
+DEBUG               = &94
 byte_95             = &95
 MTAB_PTR            = &97
 byte_99             = &99

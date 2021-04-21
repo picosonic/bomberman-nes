@@ -2,19 +2,19 @@ ORG &C000
 
 .ROMSTART
 
-INCLUDE "consts.asm"
 INCLUDE "nesregs.asm"
+INCLUDE "consts.asm"
 INCLUDE "vars.asm"
 
 .RESET
   SEI
   LDA #0
-  STA PPU_CTRL_REG2
-  STA PPU_CTRL_REG1
-  CLD
+  STA PPU_CTRL_REG2:STA PPU_CTRL_REG1 ; Reset PPU
+  CLD ; NES 6502 does not have BCD-mode, clear the flag in all cases
 
   LDX #&FF:TXS ; Clear stack
 
+; Add 2 VBlank, for PPU stabilization
 .WAIT_VBLANK1
   LDA PPU_STATUS
   BPL WAIT_VBLANK1
@@ -33,13 +33,13 @@ INCLUDE "vars.asm"
   TYA
   PHA
   LDX #0
-  STX FRAMEDONE   ; �������� �������� ������ �����
+  STX FRAMEDONE   ; Cancel the start of the frame
   STX PPU_SPR_ADDR
   LDA STAGE_STARTED
   BEQ SEND_SPRITES
-  LDA #25     ; ���������� ��������� �������� ������-������ �� ������
-  STA SPR_TAB     ; ������������ ������ ��� ������� (������ ������)
-  LDA #&EC ; '�'
+  LDA #25
+  STA SPR_TAB
+  LDA #&EC
   STA SPR_TAB+1
   LDA #0
   STA SPR_TAB+2
@@ -49,12 +49,12 @@ INCLUDE "vars.asm"
 .SEND_SPRITES
   LDA #7
   STA PPU_SPR_DMA
-  LDX #9      ; ���������� ����� �� ��������� ������
+  LDX #9
   STX TILE_CNT
   BNE DRAW_NEXT_TILE
 
 .DRAW_TILES
-  LDA TILE_TAB+2,Y    ; ������������ ����� ����� �� ����� ������, �� �� ����� TILE_CNT ����
+  LDA TILE_TAB+2,Y
   ORA TILE_TAB,Y
   PHA
   STA PPU_ADDRESS
@@ -101,28 +101,30 @@ INCLUDE "vars.asm"
 .DRAW_NEXT_TILE
   LDY TILE_CUR
   CPY TILE_PTR
-  BNE DRAW_TILES  ; ������������ ����� ����� �� ����� ������, �� �� ����� TILE_CNT ����
+  BNE DRAW_TILES
 
 .DRAW_MENU_ARROW
   LDA INMENU
   BEQ DRAW_ARROW_SKIP
-  LDA #&22 ; '"'
-  LDX #&68 ; 'h'
+
+  LDA #&22:LDX #&68
   JSR VRAMADDR
-  LDY #&B0 ; '-'
+
+  LDY #&B0
   LDA CURSOR
   BNE DRAW_ARROW_START
-  LDY #&40 ; '@'
+  LDY #&40
 
 .DRAW_ARROW_START
   STY PPU_DATA
-  LDA #&22 ; '"'
-  LDX #&70 ; 'p'
+
+  LDA #&22:LDX #&70
   JSR VRAMADDR
-  LDY #&B0 ; '-'
+
+  LDY #&B0
   LDA CURSOR
   BEQ DRAW_ARROW_CONT
-  LDY #&40 ; '@'
+  LDY #&40
 
 .DRAW_ARROW_CONT
   STY PPU_DATA
@@ -135,34 +137,35 @@ INCLUDE "vars.asm"
   LDA TILE_CNT
   CMP #4
   BCC UPDATE_FPS
-  LDA #&20 ; ' '
-  LDX #&4B ; 'K'
+
+  LDA #&20:LDX #&4B
   JSR VRAMADDR    ; Y=2, X=11
+
   LDX #0
 
 .DRAW_SCORE_BLANK
-  LDA SCORE,X     ; ���������� ��������� ����
+  LDA SCORE,X     ; Skip leading zeroes
   BNE DRAW_SCORE_NUM
-  LDA #&3A ; ':'      ; ������ ������ ������ ����
+  LDA #&3A ; Blank character instead of zero
   STA PPU_DATA
   INX
   CPX #7
-  BNE DRAW_SCORE_BLANK ; ���������� ��������� ����
+  BNE DRAW_SCORE_BLANK
   BEQ DRAW_TIMER
 
 .DRAW_SCORE_NUM
   LDA SCORE,X
   CLC
-  ADC #&30 ; '0'      ; ����� 0...9
+  ADC #&30 ; '0'      ; Number 0...9
   STA PPU_DATA
   INX
   CPX #7
   BNE DRAW_SCORE_NUM
 
 .DRAW_TIMER
-  LDA #&20 ; ' '
-  LDX #&46 ; 'F'      ; Y=2, X=6
+  LDA #&20:LDX #&46 ; Y=2, X=6
   JSR VRAMADDR
+
   LDA TIMELEFT
   CMP #255
   BNE TIME_OVERFLOW
@@ -187,8 +190,8 @@ INCLUDE "vars.asm"
 .TICK_FPS
   STA FPS
   JSR PAD_READ
-  JSR APU_PLAY_MELODY ; ��������� �������
-  JSR APU_PLAY_SOUND  ; ��������� ����
+  JSR APU_PLAY_MELODY ; Play melody
+  JSR APU_PLAY_SOUND  ; Play sound
   LDA BOOM_SOUND
   BEQ SET_SCROLL_REG
   LDA DEMOPLAY
@@ -197,7 +200,7 @@ INCLUDE "vars.asm"
   STA APU_DELTA_REG
   LDA #0
   STA BOOM_SOUND
-  LDA #&C0 ; 'L'
+  LDA #&C0
   STA APU_DELTA_REG+2
   LDA #&FF
   STA APU_DELTA_REG+3
@@ -212,12 +215,12 @@ INCLUDE "vars.asm"
 
 .WAIT_SPR0_HIT
   LDA PPU_STATUS
-  AND #&40 ; '@'
+  AND #&40
   BNE WAIT_SPR0_HIT
 
 .WAIT_SPR0_MISS
   LDA PPU_STATUS
-  AND #&40 ; '@'
+  AND #&40
   BEQ WAIT_SPR0_MISS
   LDA H_SCROLL
   STA PPU_SCROLL_REG
@@ -329,7 +332,7 @@ INCLUDE "vars.asm"
   STA TILE_CUR
   STA TILE_PTR
   STA V_SCROLL
-  JSR SPRD        ; �������� �������
+  JSR SPRD        ; Send to the screen
   JSR PPUD
   JSR WAITVBL
   JSR PAL_RESET
@@ -339,11 +342,11 @@ INCLUDE "vars.asm"
 
 
 .CLS
-  LDA #&20 ; ' '
-  LDX #0
+  LDA #&20:LDX #0
   JSR VRAMADDR
+
   LDY #8
-  LDA #&B0 ; '-'
+  LDA #&B0
 
 .CLEAR_NT
   STA PPU_DATA
@@ -351,9 +354,10 @@ INCLUDE "vars.asm"
   BNE CLEAR_NT
   DEY
   BNE CLEAR_NT
-  LDA #&23 ; '#'
-  LDX #&C0 ; 'L'
+
+  LDA #&23:LDX #&C0
   JSR VRAMADDR
+
   LDX #&40 ; '@'
   LDA #0
 
@@ -378,25 +382,26 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ��� ���������� ��������� ��������.
-; ����� � ���� ����� ���� �� 16 ���������� ������� (10 ��������, ��������� � �������� ����)
-; ���������� ����� ������� �� 4 �������� � ����� ������ 16x16.
-; ������� �������� ������� �������� �� ��� �����: ��� ������� � ��������� ������.
-; ������� ��� ������ ��� ����, ����� ��������� �������� ��������.
-; ��������� ����������� ������ ���������� �� ���������� (������� ����� 8x16, ����� ������),
-; ��� ��� ��� �����������.
-; ����������� ���������� SPR_TAB_TOGGLE ������ ���� ��������� �������� 0 -> 5 -> 0 ...
-; � ��� ����� �������� ����� ��������� SPR_TAB ������������ ��� ���������.
-; ������ �������� � SPR_TAB ��� �������� ����������� ������ ����������� ���
-; TEMP = SPR_TAB_INDEX++ + SPR_TAB_TOGGLE   <-- ������ ���������� � 1.
-; TEMP = TEMP >= 12 ? TEMP - 10 : TEMP      <-- ���������� ������ �� 12
-; Y = 16 * TEMP                             <-- *16 ������ ��� ����� �� 4 ��������
-; ��� ������� �������, �� ��� �����, ��� ������� ��� � ����.
-; ��� ������� - �� ������ ��������� ������ � 10 ��������. �������� TEMP ����� �����-
-; ��� ������ ������: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-; ��� �������� ������: 6, 7, 8, 9, 10, 11, 2, 3, 4, 5, 6
-; (��� �������� ������ ������� ���������� ����� ������� �������� ������� � � ����������
-; �������� ������� ����� ������ ����� �� ������ ����� ��������).
+; *** Needs fixing, this is the output from a translate ***
+; How does the setting of the files come up.
+; All in the game washes up to 16 standard samples (10 monitors, bunked and boosted points)
+; The custom image consists of 4 sizes and is 16x16 in size.
+; The table of advices is conditionally divided into two parts: separate and odd frames.
+; This video is made so that you can change the time of the lights.
+; The search engine image is displayed in semicircles (initially left 8x16, right),
+; just like they are symmetric.
+; The special variable SPR_TAB_TOGGLE every day assigns a value 0 -> 5 -> 0 ...
+; and then select which one SPR_TAB should be used for.
+; The display in SPR_TAB for the current run-time display is displayed as follows:
+; TEMP = SPR_TAB_INDEX++ + SPR_TAB_TOGGLE   <-- Index starts from 1.
+; TEMP = TEMP >= 12 ? TEMP - 10 : TEMP      <-- Limit the index to 12
+; Y = 16 * TEMP                             <-- *16 easy to read from 4 screens
+; It’s a little strange, but it’s just a little bit out of the way, just like it’s done.
+; For example - on the screen, there are bombs and 10 monitors. The TEMP value will be
+; DUAL frames: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+; For odd frames: 6, 7, 8, 9, 10, 11, 2, 3, 4, 5, 6
+; (For odd cadres, run the battery, use the monitor
+; The bomber box will flash when on the screen of several windows).
 
 
 .SENDSPR
@@ -437,7 +442,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; �������� �������
+; Send to the screen
 
 .SPRD
   LDY #&1C
@@ -496,7 +501,7 @@ INCLUDE "vars.asm"
 .VBLE
   JSR WAITVBL
   LDA LAST_2000
-  ORA #&80 ; '�'
+  ORA #&80
   BNE WRITE2000
 
 
@@ -505,7 +510,7 @@ INCLUDE "vars.asm"
 
 .VBLD
   LDA LAST_2000
-  AND #&7F ; ''
+  AND #&7F
 
 .WRITE2000
   STA LAST_2000
@@ -517,7 +522,7 @@ INCLUDE "vars.asm"
 
 
 .PAL_RESET
-  LDA #&3F ; '?'
+  LDA #&3F
   LDX #0
   JSR VRAMADDR
   LDY #32
@@ -534,7 +539,7 @@ INCLUDE "vars.asm"
 
 
 .VRAMADDRZ
-  LDA #&3F ; '?'
+  LDA #&3F
   STA PPU_ADDRESS
   LDA #0
   STA PPU_ADDRESS
@@ -549,11 +554,11 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ����� ���������� ������
+; Wait until nothing pressed on joypad 1
 
 .WAITUNPRESS
   LDA JOYPAD1
-  BNE WAITUNPRESS ; ����� ���������� ������
+  BNE WAITUNPRESS ; Keep waiting - something is pressed
   RTS
 
 
@@ -578,7 +583,7 @@ INCLUDE "vars.asm"
   BNE CLEAR_WRAM
   LDX #0
   LDY SOFT_RESET_FLAG
-  CPY #&93 ; '�'
+  CPY #&93
   BNE CLEAR_ZP
   LDY CLEAR_TOPSCORE1
   BNE CLEAR_ZP
@@ -590,14 +595,14 @@ INCLUDE "vars.asm"
   STA 0,X
   INX
   BNE CLEAR_ZP
-  LDA #&93 ; '�'
+  LDA #&93
   STA SOFT_RESET_FLAG
 
 .RESET_GAME
   JSR PPU_RESET
   LDA #0
   STA SPR_TAB_TOGGLE
-  JSR APU_RESET   ; �������� ��������� APU
+  JSR APU_RESET   ; Reset APU
   LDA #1
   STA APU_MUSIC
 
@@ -629,36 +634,36 @@ INCLUDE "vars.asm"
   JSR NEXTFRAME
   LDA JOYPAD1
   AND #&10
-  BNE START_PRESSED   ; ���� ����� START
+  BNE START_PRESSED   ; Check for START being pressed
   LDA JOYPAD1
   AND #&20 ; ' '
-  BEQ UPDATE_RAND ; �������� ��������� ��������� �����
-  LDA CURSOR
+  BEQ UPDATE_RAND ; START/SELECT not pressed, so update random number generator seed
+  LDA CURSOR      ; Move cursor between START/CONTINUE
   EOR #1
   STA CURSOR
-  JSR WAITUNPRESS ; ����� ���������� ������
+  JSR WAITUNPRESS ; Wait for nothing to be pressed
   JMP ADVANCE_FRAME
 ; ---------------------------------------------------------------------------
 
 .UPDATE_RAND
-  JSR RAND        ; �������� ��������� ��������� �����
+  JSR RAND        ; Update random number generator state
   DEC DEMO_WAIT_LO
   BNE DEMO_WAIT_LOOP
   DEC DEMO_WAIT_HI
   BNE DEMO_WAIT_LOOP
-  INC DEMOPLAY    ; ���� ������� �����, �� ��������� ������������
+  INC DEMOPLAY    ; If demo wait time expired, then start the demo
 
 .START_PRESSED
   LDA DEMOPLAY
   BNE loc_C3A3
   LDA CURSOR
   BEQ loc_C3A3
-  JSR sub_DA8E
+  JSR sub_DA8E ; Password entry screen
 
 .loc_C3A3
   LDA #0
   STA INMENU
-  JSR WAITUNPRESS ; ����� ���������� ������
+  JSR WAITUNPRESS ; Await button release
   LDA #2
   STA LIFELEFT
   LDA DEMOPLAY
@@ -688,9 +693,10 @@ INCLUDE "vars.asm"
   STA BONUS_SPEED
   STA BONUS_NOCLIP
   STA BONUS_FIRESUIT
-  STA byte_94
+  STA DEBUG
   LDA DEMOPLAY
   BEQ loc_C40A
+  ; Enhance capabilites for demo playback
   LDA #9
   STA BONUS_BOMBS
   LDA #&40 ; '@'
@@ -704,9 +710,9 @@ INCLUDE "vars.asm"
   STA SEED+2
   STA SEED+3
   STA FRAME_CNT
-  LDA #&F4 ; '�'
+  LDA #&F4
   STA DEMOKEY_DATA
-  LDA #&ED ; '�'
+  LDA #&ED
   STA DEMOKEY_DATA+1
   LDA DEMO_KEYDATA
   STA DEMOKEY_TIMEOUT
@@ -723,50 +729,54 @@ INCLUDE "vars.asm"
   STA byte_B1
   STA byte_A8
   STA STAGE_STARTED
-  STA byte_9E
-  STA byte_9F
-  STA byte_9C
-  STA byte_A0
-  STA byte_A1
-  STA byte_A2
-  STA byte_A3
-  STA byte_A4
-  STA byte_A5
-  STA byte_A6
-  STA byte_A7
+  STA byte_9E ; Enemies defeated
+  STA byte_9F ; Exit dwell time ?
+  STA byte_9C ; Remaining enemies
+  STA byte_A0 ; Visits to top left square
+  STA byte_A1 ; Visits to top right square
+  STA byte_A2 ; Visits to bottom left square
+  STA byte_A3 ; Visits to bottom right square
+  STA byte_A4 ; Number of bricks blown up
+  STA byte_A5 ; Number of chain reactions
+  STA byte_A6 ; Something pressed on gamepad timer
+  STA byte_A7 ; Number of times exit has been bombed ?
   JSR STAGE_SCREEN
-  LDA #2
-  STA APU_MUSIC
-  JSR WAITTUNE    ; ��������� ��������� ������� �������
-  LDA #3
-  STA APU_MUSIC
+
+  ; Play melody 2 to end
+  LDA #2:STA APU_MUSIC
+  JSR WAITTUNE
+
+  ; Play melody 3
+  LDA #3:STA APU_MUSIC
+
   JSR VBLD
-  JSR BUILD_MAP   ; ������������� ����� ������ � ���������
-  JSR SPAWN       ; ������� �������� � ����������
+  JSR BUILD_MAP   ; Generate level map
+  JSR SPAWN       ; Spawn enemies
   JSR sub_E4AF
-  JSR PICTURE_ON  ; �������� ����� � �������
+  JSR PICTURE_ON  ; Turn on screen and display
   LDA #200
   STA TIMELEFT
 
 .STAGE_LOOP
-  JSR PAUSED      ; ��������� ������ �� ����� (� ���� ������, �� ����� ����������)
-  JSR SPRD        ; �������� �������
-  JSR sub_CC36    ; ��������� ������� �� ������
-  JSR BOMB_TICK   ; ��������� ������� ���� � ��������� ������
-  JSR DRAW_BOMBERMAN  ; ���������� ���������� (�������� ������)
-  JSR THINK       ; �������.
-  JSR BOMB_ANIMATE    ; ���������� �������� ����
-  JSR STAGE_TIMER ; �������� ����� �� 1 ������� (������� �������)
+  JSR PAUSED      ; Check for START being pressed, if so pause
+  JSR SPRD        ; Send sprites to screen
+  JSR sub_CC36    ; Process button presses
+  JSR BOMB_TICK   ; Timer operations
+  JSR DRAW_BOMBERMAN  ; Draw bomberman
+  JSR THINK       ; Enemy movements
+  JSR BOMB_ANIMATE    ; Animate on-screen bombs
+  JSR STAGE_TIMER ; Tick the stage timer
   JSR sub_E399
   LDA byte_5D
   BNE loc_C481
   LDA byte_5E
   BNE loc_C4BF
-  LDA FRAME_CNT
-  AND #3      ; ������ ����������� ������ � 1 ����� �� 4-�
-  BNE STAGE_LOOP
-  JSR sub_C79D    ; ��������� ������� (?)
-  JSR sub_C66C    ; ����������� ������ ��� ���������� ������
+
+  ; Limit next function calls to 1 frame out of 4
+  LDA FRAME_CNT:AND #3:BNE STAGE_LOOP
+
+  JSR sub_C79D
+  JSR sub_C66C
   JMP STAGE_LOOP
 ; ---------------------------------------------------------------------------
 
@@ -779,9 +789,11 @@ INCLUDE "vars.asm"
   STA BONUS_REMOTE
   STA BONUS_FIRESUIT
   STA INVUL_UNK1
-  LDA #8
-  STA APU_MUSIC
-  JSR WAITTUNE    ; ��������� ��������� ������� �������
+
+  ; Play melody 8 to the end
+  LDA #8:STA APU_MUSIC
+  JSR WAITTUNE
+
   DEC LIFELEFT
   BMI GAME_OVER
   JMP START_STAGE
@@ -830,27 +842,28 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .NEXT_STAGE
-  LDA #10
-  STA APU_MUSIC
-  JSR WAITTUNE    ; ��������� ��������� ������� �������
+  ; Play melody 10 to the end
+  LDA #10:STA APU_MUSIC
+  JSR WAITTUNE
+
   INC LIFELEFT
   INC STAGE
   LDY #0
   LDA STAGE
   CMP #MAP_LEVELS+1
-  BNE SELECT_BONUS_MONSTER ; ������� ��� ������� ��� ��������� ������
+  BNE SELECT_BONUS_MONSTER ; Select the monster type for the bonus level
   JMP END_GAME
 ; ---------------------------------------------------------------------------
 
 .SELECT_BONUS_MONSTER
-  INY         ; ������� ��� ������� ��� ��������� ������
+  INY
   SEC
   SBC #5
-  BCS SELECT_BONUS_MONSTER ; ������� ��� ������� ��� ��������� ������
+  BCS SELECT_BONUS_MONSTER
   DEY
   CPY #8
   BCC SELECT_STAGE_TYPE
-  LDY #8      ; ��� ������� ��������� 1...8
+  LDY #8      ; Type of control limit 1 ... 8
 
 .SELECT_STAGE_TYPE
   STY BONUS_ENEMY_TYPE
@@ -864,46 +877,53 @@ INCLUDE "vars.asm"
   LDA #0
   STA STAGE_STARTED
   JSR BONUS_STAGE_SCREEN
-  LDA #2
-  STA APU_MUSIC
-  JSR WAITTUNE    ; ��������� ��������� ������� �������
+
+  ; Play melody 2 to the end
+  LDA #2:STA APU_MUSIC
+  JSR WAITTUNE
+
   JSR VBLD
-  JSR BUILD_CONCRET_WALLS ; ��������� �������� �����
-  JSR SPAWN       ; ������� �������� � ����������
-  JSR PICTURE_ON  ; �������� ����� � �������
+  JSR BUILD_CONCRET_WALLS ; Build level
+  JSR SPAWN       ; Spawn enemies
+  JSR PICTURE_ON  ; Turn on screen and display
   JSR STAGE_CLEANUP
-  LDA #6
-  STA APU_MUSIC
+
+  ; Play melody 6
+  LDA #6:STA APU_MUSIC
+
   LDA #1
   STA INVUL_UNK1
   STA INVUL_UNK2
-  LDA #30     ; ���������� 30 ������
-  STA TIMELEFT
+
+  ; Allow 30 seconds for bonus level
+  LDA #30:STA TIMELEFT
 
 .BONUS_STAGE_LOOP
-  JSR PAUSED      ; ��������� ������ �� ����� (� ���� ������, �� ����� ����������)
+  JSR PAUSED      ; Check for START pressed, if so pause
   LDA TIMELEFT
-  BEQ BONUS_STAGE_END ; ���� ����� ����������� �� ����� �� ��������� ������
-  JSR SPRD        ; �������� �������
-  JSR RESPAWN_BONUS_ENEMY ; ���� ���������� �������� � �������� ������ ������ 10, �� �������� ���
-  JSR sub_CC36    ; ��������� ������� �� ������
-  JSR BOMB_TICK   ; ��������� ������� ���� � ��������� ������
-  JSR DRAW_BOMBERMAN  ; ���������� ���������� (�������� ������)
-  JSR THINK       ; �������.
-  JSR BOMB_ANIMATE    ; ���������� �������� ����
-  JSR BONUS_STAGE_TIMER ; �������� ����� �� 1 ������� (�������� �������)
-  LDA FRAME_CNT
-  AND #1      ; ������ ����������� �� ������ ����, � ����� ���
-  BNE BONUS_STAGE_LOOP
-  JSR sub_C79D    ; ��������� ������� (?)
-  JSR sub_C66C    ; ����������� ������ ��� ���������� ������
+  BEQ BONUS_STAGE_END ; Check for running out of time
+  JSR SPRD        ; Send to the screen
+  JSR RESPAWN_BONUS_ENEMY ; Respawn if < 10 enemies
+  JSR sub_CC36    ; Process button presses
+  JSR BOMB_TICK   ; Bomb timer
+  JSR DRAW_BOMBERMAN  ; Draw bomberman
+  JSR THINK       ; Enemy AI
+  JSR BOMB_ANIMATE    ; Animate on-screen bombs
+  JSR BONUS_STAGE_TIMER ; Tick level time remaining
+
+  ; Limit following functions to every other frame
+  LDA FRAME_CNT:AND #1:BNE BONUS_STAGE_LOOP
+
+  JSR sub_C79D
+  JSR sub_C66C
   JMP BONUS_STAGE_LOOP
 ; ---------------------------------------------------------------------------
 
 .BONUS_STAGE_END
-  LDA #10
-  STA APU_MUSIC
-  JSR WAITTUNE    ; ��������� ��������� ������� �������
+  ; Play melody 10 to the end
+  LDA #10:STA APU_MUSIC
+  JSR WAITTUNE
+
   LDA #0
   STA INVUL_UNK2
   STA INVUL_UNK1
@@ -913,7 +933,7 @@ INCLUDE "vars.asm"
 .END_GAME
   JSR PPU_RESET
   JSR sub_DBF9
-  JSR BUILD_CONCRET_WALLS ; ��������� �������� �����
+  JSR BUILD_CONCRET_WALLS ; Reset level map
   LDA #SPR_HALFSIZE
   STA BOMBMAN_U
   STA BOMBMAN_V
@@ -931,23 +951,23 @@ INCLUDE "vars.asm"
   JSR NEXTFRAME
   LDA #1
   STA SPR_TAB_INDEX
-  JSR SPRD        ; �������� �������
-  JSR DRAW_BOMBERMAN  ; ���������� ���������� (�������� ������)
+  JSR SPRD        ; Send to the screen
+  JSR DRAW_BOMBERMAN  ; Draw bomberman
   LDA FRAME_CNT
   ROR A
   BCS loc_C5A4
-  JSR sub_CDD4
+  JSR sub_CDD4 ; Move character right
 
 .loc_C5A4
   LDA BOMBMAN_X
   CMP #8
-  BNE loc_C58F
+  BNE loc_C58F ; Keep moving until at tile 8 from left
 
 .WAIT_END_MELODY
   JSR NEXTFRAME
   LDA #1
   STA SPR_TAB_INDEX
-  JSR SPRD        ; �������� �������
+  JSR SPRD        ; Send to the screen
   JSR sub_CEA7
   LDA FRAME_CNT
   ROR A
@@ -967,7 +987,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ������� �������� � ����������
+; Spawn enemies
 
 .SPAWN
   LDA #1
@@ -987,7 +1007,7 @@ INCLUDE "vars.asm"
   JSR WAITVBL
   JSR PAL_RESET
   LDX STAGE
-  LDA EXIT_ENEMY_TAB-1,X ; � ���� ������� ���������� ��� �������, ������� �������� �� ����� ����� ������
+  LDA EXIT_ENEMY_TAB-1,X ; This table contains the type of monsters that are placed from the door after the explosion
   STA EXIT_ENEMY_TYPE
   LDA #1
   STA STAGE_STARTED
@@ -996,10 +1016,10 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; �������� ����� � �������
+; Turn on screen and display
 
 .PICTURE_ON
-  JSR SPRD        ; �������� �������
+  JSR SPRD        ; Send to the screen
   JSR VBLE
   JSR PPUE
   JMP SPRE
@@ -1007,11 +1027,11 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ��������� ��������� ������� �������
+; Wait for current melody to finish
 
 .WAITTUNE
   LDA APU_MUSIC
-  BNE WAITTUNE    ; ��������� ��������� ������� �������
+  BNE WAITTUNE
   RTS
 
 ; ---------------------------------------------------------------------------
@@ -1022,7 +1042,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ��������� ������ �� ����� (� ���� ������, �� ����� ����������)
+; Check for START being pressed, if so pause
 
 .PAUSED
   JSR NEXTFRAME
@@ -1035,19 +1055,28 @@ INCLUDE "vars.asm"
   BNE ABORT_DEMOPLAY
   LDA #1
   STA APU_DISABLE
+
+  ; Play sound 6
   LDA #6
-  STA APU_SOUND   ; ��������� ����
-  JSR WAITUNPRESS ; ����� ���������� ������
+  STA APU_SOUND
+
+  JSR WAITUNPRESS ; Wait for button to be released
 
 .WAIT_START
+  ; Wait for START to be pressed to resume
   LDA JOYPAD1
   AND #&10
   BEQ WAIT_START
+
+  ; Play sound 6
   LDA #6
-  STA APU_SOUND   ; ��������� ����
-  LDA #0
-  STA APU_DISABLE
-  JSR WAITUNPRESS ; ����� ���������� ������
+  STA APU_SOUND
+
+  LDA #0:STA APU_DISABLE
+
+  ; Wait for START to be released again
+  JSR WAITUNPRESS
+
   JMP NEXTFRAME
 ; ---------------------------------------------------------------------------
 
@@ -1057,21 +1086,29 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; �������� ����� �� 1 ������� (������� �������)
+; Change the time by 1 second (common level)
 
 .STAGE_TIMER
-  LDA FRAME_CNT
-  AND #&3F ; '?'
-  BNE STAGE_TIMER_END
+  ; Limit this function to roughly once per second (64 frames)
+  LDA FRAME_CNT:AND #&3F:BNE STAGE_TIMER_END
+
+  ; Check for underflow
   LDA TIMELEFT
   CMP #255
   BEQ STAGE_TIMER_END
+
+  ; Reduce time left by 1 second
   DEC TIMELEFT
+
+  ; Continue if some time left
   BNE STAGE_TIMER_END
-  JSR KILL_ENEMY  ; ������� ���� �������� � �����
-  LDA #8      ; �������� ���� ����� ������ ��������
-  STA BONUS_ENEMY_TYPE
-  JMP RESPAWN_BONUS_ENEMY ; ���� ���������� �������� � �������� ������ ������ 10, �� �������� ���
+
+  ; Out of time
+  JSR KILL_ENEMY  ; Remove all enemies from the level
+
+  ; Spawn 10 x enemy type 8 (PONTAN)
+  LDA #8:STA BONUS_ENEMY_TYPE
+  JMP RESPAWN_BONUS_ENEMY
 ; ---------------------------------------------------------------------------
 
 .STAGE_TIMER_END
@@ -1080,30 +1117,33 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; �������� ����� �� 1 ������� (�������� �������)
+; Change the time by 1 second (bonus level)
 
 .BONUS_STAGE_TIMER
-  LDA FRAME_CNT
-  AND #&3F ; '?'
-  BNE STAGE_TIMER_END
-  LDA TIMELEFT
-  BEQ STAGE_TIMER_END
+  ; Limit this function to roughly once per second (64 frames)
+  LDA FRAME_CNT:AND #&3F:BNE STAGE_TIMER_END
+
+  ; End stage if time run out
+  LDA TIMELEFT:BEQ STAGE_TIMER_END
+
+  ; Reduce time left by 1 second
   DEC TIMELEFT
+
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
 
-; ����������� ������ ��� ���������� ������
+; Triggering for a call ?? Check translation
 
 .sub_C66C
-  LDX #&4F ; 'O'
+  LDX #&4F
 
 .loc_C66E
   LDA FIRE_ACTIVE,X
   BEQ loc_C6CD
   BPL loc_C688
-  AND #&7F ; ''
+  AND #&7F
   TAY
   LDA FIRE_X,X
   STA byte_1F
@@ -1119,7 +1159,7 @@ INCLUDE "vars.asm"
   LDA FIRE_Y,X
   STA byte_20
   LDA byte_526,X
-  AND #&78 ; 'x'
+  AND #&78
   BEQ loc_C6CD
   LDA byte_526,X
   BPL loc_C6B2
@@ -1127,7 +1167,7 @@ INCLUDE "vars.asm"
   STA byte_32
   LDA byte_526,X
   LSR A
-  AND #&3C ; '<'
+  AND #&3C
   CLC
   ADC byte_32
   TAY
@@ -1170,7 +1210,7 @@ INCLUDE "vars.asm"
 .loc_C6DA
   AND #&FF
   BEQ loc_C753
-  JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
+  JSR DRAW_TILE   ; Add a new tile to TILE_TAB
   LDA byte_5C
   BNE loc_C705
   LDA BONUS_FIRESUIT
@@ -1183,8 +1223,10 @@ INCLUDE "vars.asm"
   LDA BOMBMAN_Y
   CMP byte_20
   BNE loc_C705
-  LDA #5
-  STA APU_SOUND   ; ��������� ����
+
+  ; Collision between this enemy and bomberman, play sound 5
+  LDA #5:STA APU_SOUND
+
   LDA #1
   STA byte_5C
   LDA #12
@@ -1210,7 +1252,7 @@ INCLUDE "vars.asm"
   STA byte_A1
   STA byte_A2
   STA byte_A3
-  LDA #&64 ; 'd'
+  LDA #&64
   STA byte_5C6,Y
   LDA ENEMY_TYPE,Y
   STA ENEMY_FACE,Y
@@ -1224,7 +1266,7 @@ INCLUDE "vars.asm"
   LSR A
   AND #7
   CLC
-  ADC #&20 ; ' '
+  ADC #&20
   STA ENEMY_FRAME,Y
 
 .loc_C74E
@@ -1233,7 +1275,7 @@ INCLUDE "vars.asm"
   BMI loc_C756
 
 .loc_C753
-  JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
+  JSR DRAW_TILE   ; Add a new tile to TILE_TAB
 
 .loc_C756
   DEX
@@ -1260,7 +1302,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; ��������� ������� (?)
+; Trigger shaking (?)
 
 .sub_C79D
   LDX #79
@@ -1277,14 +1319,14 @@ INCLUDE "vars.asm"
   PHA
   LDY FIRE_Y,X
   STY byte_20
-  JSR FIX_STAGE_PTR   ; ���������� ��������� �� ������� ������ �����
+  JSR FIX_STAGE_PTR   ; Set pointer to level data
   LDY FIRE_X,X
   STY byte_1F
   PLA
   BPL loc_C7CB
   INC FIRE_ACTIVE,X
   LDA FIRE_ACTIVE,X
-  CMP #&87 ; '�'
+  CMP #&87
   BNE loc_C7A4
   LDA #MAP_EMPTY
   STA FIRE_ACTIVE,X
@@ -1298,7 +1340,7 @@ INCLUDE "vars.asm"
   CPY #MAP_BRICK
   BNE loc_C7DE
   INC byte_A4
-  LDA #&80 ; '�'
+  LDA #&80
   STA FIRE_ACTIVE,X
   JMP loc_C8A6
 ; ---------------------------------------------------------------------------
@@ -1314,38 +1356,38 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_C7EE
-  CPY #MAP_HIDDEN_EXIT
+  CPY #MAP_HIDDEN_EXIT ; Was this the hidden exit door?
   BNE loc_C800
   LDY byte_1F
-  LDA #MAP_EXIT
+  LDA #MAP_EXIT ; Place exit door here
   STA (STAGE_MAP),Y
-  LDA #&28 ; '('
-  JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
+  LDA #&28
+  JSR DRAW_TILE   ; Add a new tile to TILE_TAB
   JMP loc_C830
 ; ---------------------------------------------------------------------------
 
 .loc_C800
-  CPY #MAP_HIDDEN_BONUS
+  CPY #MAP_HIDDEN_BONUS ; Was this a hidden bonus?
   BNE loc_C815
   LDY byte_1F
-  LDA #MAP_BONUS
+  LDA #MAP_BONUS ; Place bonus here
   STA (STAGE_MAP),Y
-  LDA #&28 ; '('
+  LDA #&28
   CLC
   ADC EXIT_ENEMY_TYPE
-  JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
+  JSR DRAW_TILE   ; Add a new tile to TILE_TAB
   JMP loc_C830
 ; ---------------------------------------------------------------------------
 
 .loc_C815
-  CPY #MAP_EXIT
+  CPY #MAP_EXIT ; Was this an exit door?
   BEQ loc_C828
-  CPY #MAP_BONUS
+  CPY #MAP_BONUS ; Was this a bonus item?
   BNE loc_C830
   LDY byte_1F
-  LDA #MAP_EMPTY
+  LDA #MAP_EMPTY ; Remove from map
   STA (STAGE_MAP),Y
-  JSR DRAW_TILE   ; �������� � TILE_TAB ����� ����
+  JSR DRAW_TILE   ; Add a new tile to TILE_TAB
   DEC byte_A7
 
 .loc_C828
@@ -1366,8 +1408,8 @@ INCLUDE "vars.asm"
   CLC
   ADC #8
   STA byte_526,X
-  AND #&7F ; ''
-  CMP #&48 ; 'H'
+  AND #&7F
+  CMP #&48
   BCS loc_C7EE
   LDA byte_4D6,X
   STA byte_36
@@ -1384,7 +1426,7 @@ INCLUDE "vars.asm"
   CLC
   ADC byte_CA11,Y
   STA byte_20
-  LDY #&4F ; 'O'
+  LDY #&4F
   JSR sub_CBE5
   BNE loc_C8A6
   LDA byte_1F
@@ -1404,7 +1446,7 @@ INCLUDE "vars.asm"
   LDA #0
   STA FIRE_ACTIVE,Y
   LDA byte_526,X
-  ORA #&80 ; '�'
+  ORA #&80
   STA byte_526,X
   JMP loc_C8A1
 ; ---------------------------------------------------------------------------
@@ -1427,6 +1469,8 @@ INCLUDE "vars.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
+
+; ******** COMMENTS UP TO HERE ********
 
 
 .sub_C8AD
@@ -1833,7 +1877,7 @@ INCLUDE "vars.asm"
   STA byte_1F
 
 .loc_CB1B
-  LDA byte_94
+  LDA DEBUG
   BEQ loc_CB24
   LDA (word_26),Y
   JMP loc_CB30
@@ -5214,7 +5258,7 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 ._pass_data_vars
   EQUW   SCORE+6,  BONUS_REMOTE,  byte_DD,  SCORE,  byte_99,  SCORE+5,  byte_DC,  SCORE+3,  BONUS_FIRESUIT,  byte_9A
-  EQUW   BONUS_BOMBS,  SCORE+2,  BONUS_SPEED,  SCORE+1,  byte_9B,  SCORE+4,  byte_94,  byte_DE,  BONUS_NOCLIP,  byte_95
+  EQUW   BONUS_BOMBS,  SCORE+2,  BONUS_SPEED,  SCORE+1,  byte_9B,  SCORE+4,  DEBUG,  byte_DE,  BONUS_NOCLIP,  byte_95
 
 .aAofkcpgelbhmjd
   EQUS "AOFKCPGELBHMJDNI"
