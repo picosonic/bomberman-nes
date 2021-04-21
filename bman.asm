@@ -2887,7 +2887,7 @@ INCLUDE "vars.asm"
 
 
 .sub_CFED
-  LDA byte_9D
+  LDA BONUS_AVAILABLE
   CLC
   ADC #&2C
   STA M_FRAME
@@ -5495,7 +5495,7 @@ INCLUDE "vars.asm"
 
   ; Play sound 4
   LDA #4:STA APU_SOUND
-  LDX byte_9D
+  LDX BONUS_AVAILABLE
   LDA byte_E4BC,X
   CMP #100
   BCC loc_E3DF
@@ -5566,7 +5566,7 @@ INCLUDE "vars.asm"
   STA VISITS_BOTTOM_RIGHT
 
 .loc_E434
-  LDX byte_9D
+  LDX BONUS_AVAILABLE
   BEQ loc_E448 ; Branch if 9D = 0 "Bonus target"
   DEX:BEQ loc_E468 ; Branch if 9D = 1 "Goddess mask"
   DEX:BEQ loc_E47D ; Branch if 9D = 2 "Nakamoto-san"
@@ -5579,11 +5579,11 @@ INCLUDE "vars.asm"
 ; Reveal the exit and walk over it without defeating any enemies
 .loc_E448 ; 9D = 0 "Bonus target"
   LDA ENEMIES_DEFEATED
-  BNE locret_E467 ; Skip if 9E != 0
+  BNE locret_E467 ; Skip if any enemies killed
   LDA byte_9F
   BEQ locret_E467 ; Skip if 9F == 0
 
-.loc_E450
+.PLACE_BONUS
   LDA byte_A8
   BNE locret_E467 ; Skip if A8 != 0
   LDA #1:STA byte_A8
@@ -5599,74 +5599,74 @@ INCLUDE "vars.asm"
 ; Defeat every enemy and circle the outer ring of the level
 .loc_E468 ; 9D = 1 "Goddess mask"
   LDA ENEMIES_LEFT
-  BNE locret_E467 ; Skip if 9C != 0
+  BNE locret_E467 ; Skip if any enemies left
   LDA VISITS_TOP_LEFT
-  BEQ locret_E467 ; Skip if A0 == 0
+  BEQ locret_E467 ; Skip if not visited top left
   LDA VISITS_TOP_RIGHT
-  BEQ locret_E467 ; Skip if A1 == 0
+  BEQ locret_E467 ; Skip if not visited top right
   LDA VISITS_BOTTOM_LEFT
-  BEQ locret_E467 ; Skip if A2 == 0
+  BEQ locret_E467 ; Skip if not visited bottom left
   LDA VISITS_BOTTOM_RIGHT
-  BNE loc_E450 ; Skip if A3 != 0
+  BNE PLACE_BONUS ; Place bonus if bottom right visited 
   RTS
 ; ---------------------------------------------------------------------------
 
 ; Kill every enemy without blowing up any walls
 .loc_E47D ; 9D = 2 "Nakamoto-san"
   LDA ENEMIES_LEFT
-  BNE locret_E467 ; Skip if 9C != 0
+  BNE locret_E467 ; Skip if any enemies left
   LDA BRICKS_BLOWN_UP
-  BEQ loc_E450 ; Skip if A4 != 0
+  BEQ PLACE_BONUS ; Place bonus if no bricks blown up
   RTS
 ; ---------------------------------------------------------------------------
 
-; Kill every enemy, then create 248 chain reactions with your bombs (one chain reaction = one bomb detonating another)
+; Create 248 or more chain reactions with your bombs (one chain reaction = one bomb detonating another)
 .loc_E486 ; 9D = 3 "Famicom"
   LDA CHAIN_REACTIONS
   CMP #248
-  BCS loc_E450 ; Skip if A5 < 248
+  BCS PLACE_BONUS ; Place bonus if 248 or more chain reactions
   RTS
 ; ---------------------------------------------------------------------------
 
-; Reveal the exit, walk over it, and don't let go of the d pad for 16.5 seconds while making sure not to defeat any enemies
+; Reveal the exit, walk over it, and don't let go of the d pad for at least 16.5 seconds [while making sure not to defeat any enemies]
 .loc_E48D ; 9D = 4 "Cola bottle"
   LDA byte_9F
-  BEQ locret_E467 ; Skip if 9F == 0
+  BEQ locret_E467 ; Skip if 9F = 0
   LDA byte_A6
   CMP #248
-  BCS loc_E450 ; Skip if A6 < 248
+  BCS PLACE_BONUS ; Place bonus if A6 >= 248
   RTS
 ; ---------------------------------------------------------------------------
 
 ; Destroy every wall and bomb the exit thrice while making sure not to defeat any enemies (including those that come out of the door)
 .loc_E498 ; 9D = 5 "Dezeniman-san"
   LDA ENEMIES_DEFEATED
-  BNE locret_E467 ; Skip if 9E != 0
+  BNE locret_E467 ; Skip if any enemies have been killed
 
   LDA STAGE:ASL A:CLC:ADC #50
   CMP BRICKS_BLOWN_UP
-  BEQ loc_E4A8 ; Branch if A4 != (STAGE * 2) + 50
-  BCS locret_E467 ; Skip if A4 >= above
+  BEQ loc_E4A8 ; Branch if bricks blown up = (STAGE * 2) + 50
+  BCS locret_E467 ; Skip if bricks blown up >= above
 
 .loc_E4A8
   LDA byte_A7
   CMP #3
-  BEQ loc_E450 ; Skip if A7 != 3
+  BEQ PLACE_BONUS ; Place bonus if A7 = 3
   RTS
 
 
 ; =============== S U B R O U T I N E =======================================
-; Calculate which bonus item can be acheived for current level
+; Calculate which bonus item can be achieved for current level
 
 .sub_E4AF
   LDA STAGE
   AND #7
   CMP #6
-  BCC loc_E4B9 ; < 6
-  AND #1
+  BCC loc_E4B9 ; IF (STAGE & 7) < 6 skip
+  AND #1 ; Restrict bonus item to 0 or 1
 
 .loc_E4B9
-  STA byte_9D
+  STA BONUS_AVAILABLE
   RTS
 
 ; ---------------------------------------------------------------------------
