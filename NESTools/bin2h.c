@@ -5,10 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ROWLEN      16
-#define HEX1        "&"
-#define HEX2        ""
-#define LINEPRE     "    EQUB    "
+#define ROWLEN      16                      // Byte per string
+#define HEX1        "&"                     // HEX numbers prefix (0x0A)
+#define HEX2        ""                      // HEX numbers suffix (0Ah)
+#define LINEPRE     "    EQUB    "          // Line prefix (usually an assembler directive like DB)
 
 void usage (void)
 {
