@@ -14,7 +14,7 @@ INCLUDE "vars.asm"
 
   LDX #&FF:TXS ; Clear stack
 
-; Add 2 VBlank, for PPU stabilization
+; Add 2 VBlanks, for PPU stabilization
 .WAIT_VBLANK1
   LDA PPU_STATUS
   BPL WAIT_VBLANK1
@@ -33,12 +33,12 @@ INCLUDE "vars.asm"
   TYA
   PHA
   LDX #0
-  STX FRAMEDONE   ; Cancel the start of the frame
+  STX FRAMEDONE   ; Cancel waiting for the start of the frame
   STX PPU_SPR_ADDR
   LDA STAGE_STARTED
   BEQ SEND_SPRITES
-  LDA #25
-  STA SPR_TAB
+  LDA #25     ; Draw a small one at the top right of the screen
+  STA SPR_TAB ; Apparently used for debugging (forgot to remove)
   LDA #&EC
   STA SPR_TAB+1
   LDA #0
@@ -49,12 +49,12 @@ INCLUDE "vars.asm"
 .SEND_SPRITES
   LDA #7
   STA PPU_SPR_DMA
-  LDX #9
+  LDX #9 ; Draw tiles from a circular buffer
   STX TILE_CNT
   BNE DRAW_NEXT_TILE
 
 .DRAW_TILES
-  LDA TILE_TAB+2,Y
+  LDA TILE_TAB+2,Y ; Draw new tiles to the end of the buffer, but no more than TILE_CNT pieces
   ORA TILE_TAB,Y
   PHA
   STA PPU_ADDRESS
@@ -332,7 +332,7 @@ INCLUDE "vars.asm"
   STA TILE_CUR
   STA TILE_PTR
   STA V_SCROLL
-  JSR SPRD        ; Send to the screen
+  JSR SPRD        ; Hide sprites
   JSR PPUD
   JSR WAITVBL
   JSR PAL_RESET
@@ -382,26 +382,25 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; *** Needs fixing, this is the output from a translate ***
-; How does the setting of the files come up.
-; All in the game washes up to 16 standard samples (10 monitors, bunked and boosted points)
-; The custom image consists of 4 sizes and is 16x16 in size.
-; The table of advices is conditionally divided into two parts: separate and odd frames.
-; This video is made so that you can change the time of the lights.
-; The search engine image is displayed in semicircles (initially left 8x16, right),
-; just like they are symmetric.
-; The special variable SPR_TAB_TOGGLE every day assigns a value 0 -> 5 -> 0 ...
-; and then select which one SPR_TAB should be used for.
-; The display in SPR_TAB for the current run-time display is displayed as follows:
-; TEMP = SPR_TAB_INDEX++ + SPR_TAB_TOGGLE   <-- Index starts from 1.
-; TEMP = TEMP >= 12 ? TEMP - 10 : TEMP      <-- Limit the index to 12
-; Y = 16 * TEMP                             <-- *16 easy to read from 4 screens
-; It’s a little strange, but it’s just a little bit out of the way, just like it’s done.
-; For example - on the screen, there are bombs and 10 monitors. The TEMP value will be
-; DUAL frames: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+; How sprites are drawn.
+; In total, there can be up to 16 sprite images in the game (10 monsters, bombermen, and items)
+; The sprite image consists of 4 sprites and is 16x16 in size.
+; The sprite table is conventionally divided into two parts: for even and odd frames.
+; This was done apparently in order to reduce the flickering of sprites.
+; The sprite image is drawn in halves (first, the left 8x16, then the right),
+; since they are symmetrical.
+; The special variable SPR_TAB_TOGGLE takes values 0 -> 5 -> 0 ...
+; and thus chooses which half of the SPR_TAB to use for rendering.
+; In general, the offset in SPR_TAB for the current sprite image is calculated as follows:
+; TEMP = SPR_TAB_INDEX++ + SPR_TAB_TOGGLE   <-- The index starts at 1.
+; TEMP = TEMP >= 12 ? TEMP - 10 : TEMP      <-- Limit index to 12
+; Y = 16 * TEMP                             <-- multiply by 16 because a metasprite consists of 4 sprites
+; Which is a little strange, but what to take, how they did it, and it is.
+; For example, there is Bomberman and 10 monsters on the screen. The TEMP value will be
+; For even frames: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
 ; For odd frames: 6, 7, 8, 9, 10, 11, 2, 3, 4, 5, 6
-; (For odd cadres, run the battery, use the monitor
-; The bomber box will flash when on the screen of several windows).
+; (For odd frames, the Bomberman sprites will be overwritten by the monster's sprites and as a result,
+; the Bomberman picture will flash when there are many sprites on the screen.)
 
 
 .SENDSPR
@@ -442,7 +441,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; Send to the screen
+; Hide sprites
 
 .SPRD
   LDY #&1C
@@ -660,7 +659,7 @@ INCLUDE "vars.asm"
   BNE loc_C3A3
   LDA CURSOR
   BEQ loc_C3A3
-  JSR sub_DA8E ; Password entry screen
+  JSR READ_PASSWORD ; Password entry screen
 
 .loc_C3A3
   LDA #NO:STA INMENU
@@ -767,9 +766,9 @@ INCLUDE "vars.asm"
 
 .STAGE_LOOP
   JSR PAUSED      ; Check for START being pressed, if so pause
-  JSR SPRD        ; Send sprites to screen
+  JSR SPRD        ; Hide sprites
   JSR sub_CC36    ; Process button presses
-  JSR BOMB_TICK   ; Timer operations
+  JSR BOMB_TICK   ; Bomb timer operations and explosion initiation
   JSR DRAW_BOMBERMAN  ; Draw bomberman
   JSR THINK       ; Enemy movements
   JSR BOMB_ANIMATE    ; Animate on-screen bombs
@@ -783,8 +782,8 @@ INCLUDE "vars.asm"
   ; Limit next function calls to 1 frame out of 4
   LDA FRAME_CNT:AND #3:BNE STAGE_LOOP
 
-  JSR sub_C79D
-  JSR sub_C66C
+  JSR sub_C79D ; Drawing explosions?
+  JSR sub_C66C ; Explosion hit detection?
   JMP STAGE_LOOP
 ; ---------------------------------------------------------------------------
 
@@ -887,7 +886,7 @@ INCLUDE "vars.asm"
   DEY
   CPY #8
   BCC SELECT_STAGE_TYPE
-  LDY #8      ; Type of control limit 1 ... 8
+  LDY #8      ; Type of monster limited to 1 ... 8
 
 .SELECT_STAGE_TYPE
   STY BONUS_ENEMY_TYPE
@@ -907,8 +906,8 @@ INCLUDE "vars.asm"
 
   JSR VBLD
   JSR BUILD_CONCRETE_WALLS ; Build level
-  JSR SPAWN       ; Spawn enemies
-  JSR PICTURE_ON  ; Turn on screen and display
+  JSR SPAWN       ; Spawn enemies and bomberman
+  JSR PICTURE_ON  ; Turn on screen and sprites
   JSR STAGE_CLEANUP
 
   ; Play melody 6
@@ -925,7 +924,7 @@ INCLUDE "vars.asm"
   JSR PAUSED      ; Check for START pressed, if so pause
   LDA TIMELEFT
   BEQ BONUS_STAGE_END ; Check for running out of time
-  JSR SPRD        ; Send to the screen
+  JSR SPRD        ; Hide sprites
   JSR RESPAWN_BONUS_ENEMY ; Respawn if < 10 enemies
   JSR sub_CC36    ; Process button presses
   JSR BOMB_TICK   ; Bomb timer
@@ -937,8 +936,8 @@ INCLUDE "vars.asm"
   ; Limit following functions to every other frame
   LDA FRAME_CNT:AND #1:BNE BONUS_STAGE_LOOP
 
-  JSR sub_C79D
-  JSR sub_C66C
+  JSR sub_C79D ; Draw explosions?
+  JSR sub_C66C ; Explosion hit detection?
   JMP BONUS_STAGE_LOOP
 ; ---------------------------------------------------------------------------
 
@@ -979,7 +978,7 @@ INCLUDE "vars.asm"
   JSR NEXTFRAME
   LDA #1
   STA SPR_TAB_INDEX
-  JSR SPRD        ; Send to the screen
+  JSR SPRD        ; Hide sprites
   JSR DRAW_BOMBERMAN  ; Draw bomberman
   LDA FRAME_CNT
   ROR A
@@ -995,7 +994,7 @@ INCLUDE "vars.asm"
   JSR NEXTFRAME
   LDA #1
   STA SPR_TAB_INDEX
-  JSR SPRD        ; Send to the screen
+  JSR SPRD        ; Hide sprites
   JSR sub_CEA7
   LDA FRAME_CNT
   ROR A
@@ -1076,7 +1075,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; Check for START being pressed, if so pause
+; Check for START being pressed, if so pause and wait for START to be released
 
 .PAUSED
   JSR NEXTFRAME
@@ -1168,7 +1167,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; Triggering for a call ?? Check translation
+; Explosion hit detection
 
 .sub_C66C
   LDX #&4F
@@ -1616,7 +1615,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; Bring up all bombs
+; Detonate all active bombs
 
 .DETONATE
   LDX #MAX_BOMB-1
@@ -1652,7 +1651,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; Bomb timer operation
+; Bomb timer operation and explosion inititation
 
 .BOMB_TICK
   LDX #MAX_BOMB-1
@@ -1787,7 +1786,7 @@ INCLUDE "vars.asm"
   LDA BOMB_Y,X
   STA byte_20
   LDA BOMB_TIME_ELAPSED,X
-  AND #&F     ; Animation
+  AND #&F     ; Animation delay
   BNE BOMB_ANIM_NEXT
   LDA BOMB_TIME_ELAPSED,X
   LSR A
@@ -1979,7 +1978,7 @@ INCLUDE "vars.asm"
   LDA byte_20
   CMP #13
   BNE loc_CB17
-  JSR TIME_AND_LIFE   ; Arrange the lines "TIME" and "LEFT XX"
+  JSR TIME_AND_LIFE   ; Draw the lines "TIME" and "LEFT XX" in the status bar
   JMP PPU_RESTORE
 
 
@@ -2133,7 +2132,7 @@ INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------------
 .EXIT_ENEMY_TAB
-  EQUB   2,  1,  5,  3,  1,  1,  2,  5,  6,  4 ; ; This table contains the type of monsters that are placed from the door after the explosion
+  EQUB   2,  1,  5,  3,  1,  1,  2,  5,  6,  4 ; This table contains the type of monsters that are placed from the door after the explosion
   EQUB   1,  1,  5,  6,  2,  4,  1,  6,  1,  5
   EQUB   6,  5,  1,  5,  6,  8,  2,  1,  5,  7
   EQUB   4,  1,  5,  8,  6,  7,  5,  2,  4,  8
@@ -2861,7 +2860,8 @@ INCLUDE "vars.asm"
 .loc_CFCF
   ASL A
   TAY
-  JSR ENEMY_SAVE
+  JSR ENEMY_SAVE ; Cache current monster attributes
+
   LDA #&CF
   PHA
   LDA #&E2
@@ -2872,7 +2872,7 @@ INCLUDE "vars.asm"
   PHA
   RTS
 ; ---------------------------------------------------------------------------
-  JSR ENEMY_LOAD
+  JSR ENEMY_LOAD ; Restore current monster attributes after THINK proc
   JSR loc_D006
 
 .THINK_NEXT
@@ -3136,7 +3136,7 @@ INCLUDE "vars.asm"
   EQUB &14,&28
 
 ; =============== S U B R O U T I N E =======================================
-
+; Cache monster X attributes
 .ENEMY_SAVE
 {
   STX M_ID
@@ -3158,7 +3158,7 @@ INCLUDE "vars.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
-
+; Restore monster X attributes
 .ENEMY_LOAD
 {
   LDX M_ID
@@ -3181,14 +3181,14 @@ INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------------
 .THINK_PROC
-  EQUW THINK_0-1
-  EQUW THINK_1-1
-  EQUW THINK_2-1
-  EQUW THINK_3-1
-  EQUW THINK_4-1
-  EQUW THINK_5-1
-  EQUW THINK_6-1
-  EQUW THINK_7-1
+  EQUW THINK_0-1 ; Valcom (Balloon)
+  EQUW THINK_1-1 ; O'Neal (Onion)
+  EQUW THINK_2-1 ; Dahl (Barrel)
+  EQUW THINK_3-1 ; Minvo (Happy face)
+  EQUW THINK_4-1 ; Doria (Blob)
+  EQUW THINK_5-1 ; Ovape (Ghost)
+  EQUW THINK_6-1 ; Pass (Tiger)
+  EQUW THINK_7-1 ; Pontan (Coin)
   EQUW THINK_8-1
   EQUW THINK_9-1
   EQUW THINK_A-1
@@ -3263,7 +3263,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_4
-  LDA #&10
+  LDA #&10 ; Doria
   LDY #&13
   JSR sub_D5DA
   JSR sub_D37E
@@ -3277,7 +3277,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_2
-  LDA #8
+  LDA #8 ; Dahl
   LDY #&B
   JSR sub_D5DA
   JSR sub_D37E
@@ -3298,7 +3298,7 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_1
-  LDA #4
+  LDA #4 ; O'Neal
   LDY #7
   JSR sub_D5DA
   JSR sub_D37E
@@ -3315,7 +3315,7 @@ INCLUDE "vars.asm"
   JMP loc_D33F
 ; ---------------------------------------------------------------------------
 .THINK_3
-  LDA #&C
+  LDA #&C ; Minvo
   LDY #&F
   JSR sub_D5DA
   JSR sub_D37E
@@ -3331,12 +3331,12 @@ INCLUDE "vars.asm"
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_5
-  LDA #20
+  LDA #20 ; Ovape
   LDY #23
   JMP loc_D325
 ; ---------------------------------------------------------------------------
 .THINK_0
-  LDA #0
+  LDA #0 ; Valcom
   LDY #3
 
 .loc_D325
@@ -3416,7 +3416,7 @@ INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------------
 .THINK_7
-  LDA #&1C
+  LDA #&1C ; Pontan
   LDY #&1F
   JSR sub_D5DA
   LDY #0
@@ -3430,7 +3430,7 @@ INCLUDE "vars.asm"
   JMP loc_D3AB
 ; ---------------------------------------------------------------------------
 .THINK_6
-  LDA #&18
+  LDA #&18 ; Pass
   LDY #&1B
   JSR sub_D5DA
   JSR sub_D37E
@@ -3518,7 +3518,7 @@ INCLUDE "vars.asm"
   LDA M_X
   CMP BOMBMAN_X
   LDA #1
-  BCC FACE_RIGHT  ; IF BX > MX, flip right, or first flip left
+  BCC FACE_RIGHT  ; IF BX > MX, go right, otherwise go left
   LDA #3
 
 .FACE_RIGHT
@@ -3540,7 +3540,7 @@ INCLUDE "vars.asm"
   LDA M_Y
   CMP BOMBMAN_Y
   LDA #4
-  BCC FACE_DOWN   ; IF BY > MY, then flip down, or first flip up
+  BCC FACE_DOWN   ; IF BY > MY, then go down, otherwise go up
   LDA #2
 
 .FACE_DOWN
@@ -3646,7 +3646,7 @@ INCLUDE "vars.asm"
 
 .BRICK_WALL
   LDA M_TYPE
-  CMP #5      ; Enemies 5/6/8 can walk through brick walls
+  CMP #5      ; Enemies 5/6/8 (Doria/Ovape/Pontan) can walk through brick walls
   BEQ locret_D4BF
   CMP #6
   BEQ locret_D4BF
@@ -3655,7 +3655,7 @@ INCLUDE "vars.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-
+; Take a step with this enemy (gaze direction in A)
 
 .STEP_MONSTER
   LDX #0
@@ -3924,20 +3924,23 @@ INCLUDE "vars.asm"
   ASL A
   ASL A
   TAY
-  LDA SPR_ATTR
+  LDA SPR_ATTR ; Check for horizontal flip
   BNE loc_D622
-  JSR SPR_WRITE_OBJ_HALF
+  ; Going left (not flipped)
+  JSR SPR_WRITE_OBJ_HALF ; Writes one of the halves (8x16) of the sprite
   INC SPR_ID
   JMP loc_D629
 ; ---------------------------------------------------------------------------
 
 .loc_D622
+  ; Going right (horizontally flipped)
   INC SPR_ID
-  JSR SPR_WRITE_OBJ_HALF
+  JSR SPR_WRITE_OBJ_HALF ; Writes one of the halves (8x16) of the sprite
   DEC SPR_ID
 
 .loc_D629
-  JSR SPR_WRITE_OBJ_HALF
+  ; Other half
+  JSR SPR_WRITE_OBJ_HALF ; Writes one of the halves (8x16) of the sprite
   LDX SPR_SAVEDX
   LDY SPR_SAVEDY
   RTS
@@ -4101,8 +4104,8 @@ INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------------
 
-; Table of monsters' operation at every one of the 50 levels
-; On the stage, there is a maximum of up to 10 monsters
+; Table of monster types for every one of the 50 levels
+; On each stage, there is up to 10 monsters
 
 .MONSTER_TAB
   EQUB    1, 1, 1, 1, 1, 1, 0, 0, 0, 0
@@ -4379,7 +4382,7 @@ INCLUDE "vars.asm"
 ; Password entry screen
 
 
-.sub_DA8E
+.READ_PASSWORD
   JSR PPUD
   JSR VBLD
   JSR SETSTAGEPAL
@@ -4594,7 +4597,7 @@ INCLUDE "vars.asm"
   BEQ loc_DBCF ; Branch if password[19] (checksum 4) = A
 
 .loc_DBCC
-  JMP sub_DA8E ; Read password all over again
+  JMP READ_PASSWORD ; Read password all over again
 ; ---------------------------------------------------------------------------
 ; Valid password has been entered
 
@@ -4759,7 +4762,7 @@ INCLUDE "vars.asm"
   LDX #8
 
 .loc_DD50
-  LDA aRevoEmag,X ; "REVO:EMAG"
+  LDA aRevoEmag,X ; "REVO:EMAG" ("GAME OVER" backwards)
   STA PPU_DATA
   DEX
   BPL loc_DD50
@@ -4854,7 +4857,7 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; Arrange the lines "TIME" and "LEFT XX"
+; Draw the lines "TIME" and "LEFT XX" in the status bar
 
 .TIME_AND_LIFE
 
@@ -4877,7 +4880,7 @@ INCLUDE "vars.asm"
   LDX #3
 
 .loc_DDE1
-  LDA aEmit,X     ; "EMIT"
+  LDA aEmit,X     ; "EMIT" ("TIME" backwards)
   STA PPU_DATA
   DEX
   BPL loc_DDE1
@@ -4900,13 +4903,13 @@ INCLUDE "vars.asm"
   LDX #3
 
 .loc_DE07
-  LDA aTfel,X     ; "TFEL"
+  LDA aTfel,X     ; "TFEL" ("LEFT" backwards)
   STA PPU_DATA
   DEX
   BPL loc_DE07
 
   LDA LIFELEFT
-  JMP PUTNUMBER   ; Print number in A
+  JMP PUTNUMBER   ; Print 2-digit number in A
 
 ; ---------------------------------------------------------------------------
 .aEmit
@@ -4931,7 +4934,7 @@ INCLUDE "vars.asm"
   LDX #4
 
 .PUT_STAGE_STR
-  LDA aEgats,X    ; "EGATS"
+  LDA aEgats,X    ; "EGATS" ("STAGE" backwards)
   STA PPU_DATA
   DEX
   BPL PUT_STAGE_STR
@@ -4967,7 +4970,7 @@ INCLUDE "vars.asm"
   LDX #&A
 
 .PUT_BONUS_MSG
-  LDA aEgatsSunob,X   ; "EGATS:SUNOB"
+  LDA aEgatsSunob,X   ; "EGATS:SUNOB" ("BONUS STAGE" backwards)
   STA PPU_DATA
   DEX
   BPL PUT_BONUS_MSG
@@ -5135,23 +5138,23 @@ INCLUDE "vars.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-; Print number in A.
+; Print 2-digit number in A.
 
 .PUTNUMBER
   LDY #'0'
   SEC         ; Convert to number 0 to 9
 
 .DECADES
-  SBC #10     ; Number of days in Y
+  SBC #10     ; Number of tens in Y
   BCC DONE_DECADES
   INY
-  BNE DECADES     ; Number of days in Y
+  BNE DECADES     ; Number of tens in Y
 
 .DONE_DECADES
   ADC #&3A ; ':'
-  CPY #'0'      ; From 0 to 9
+  CPY #'0'      ; If the number is single-digit (from 0 to 9) add leading space
   BNE PUTNUMB2
-  LDY #&3A ; ':'      ; &3A - This was a problem
+  LDY #&3A ; ':' - This is a space
 
 .PUTNUMB2
   STY PPU_DATA
