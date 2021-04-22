@@ -730,7 +730,7 @@ INCLUDE "vars.asm"
 
 .START_STAGE
   LDA #0
-  STA byte_B1
+  STA NO_ENEMIES_CELEBRATED
   STA byte_A8
   STA STAGE_STARTED
 
@@ -1713,8 +1713,8 @@ INCLUDE "vars.asm"
 
 .sub_C9B6
   ; Cache X and Y regs
-  STX byte_2F
-  STY byte_30
+  STX TEMP_X2
+  STY TEMP_Y2
 
   TAY
   LDA byte_C9DE,Y ; Load from lookup table
@@ -1727,8 +1727,8 @@ INCLUDE "vars.asm"
   LDA #0:JSR sub_C9E3
 
   ; Restore X and Y regs
-  LDX byte_2F
-  LDY byte_30
+  LDX TEMP_X2
+  LDY TEMP_Y2
 
   RTS
 
@@ -1742,7 +1742,7 @@ INCLUDE "vars.asm"
 .sub_C9E3
   CMP byte_2E
   BEQ BOMB_TICK_END
-  STA byte_31
+  STA TEMP_A2
   TAX
   LDY #&4F
   JSR sub_CBE5
@@ -1755,7 +1755,7 @@ INCLUDE "vars.asm"
   CLC
   ADC byte_CA16,X
   STA FIRE_X,Y
-  LDA byte_31
+  LDA TEMP_A2
   STA byte_4D6,Y
   STA byte_526,Y
   LDA #1
@@ -2301,7 +2301,7 @@ INCLUDE "vars.asm"
   LDA BOMBMAN_Y:STA BOMB_Y,X
 
   LDA #0:STA BOMB_TIME_ELAPSED,X
-  LDA #0:STA byte_3C8,X
+  LDA #0:STA BOMB_UNUSED,X
   LDA #160:STA BOMB_TIME_LEFT,X
 
   ; Set bomb as enabled
@@ -2453,7 +2453,7 @@ INCLUDE "vars.asm"
   LDA #&40 ; Flip sprite horizontally
 
 .loc_CE06
-  STA byte_2D
+  STA SPR_ATTR_TEMP
   LDA #0
   LDY #3
   JMP loc_CE2E
@@ -2562,7 +2562,7 @@ INCLUDE "vars.asm"
   LDA BOMBMAN_FRAME
   CMP #19
   BCS INCORRECT_FRAMENUM
-  LDA byte_2D
+  LDA SPR_ATTR_TEMP
   STA SPR_ATTR
   LDY #0
   STY SPR_COL
@@ -2613,7 +2613,7 @@ INCLUDE "vars.asm"
 
 
 .sub_CEA7
-  LDA byte_2D
+  LDA SPR_ATTR_TEMP
   STA SPR_ATTR
   LDY #3
   STY SPR_COL
@@ -4511,7 +4511,7 @@ INCLUDE "vars.asm"
   AND #&F
   TAX             ; X = current char & 0x0F
   LDA byte_DFA0,X ; Use lookup for current char
-  STA unk_7F,Y    ; Store this in 0x7F to 0x92
+  STA PW_BUFF,Y    ; Store this in 0x7F to 0x92
   JSR WAITVBL
 
   ; Set screen position for next character to be written
@@ -4537,14 +4537,14 @@ INCLUDE "vars.asm"
   STX SEED
 
 .loc_DB7E
-  LDA unk_7F,X ; Load password[X]
+  LDA PW_BUFF,X ; Load password[X]
   PHA
   CLC
   ADC #7
   CLC
   ADC SEED
   AND #&F
-  STA unk_7F,X ; Save decoded char back to password[X]
+  STA PW_BUFF,X ; Save decoded char back to password[X]
   PLA
   STA SEED
   INX
@@ -4559,29 +4559,29 @@ INCLUDE "vars.asm"
 
 .loc_DB99
   CLC
-  ADC unk_7F,X
+  ADC PW_BUFF,X
   INX
   DEY
   BNE loc_DB99 ; Loop until Y=0 (4 times)
   AND #&F
-  CMP unk_7F,X
+  CMP PW_BUFF,X
   BNE loc_DBCC ; Branch if password[X] != A
 
   INX
   CPX #&F
   BNE loc_DB95 ; Branch if X != $F
 
-  LDA byte_83 ; Load password[4] (checksum 1)
+  LDA PW_BUFF+4 ; Load password[4] (checksum 1)
   ASL A
   STA byte_1F
 
-  LDA byte_88 ; Load password[9] (checksum 2)
+  LDA PW_BUFF+9 ; Load password[9] (checksum 2)
   ASL A
   CLC
   ADC byte_1F
   STA byte_1F
 
-  LDA byte_8D ; Load password[14] (checksum 3 ?)
+  LDA PW_BUFF+14 ; Load password[14] (checksum 3 ?)
   ASL A
   CLC
   ADC byte_1F
@@ -4589,11 +4589,11 @@ INCLUDE "vars.asm"
 
 .loc_DBC0
   CLC
-  ADC byte_8D,X
+  ADC PW_BUFF+14,X
   DEX
   BNE loc_DBC0
   AND #&F
-  CMP byte_92
+  CMP PW_BUFF+19
   BEQ loc_DBCF ; Branch if password[19] (checksum 4) = A
 
 .loc_DBCC
@@ -4607,7 +4607,7 @@ INCLUDE "vars.asm"
 
 .loc_DBD3
   JSR _get_pass_data_var_addr
-  LDA unk_7F,Y
+  LDA PW_BUFF,Y
   STY TEMP_Y
 
   ; Clear password data address offset
@@ -4619,11 +4619,11 @@ INCLUDE "vars.asm"
   BNE loc_DBD3
 
   ; Determine bomb radius
-  LDA byte_DC:ASL A:ASL A:ASL A:ASL A
+  LDA BOMB_PWR:ASL A:ASL A:ASL A:ASL A
   STA BONUS_POWER
 
   ; Determine stage number
-  LDA byte_DE:ASL A:ASL A:ASL A:ASL A:ORA byte_DD
+  LDA STAGE_HI:ASL A:ASL A:ASL A:ASL A:ORA STAGE_LO
   STA STAGE
 
   RTS
@@ -4735,7 +4735,7 @@ INCLUDE "vars.asm"
   LDY #4
 
 .loc_DD15
-  LDA byte_DD22,X
+  LDA STAGE_LO22,X
   STA PPU_DATA
   INX
   DEY
@@ -4743,7 +4743,7 @@ INCLUDE "vars.asm"
   JMP VRAMADDRZ
 
 ; ---------------------------------------------------------------------------
-.byte_DD22
+.STAGE_LO22
   EQUB  &F,  0,  0,  0, &F,  0,  0,  0, &F,  0,  0,  0, &F,  0,  0,  0
   EQUB  &F,  0,  0,  0, &F,  0,  0,  0, &F,&15,&36,&21
 
@@ -5334,18 +5334,18 @@ INCLUDE "vars.asm"
   LSR A
   LSR A
   LSR A
-  STA byte_DC
+  STA BOMB_PWR
 
   LDA STAGE
   AND #&F
-  STA byte_DD
+  STA STAGE_LO
 
   LDA STAGE
   LSR A
   LSR A
   LSR A
   LSR A
-  STA byte_DE
+  STA STAGE_HI
 
   LDY #0
   LDX #0
@@ -5450,8 +5450,8 @@ INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------------
 ._pass_data_vars
-  EQUW   SCORE+6,  BONUS_REMOTE,  byte_DD,  SCORE,  byte_99,  SCORE+5,  byte_DC,  SCORE+3,  BONUS_FIRESUIT,  byte_9A
-  EQUW   BONUS_BOMBS,  SCORE+2,  BONUS_SPEED,  SCORE+1,  byte_9B,  SCORE+4,  DEBUG,  byte_DE,  BONUS_NOCLIP,  byte_95
+  EQUW   SCORE+6,  BONUS_REMOTE,  STAGE_LO,  SCORE,  byte_99,  SCORE+5,  BOMB_PWR,  SCORE+3,  BONUS_FIRESUIT,  byte_9A
+  EQUW   BONUS_BOMBS,  SCORE+2,  BONUS_SPEED,  SCORE+1,  byte_9B,  SCORE+4,  DEBUG,  STAGE_HI,  BONUS_NOCLIP,  byte_95
 
 .aAofkcpgelbhmjd
   EQUS "AOFKCPGELBHMJDNI"
@@ -5467,11 +5467,11 @@ INCLUDE "vars.asm"
 .sub_E399
   LDA ENEMIES_LEFT
   BNE loc_E3A7
-  LDA byte_B1
+  LDA NO_ENEMIES_CELEBRATED
   BNE loc_E3A7
-  INC byte_B1
+  INC NO_ENEMIES_CELEBRATED
 
-  ; Play sound 6
+  ; Play sound 6 to indicate we've just defeated all the enemies
   LDA #6:STA APU_SOUND
 
 .loc_E3A7

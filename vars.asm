@@ -37,16 +37,20 @@ byte_23             = &23
 TEMP_X              = &24
 TEMP_Y              = &25
 word_26             = &26
+
 BOMBMAN_X           = &28
 BOMBMAN_U           = &29
 BOMBMAN_Y           = &2A
 BOMBMAN_V           = &2B
 BOMBMAN_FRAME       = &2C
-byte_2D             = &2D
+
+SPR_ATTR_TEMP       = &2D
 byte_2E             = &2E
-byte_2F             = &2F
-byte_30             = &30
-byte_31             = &31
+
+TEMP_X2             = &2F
+TEMP_Y2             = &30
+TEMP_A2             = &31
+
 byte_32             = &32
 FRAME_CNT           = &33
 STAGE_MAP           = &34
@@ -60,6 +64,7 @@ SPR_ATTR            = &3D
 SPR_ID              = &3E
 SPR_SAVEDX          = &3F
 SPR_SAVEDY          = &40
+
 M_TYPE              = &41
 M_X                 = &42
 M_U                 = &43
@@ -73,12 +78,14 @@ M_FACE              = &4A
 byte_4B             = &4B
 byte_4C             = &4C
 M_ID                = &4D
+
 byte_4E             = &4E
 byte_4F             = &4F
 byte_50             = &50
 byte_51             = &51
 byte_52             = &52
 byte_53             = &53
+
 SEED                = &54
 STAGE               = &58
 DEMOPLAY            = &59
@@ -120,14 +127,9 @@ INVUL_UNK1          = &7A
 LAST_INPUT          = &7B
 INVUL_UNK2          = &7D
 BONUS_ENEMY_TYPE    = &7E
+
 ; Password is stored here (20 bytes) .. $92
-unk_7F              = &7F
-unk_80              = &80
-byte_83             = &83
-byte_87             = &87
-byte_88             = &88
-byte_8D             = &8D
-byte_92             = &92
+PW_BUFF             = &7F
 
 ; Time in seconds left to play
 TIMELEFT            = &93
@@ -160,7 +162,8 @@ DEMOKEY_TIMEOUT     = &AE ; Current DEMO key timeout
 DEMOKEY_PAD1        = &AF ; Current DEMO pad state
 
 byte_B0             = &B0
-byte_B1             = &B1
+NO_ENEMIES_CELEBRATED = &B1
+
 APU_DISABLE         = &B2
 APU_CHAN            = &B3
 APU_TEMP            = &B4
@@ -209,13 +212,12 @@ APU_SWEEP           = &D9
 SPR_TAB_TOGGLE      = &DB
 
 ; Used for BONUS_POWER calculations with resume codes
-byte_DC             = &DC
+BOMB_PWR             = &DC
 
 ; Used for low byte of STAGE in resume codes
-byte_DD             = &DD
-
+STAGE_LO             = &DD
 ; Used for high byte of STAGE in resume codes
-byte_DE             = &DE
+STAGE_HI             = &DE
 
 APU_SOUND           = &DF
 APU_PATTERN         = &E0
@@ -233,7 +235,7 @@ BOMB_ACTIVE         = &03A0
 BOMB_X              = &03AA
 BOMB_Y              = &03B4
 BOMB_TIME_LEFT      = &03BE
-byte_3C8            = &03C8
+BOMB_UNUSED         = &03C8
 BOMB_TIME_ELAPSED   = &03D2
 
 FIRE_ACTIVE         = &03E6
