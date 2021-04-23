@@ -227,7 +227,7 @@ APU_SOUND_MOD       = &E1
 APU_SDELAY          = &E4
 
 ; Lower memory ($0100-$07FF).
-_passworf_buffer    = &0180
+password_buffer    = &0180
 stage_buffer        = &0200
 
 ; Bomb vars (up to 10 bombs)
@@ -238,11 +238,13 @@ BOMB_TIME_LEFT      = &03BE
 BOMB_UNUSED         = &03C8
 BOMB_TIME_ELAPSED   = &03D2
 
+; Fire vars (up to 80 flames)
 FIRE_ACTIVE         = &03E6
 FIRE_X              = &0436
 FIRE_Y              = &0486
 byte_4D6            = &04D6
 byte_526            = &0526
+
 ENEMY_TYPE          = &0576
 ENEMY_X             = &0580
 ENEMY_U             = &058A
@@ -255,6 +257,7 @@ byte_5C6            = &05C6
 ENEMY_FACE          = &05D0
 byte_5DA            = &05DA
 byte_5E4            = &05E4
-TILE_TAB            = &0600
-SPR_TAB             = &0700
 
+TILE_TAB            = &0600
+
+SPR_TAB             = &0700

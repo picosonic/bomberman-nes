@@ -239,48 +239,54 @@ INCLUDE "vars.asm"
   RTI
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Set graphics pointer to absolute address in A:X
 .VRAMADDR
+{
   STA PPU_ADDRESS
   STX PPU_ADDRESS
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .PAD_READ
+{
   JSR PAD_STROBE
-  LDA JOYPAD1
-  STA PAD1_TEST
-  LDA JOYPAD2
-  STA PAD2_TEST
+
+  LDA JOYPAD1:STA PAD1_TEST
+  LDA JOYPAD2:STA PAD2_TEST
+
   JSR PAD_STROBE
+
   LDA JOYPAD1
   CMP PAD1_TEST
   BNE PAD_DRE
+
   LDA JOYPAD2
   CMP PAD2_TEST
   BNE PAD_DRE
+
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
 .PAD_DRE
+{
   LDA #0
-  STA JOYPAD1
-  STA JOYPAD2
-  RTS
+  STA JOYPAD1:STA JOYPAD2
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 
 
 .PAD_STROBE
-  LDA #1
-  STA JOYPAD_PORT1
-  LDA #0
-  STA JOYPAD_PORT1
+{
+  LDA #1:STA JOYPAD_PORT1
+  LDA #0:STA JOYPAD_PORT1
+
   TAX
   LDY #8
 
@@ -292,6 +298,7 @@ INCLUDE "vars.asm"
   JSR IS_PRESSED
   BNE JOY1
   STX JOYPAD1
+
   LDX #0
   LDY #8
 
@@ -303,20 +310,24 @@ INCLUDE "vars.asm"
   JSR IS_PRESSED
   BNE JOY2
   STX JOYPAD2
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 
-
 .IS_PRESSED
+{
   AND #3
   BEQ NOT_PRESSED
+
   INX
 
 .NOT_PRESSED
   DEY
+
   RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -339,9 +350,10 @@ INCLUDE "vars.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-
-
+; Clear screen
 .CLS
+{
+  ; Set VRAM address to &2000
   LDA #&20:LDX #0
   JSR VRAMADDR
 
@@ -355,6 +367,7 @@ INCLUDE "vars.asm"
   DEY
   BNE CLEAR_NT
 
+  ; Set VRAM address to &23C0
   LDA #&23:LDX #&C0
   JSR VRAMADDR
 
@@ -365,20 +378,24 @@ INCLUDE "vars.asm"
   STA PPU_DATA
   DEX
   BNE CLEAR_AT
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 
-
 .PPUE
+{
   JSR VBLD
-  JSR WAITVBL
-  LDA #&E
-  JSR WRITE2001
-  JSR SENDSPR
-  JMP VBLE
 
+  JSR WAITVBL
+
+  LDA #&E:JSR WRITE2001
+
+  JSR SENDSPR
+
+  JMP VBLE
+}
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -402,48 +419,46 @@ INCLUDE "vars.asm"
 ; (For odd frames, the Bomberman sprites will be overwritten by the monster's sprites and as a result,
 ; the Bomberman picture will flash when there are many sprites on the screen.)
 
-
 .SENDSPR
-  LDA #0
-  STA PPU_SPR_ADDR
-  LDA #7
-  STA PPU_SPR_DMA
-  RTS
+{
+  LDA #0:STA PPU_SPR_ADDR
+  LDA #7:STA PPU_SPR_DMA
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 
 .PPUD
+{
   JSR WAITVBL
+
   LDA #0
 
-
 ; =============== S U B R O U T I N E =======================================
 
-
-.WRITE2001
+.^WRITE2001
   STA PPU_CTRL_REG2
 
-.WRITE2001_2
+.^WRITE2001_2
   STA LAST_2001
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 
-
 .SPRE
+{
   LDA LAST_2001
   ORA #&10
   BNE WRITE2001_2
-
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Hide sprites
 
-.SPRD
+.^SPRD
   LDY #&1C
   LDA #248
 
@@ -461,26 +476,28 @@ INCLUDE "vars.asm"
   DEY
   DEY
   BPL SETATTR
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
+; Wait for vertical blank (top bit of PPU_STATUS)
 .WAITVBL
+{
   LDA PPU_STATUS
-  BMI WAITVBL
+  BMI WAITVBL ; Wait for vblank start (line 241)
 
 .WAITVBL2
   LDA PPU_STATUS
-  BPL WAITVBL2
-  RTS
+  BPL WAITVBL2 ; Wait for vblank to be cleared
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 
-
 .PPU_RESTORE
+{
   LDA LAST_2001
   STA PPU_CTRL_REG2
 
@@ -490,80 +507,95 @@ INCLUDE "vars.asm"
   LDA #0
   STA PPU_SCROLL_REG
   STA PPU_SCROLL_REG
-  LDA LAST_2000
-  STA PPU_CTRL_REG1
-  RTS
 
+  LDA LAST_2000:STA PPU_CTRL_REG1
+
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 
-
 .VBLE
+{
   JSR WAITVBL
   LDA LAST_2000
   ORA #&80
   BNE WRITE2000
 
-
 ; =============== S U B R O U T I N E =======================================
 
-
-.VBLD
+.^VBLD
   LDA LAST_2000
   AND #&7F
 
 .WRITE2000
   STA LAST_2000
   STA PPU_CTRL_REG1
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
+; Reset the full colour palette
 .PAL_RESET
+{
+  ; Point to palette RAM
   LDA #&3F:LDX #0
   JSR VRAMADDR
 
+  ; Copy palette data
   LDY #32
 
-.PAL_RESET_LOOP
+.loop
   LDA STARTPAL,X
   STA PPU_DATA
+
   INX
   DEY
-  BNE PAL_RESET_LOOP
-
+  BNE loop
 
 ; =============== S U B R O U T I N E =======================================
 
-
-.VRAMADDRZ
+.^VRAMADDRZ
   LDA #&3F
   STA PPU_ADDRESS
+
   LDA #0
   STA PPU_ADDRESS
   STA PPU_ADDRESS
   STA PPU_ADDRESS
   RTS
 
-; ---------------------------------------------------------------------------
 .STARTPAL
-  EQUB &19, &F,&10,&30,&19,&16,&26,&36,&19, &F,&18,&28,&19, &F,&17,  7
-  EQUB &19,&30,&21,&26,&19, &F,&26,&30,&19, &F,&15,&30,&19, &F,&21,&30
+  EQUB &19 ; Universal background colour
+  EQUB &F,&10,&30  ; Background palette 0
+  EQUB &19
+  EQUB &16,&26,&36 ; Background palette 1
+  EQUB &19
+  EQUB &F,&18,&28  ; Background palette 2
+  EQUB &19
+  EQUB &F,&17,  7  ; Background palette 3
+  EQUB &19
+  EQUB &30,&21,&26 ; Sprite palette 0
+  EQUB &19
+  EQUB &F,&26,&30  ; Sprite palette 1
+  EQUB &19
+  EQUB &F,&15,&30  ; Sprite palette 2
+  EQUB &19
+  EQUB &F,&21,&30  ; Sprite palette 3
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Wait until nothing pressed on joypad 1
-
 .WAITUNPRESS
+{
   LDA JOYPAD1
   BNE WAITUNPRESS ; Keep waiting - something is pressed
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 
 .START
   LDY #0
@@ -4164,16 +4196,18 @@ INCLUDE "vars.asm"
 ; Add a new tile to TILE_TAB
 
 .DRAW_TILE
+{
   STX TEMP_X
   STY TEMP_Y
   PHA
 
-.loc_D901
+.loop
   LDA TILE_CUR
   SEC
   SBC TILE_PTR
   CMP #8
-  BEQ loc_D901
+  BEQ loop
+
   PLA
   JSR sub_D924
   LDY TILE_PTR
@@ -4190,6 +4224,7 @@ INCLUDE "vars.asm"
   LDX TEMP_X
   LDY TEMP_Y
   RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -5393,7 +5428,7 @@ INCLUDE "vars.asm"
   SEC
   SBC #7
   AND #&F
-  STA _passworf_buffer,X
+  STA password_buffer,X
   STA SEED
   CPX #&28
   BNE loc_E30A
@@ -5405,7 +5440,7 @@ INCLUDE "vars.asm"
   LDX #2
 
 .loc_E32B
-  LDA _passworf_buffer,X
+  LDA password_buffer,X
   TAY
   LDA aAofkcpgelbhmjd,Y ; "AOFKCPGELBHMJDNI"
   STA PPU_DATA
