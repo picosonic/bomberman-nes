@@ -363,6 +363,7 @@
 ; ---------------------------------------------------------------------------
 
 .UPDATE_SOUND
+{
   LDA APU_PATTERN
   CMP #7
   BCS WRONG_SOUND
@@ -373,158 +374,151 @@
   LDA CONST_SOUND_TAB,X
   PHA
 
-.WRONG_SOUND
+.^WRONG_SOUND
   RTS
+}
 
 ; ---------------------------------------------------------------------------
 .MOD_SOUND_TAB
-  EQUW APU_RESET-1   ; Bring up the state of the APU
-  EQUW S1_START-1
-  EQUW S2_START-1
-  EQUW S3_START-1
-  EQUW S4_START-1
-  EQUW S5_START-1
-  EQUW S6_START-1
+  EQUW APU_RESET-1 ; 0 Reset APU
+  EQUW S1_START-1  ; 1 Bomberman footsteps 1
+  EQUW S2_START-1  ; 2 Bomberman footsteps 2
+  EQUW S3_START-1  ; 3 Place a bomb
+  EQUW S4_START-1  ; 4 Bonus collected
+  EQUW S5_START-1  ; 5 Collision between enemy and bomberman
+  EQUW S6_START-1  ; 6 Pause/Unpause and all enemies defeated
+
 .CONST_SOUND_TAB
-  EQUW WRONG_SOUND-1
-  EQUW WRONG_SOUND-1
-  EQUW WRONG_SOUND-1
-  EQUW S3_UPDATE-1
-  EQUW S4_UPDATE-1
-  EQUW WRONG_SOUND-1
-  EQUW S6_UPDATE-1
+  EQUW WRONG_SOUND-1 ; 0
+  EQUW WRONG_SOUND-1 ; 1
+  EQUW WRONG_SOUND-1 ; 2
+  EQUW S3_UPDATE-1   ; 3
+  EQUW S4_UPDATE-1   ; 4
+  EQUW WRONG_SOUND-1 ; 5
+  EQUW S6_UPDATE-1   ; 6
 ; ---------------------------------------------------------------------------
 
 .S1_START
+{
   LDA #4
-  BNE loc_E6CF
+  BNE loc_E6CF ; Always branch to skip S2_START
 
-.S2_START
+.^S2_START
   LDA #&C
 
 .loc_E6CF
   STA APU_NOISE_REG+2
-  LDA #0
-  STA APU_PATTERN
+  LDA #0:STA APU_PATTERN
   STA APU_NOISE_REG
-  LDA #&10
-  STA APU_NOISE_REG+3
+  LDA #&10:STA APU_NOISE_REG+3
+
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
 .S3_START
-  LDA #&10
-  STA APU_SOUND_MOD+1
-  LDA #1
-  STA APU_NOISE_REG
-  LDA #&F
-  STA APU_NOISE_REG+2
-  LDA #&10
-  STA APU_NOISE_REG+3
-  LDA #&FF
-  STA APU_SQUARE2_REG
-  LDA #&84
-  STA APU_SQUARE2_REG+1
-  LDA #0
-  STA APU_SQUARE2_REG+2
-  LDA #2
-  STA APU_SQUARE2_REG+3
-  LDA #4
-  STA APU_SDELAY
+{
+  LDA #&10:STA APU_SOUND_MOD+1
+  LDA #1:STA APU_NOISE_REG
+  LDA #&F:STA APU_NOISE_REG+2
+  LDA #&10:STA APU_NOISE_REG+3
+  LDA #&FF:STA APU_SQUARE2_REG
+  LDA #&84:STA APU_SQUARE2_REG+1
+  LDA #0:STA APU_SQUARE2_REG+2
+  LDA #2:STA APU_SQUARE2_REG+3
+  LDA #4:STA APU_SDELAY
+
   RTS
+}
 ; ---------------------------------------------------------------------------
 
 .S3_UPDATE
+{
   DEC APU_SDELAY
-  BNE locret_E727
-  LDA #&DF
-  STA APU_SQUARE2_REG
-  LDA #&84
-  STA APU_SQUARE2_REG+1
-  LDA #0
-  STA APU_SQUARE2_REG+2
-  LDA #&81
-  STA APU_SQUARE2_REG+3
-  LDA #0
-  STA APU_PATTERN
+  BNE done
 
-.locret_E727
+  LDA #&DF:STA APU_SQUARE2_REG
+  LDA #&84:STA APU_SQUARE2_REG+1
+  LDA #0:STA APU_SQUARE2_REG+2
+  LDA #&81:STA APU_SQUARE2_REG+3
+  LDA #0:STA APU_PATTERN
+
+.done
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
 .S4_START
-  LDA #&FF
-  STA APU_SOUND_MOD+1
-  LDA #0
-  STA APU_SDELAY
-  LDA #4
-  STA APU_SDELAY+1
+{
+  LDA #&FF:STA APU_SOUND_MOD+1
+  LDA #0:STA APU_SDELAY
+  LDA #4:STA APU_SDELAY+1
 
-.S4_UPDATE
+.^S4_UPDATE
   LDA APU_SDELAY
   BNE S4_PITCH1
+
   LDA APU_SDELAY+1
   BNE S4_PITCH2
+
   LDA #0
   STA APU_PATTERN
   STA APU_SOUND_MOD+1
+
   RTS
+
 ; ---------------------------------------------------------------------------
 
 .S4_PITCH2
   DEC APU_SDELAY+1
-  LDA #&84
-  STA APU_SQUARE2_REG
-  LDA #&8B
-  STA APU_SQUARE2_REG+1
+
+  LDA #&84:STA APU_SQUARE2_REG
+  LDA #&8B:STA APU_SQUARE2_REG+1
+
   LDX APU_SDELAY+1
-  LDA S4_PITCH_TAB,X
-  STA APU_SQUARE2_REG+2
-  LDA #&10
-  STA APU_SQUARE2_REG+3
-  LDA #4
-  STA APU_SDELAY
+
+  LDA S4_PITCH_TAB,X:STA APU_SQUARE2_REG+2
+  LDA #&10:STA APU_SQUARE2_REG+3
+  LDA #4:STA APU_SDELAY
 
 .S4_PITCH1
   DEC APU_SDELAY
   RTS
+
 ; ---------------------------------------------------------------------------
 .S4_PITCH_TAB
   EQUB &65,&87,&B4,&F0
-; ---------------------------------------------------------------------------
+}
 
 .S5_START
-  LDA #&30
-  STA APU_SOUND_MOD+1
-  LDA #9
-  STA APU_NOISE_REG
-  LDA #7
-  STA APU_NOISE_REG+2
-  LDA #&30
-  STA APU_NOISE_REG+3
-  LDA #&1F
-  STA APU_SQUARE2_REG
-  LDA #&8F
-  STA APU_SQUARE2_REG+1
-  LDA #0
-  STA APU_SQUARE2_REG+2
-  LDA #&33
-  STA APU_SQUARE2_REG+3
-  LDA #0
-  STA APU_PATTERN
+{
+  LDA #&30:STA APU_SOUND_MOD+1
+  LDA #9:STA APU_NOISE_REG
+  LDA #7:STA APU_NOISE_REG+2
+  LDA #&30:STA APU_NOISE_REG+3
+  LDA #&1F:STA APU_SQUARE2_REG
+  LDA #&8F:STA APU_SQUARE2_REG+1
+  LDA #0:STA APU_SQUARE2_REG+2
+  LDA #&33:STA APU_SQUARE2_REG+3
+  LDA #0:STA APU_PATTERN
+
   RTS
+}
 ; ---------------------------------------------------------------------------
 ; 6 = PAUSE / UNPAUSE
 
 .S6_START
-  LDA #&1D
-  STA APU_SDELAY
+{
+  LDA #&1D:STA APU_SDELAY
+
   LDA #&FF
   STA APU_SOUND_MOD+0
   STA APU_SOUND_MOD+1
   STA APU_SOUND_MOD+2
 
-.S6_UPDATE
+.^S6_UPDATE
   DEC APU_SDELAY
   BEQ S6_PITCH
   LDA APU_SDELAY
@@ -535,10 +529,13 @@
   LSR A
   AND #1
   TAX
+
   LDA S6_SQ1MOD_TAB,X
   STA APU_SQUARE1_REG+2
+
   LDA S6_SQ2MOD_TAB,X
   STA APU_SQUARE2_REG+2
+
   LDA #8
   STA APU_SQUARE1_REG
   STA APU_SQUARE2_REG
@@ -549,6 +546,7 @@
 
 .S6_END
   RTS
+
 ; ---------------------------------------------------------------------------
 
 .S6_PITCH
@@ -556,9 +554,12 @@
   STA APU_SOUND_MOD+0
   STA APU_SOUND_MOD+1
   STA APU_SOUND_MOD+2
+
   LDA #0
   STA APU_PATTERN
+
   RTS
+
 ; ---------------------------------------------------------------------------
 .S6_SQ1MOD_TAB
   EQUB &A9
@@ -567,18 +568,19 @@
 .S6_SQ2MOD_TAB
   EQUB &6A
   EQUB &64
+}
 
-; Wavelength for notes on an NTSC system
+; Wavelength for square wave notes on an NTSC system (triangle wave are one octave lower)
 .WAVELEN_TAB
   EQUW    0 ; Silence
-  ;       A    Bb     B     C    C#     D    D#     E     F    F#     G    G#
-  EQUW &7F0, &77E, &712, &6AE, &64E, &5F3, &59F, &54D, &501, &4B9, &475, &435 ; Octave 0
-  EQUW &3F8, &3BF, &389, &357, &327, &2F9, &2CF, &2A6, &280, &25C, &23A, &21A ; Octave 1
-  EQUW &1FC, &1DF, &1C4, &1AB, &193, &17C, &167, &152, &13F, &12D, &11C, &10C ; Octave 2
-  EQUW  &FD,  &EE,  &E1,  &D4,  &C8,  &BD,  &B2,  &A8,  &9F,  &96,  &8D,  &85 ; Octave 3
-  EQUW  &7E,  &76,  &70,  &69,  &63,  &5E,  &58,  &53,  &4F,  &4A,  &46,  &42 ; Octave 4
-  EQUW  &3E,  &3A,  &37,  &34,  &31,  &2E,  &2B,  &29,  &27,  &24,  &22,  &20 ; Octave 5
-  EQUW  &1E,  &1C,  &1B,  &1A                                                 ; Octave 6
+  ;       A    Bb     B     C    C#     D    D#     E     F    F#     G    G#   Scientific designation
+  EQUW &7F0, &77E, &712, &6AE, &64E, &5F3, &59F, &54D, &501, &4B9, &475, &435 ; Octave 2
+  EQUW &3F8, &3BF, &389, &357, &327, &2F9, &2CF, &2A6, &280, &25C, &23A, &21A ; Octave 3
+  EQUW &1FC, &1DF, &1C4, &1AB, &193, &17C, &167, &152, &13F, &12D, &11C, &10C ; Octave 4 (With middle C)
+  EQUW  &FD,  &EE,  &E1,  &D4,  &C8,  &BD,  &B2,  &A8,  &9F,  &96,  &8D,  &85 ; Octave 5
+  EQUW  &7E,  &76,  &70,  &69,  &63,  &5E,  &58,  &53,  &4F,  &4A,  &46,  &42 ; Octave 6
+  EQUW  &3E,  &3A,  &37,  &34,  &31,  &2E,  &2B,  &29,  &27,  &24,  &22,  &20 ; Octave 7
+  EQUW  &1E,  &1C,  &1B,  &1A                                                 ; Octave 8
 
 .APU_MELODIES_TAB
   EQUW TUNE1_TRI   , TUNE1_SQ2   ,  TUNE1_SQ1, &8080 ; 1: TITLE

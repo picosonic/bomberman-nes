@@ -1122,8 +1122,7 @@ INCLUDE "vars.asm"
   STA APU_DISABLE
 
   ; Play sound 6
-  LDA #6
-  STA APU_SOUND
+  LDA #6:STA APU_SOUND
 
   JSR WAITUNPRESS ; Wait for button to be released
 
@@ -1134,8 +1133,7 @@ INCLUDE "vars.asm"
   BEQ WAIT_START
 
   ; Play sound 6
-  LDA #6
-  STA APU_SOUND
+  LDA #6:STA APU_SOUND
 
   LDA #NO:STA APU_DISABLE
 
@@ -2211,17 +2209,18 @@ INCLUDE "vars.asm"
   LDA BOMBMAN_V
   CMP #SPR_HALFSIZE
   BNE loc_CCA4
-  LDY BOMBMAN_Y
-  STY byte_20
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
-  LDY BOMBMAN_X
-  STY byte_1F
+
+  LDY BOMBMAN_Y:STY byte_20
+
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
+  LDY BOMBMAN_X:STY byte_1F
+
   LDA (STAGE_MAP),Y
   CMP #MAP_EXIT
   BEQ loc_CC95
+
   CMP #MAP_BONUS
   BNE loc_CCA4
 
@@ -3002,7 +3001,7 @@ INCLUDE "vars.asm"
   CMP BOMBMAN_Y
   BNE locret_D08B
 
-  ; PLay sound 5
+  ; Play sound 5
   LDA #5:STA APU_SOUND
 
   LDA #1
