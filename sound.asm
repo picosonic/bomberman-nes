@@ -9,10 +9,9 @@
   RTS
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Play melody
-
 .APU_PLAY_MELODY
+{
   LDA APU_DISABLE
   BNE APU_ABORT
   LDA APU_MUSIC
@@ -87,13 +86,16 @@
   DEC &B6,X
   BEQ PLAY_CHANNEL
 
-.ADVANCE_CHANNEL
+.^ADVANCE_CHANNEL
   DEC APU_CHAN
   BPL NEXT_CHANNEL
+
   RTS
+}
 ; ---------------------------------------------------------------------------
 
 .PLAY_CHANNEL
+{
   TXA
   ASL A
   TAX
@@ -105,12 +107,12 @@
   BEQ ADVANCE_CHANNEL
   JSR APU_WRITE_REGS
   JMP ADVANCE_CHANNEL
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 
-
 .APU_WRITE_REGS
+{
   LDX APU_CHAN
   LDY APU_CNT,X
   LDA (APU_PTR),Y
@@ -173,6 +175,8 @@
   CMP #2
   BNE loc_E5AB
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
 .loc_E5AB
@@ -292,10 +296,9 @@
   JMP APU_WRITE_REGS
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Bring up the state of the APU
-
 .APU_RESET
+{
   LDA #0
   STA APU_DELTA_REG+1
   STA APU_CHAN_DIS
@@ -305,16 +308,17 @@
   STA APU_SQUARE2_REG
   STA APU_TRIANGLE_REG
   STA APU_NOISE_REG
+
   LDA #&F
   STA APU_MASTERCTRL_REG
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-; Play sound
-
+; Play sound effect
 .APU_PLAY_SOUND
+{
   LDX #2
 
 .MUTE_CHANNEL
@@ -354,6 +358,8 @@
   LDA MOD_SOUND_TAB,X
   PHA
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
 .UPDATE_SOUND
@@ -562,12 +568,17 @@
   EQUB &6A
   EQUB &64
 
+; Wavelength for notes on an NTSC system
 .WAVELEN_TAB
-  EQUW     0, &7F0, &77E, &712, &6AE, &64E, &5F3, &59F, &54D, &501, &4B9, &475, &435, &3F8, &3BF, &389
-  EQUW  &357, &327, &2F9, &2CF, &2A6, &280, &25C, &23A, &21A, &1FC, &1DF, &1C4, &1AB, &193, &17C, &167
-  EQUW  &152, &13F, &12D, &11C, &10C,  &FD,  &EE,  &E1,  &D4,  &C8,  &BD,  &B2,  &A8,  &9F,  &96,  &8D
-  EQUW   &85,  &7E,  &76,  &70,  &69,  &63,  &5E,  &58,  &53,  &4F,  &4A,  &46,  &42,  &3E,  &3A,  &37
-  EQUW   &34,  &31,  &2E,  &2B,  &29,  &27,  &24,  &22,  &20,  &1E,  &1C,  &1B,  &1A
+  EQUW    0 ; Silence
+  ;       A    Bb     B     C    C#     D    D#     E     F    F#     G    G#
+  EQUW &7F0, &77E, &712, &6AE, &64E, &5F3, &59F, &54D, &501, &4B9, &475, &435 ; Octave 0
+  EQUW &3F8, &3BF, &389, &357, &327, &2F9, &2CF, &2A6, &280, &25C, &23A, &21A ; Octave 1
+  EQUW &1FC, &1DF, &1C4, &1AB, &193, &17C, &167, &152, &13F, &12D, &11C, &10C ; Octave 2
+  EQUW  &FD,  &EE,  &E1,  &D4,  &C8,  &BD,  &B2,  &A8,  &9F,  &96,  &8D,  &85 ; Octave 3
+  EQUW  &7E,  &76,  &70,  &69,  &63,  &5E,  &58,  &53,  &4F,  &4A,  &46,  &42 ; Octave 4
+  EQUW  &3E,  &3A,  &37,  &34,  &31,  &2E,  &2B,  &29,  &27,  &24,  &22,  &20 ; Octave 5
+  EQUW  &1E,  &1C,  &1B,  &1A                                                 ; Octave 6
 
 .APU_MELODIES_TAB
   EQUW TUNE1_TRI   , TUNE1_SQ2   ,  TUNE1_SQ1, &8080 ; 1: TITLE
