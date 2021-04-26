@@ -2895,14 +2895,17 @@ INCLUDE "input.asm"
 .loc_D006
   LDA M_TYPE
   BEQ THINK_END
+
   CMP #11
   BEQ loc_D08C
+
   LDA byte_48
 
 .loc_D010
   STA SPR_ATTR
-  LDY #0
-  STY byte_50
+
+  LDY #0:STY byte_50
+
   LDA M_X
   ASL A
   ASL A
@@ -2912,26 +2915,33 @@ INCLUDE "input.asm"
   CLC
   ADC M_U
   STA byte_4F
+
   LDA byte_50
   ADC #0
   STA byte_50
+
   LDA byte_4F
   SEC
   SBC #8
   STA byte_4F
+
   LDA byte_50
   SBC #0
   STA byte_50
+
   LDA byte_4F
   SEC
   SBC H_SCROLL
   STA byte_4F
+
   LDA byte_50
   SBC #0
   BNE locret_D08B
+
   LDA byte_4F
   CMP #&F8
   BCS locret_D08B
+
   STA SPR_X
   LDA M_Y
   ASL A
@@ -2943,20 +2953,24 @@ INCLUDE "input.asm"
   ADC #&17
   STA SPR_Y
   LDY M_FRAME
-  LDA MONSTER_ATTR,Y
-  STA SPR_COL
+  LDA MONSTER_ATTR,Y:STA SPR_COL
   LDA MONSTER_TILE,Y
   JSR SPR_DRAW
+
   LDA M_FRAME
   CMP #&20
   BCS locret_D08B
+
   LDA byte_5C
   BNE locret_D08B
+
   LDA INVUL_UNK1
   BNE locret_D08B
+
   LDA M_X
   CMP BOMBMAN_X
   BNE locret_D08B
+
   LDA M_Y
   CMP BOMBMAN_Y
   BNE locret_D08B
@@ -3043,9 +3057,8 @@ INCLUDE "input.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_D0FA
+{
   LDA loc_D121,X
   BEQ loc_D11C
   PHA
@@ -3094,6 +3107,7 @@ INCLUDE "input.asm"
   EQUB &FD,&46,&46
   EQUB &FE,&46,&46
   EQUB &FF,&46,&46
+}
 
 .MONSTER_TILE
   ; Animation sprites (one set for each of the 8 monsters)
@@ -3120,6 +3134,7 @@ INCLUDE "input.asm"
   EQUB   3,  3,  3,  3,  2,  2,  2,  2,  1,  1,  1,  1,  1,  2,  1,  2
   EQUB   1,  3,  2,  1,  3,  2,  1,  1,  1,  1,  1,  1,  1,  0,  1,  2
   EQUB   3
+
 .MONSTER_ATTR2
   EQUB   1,  1,  2,  4,  8, &A,&14,&28,&50,&64,&C8,  2,  4,  5, &A
   EQUB &14,&28
@@ -3184,11 +3199,14 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 .THINK_A
+{
   DEC byte_49
   BNE locret_D2A2
   LDA #0
   STA M_TYPE
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 .THINK_9
   DEC byte_49
@@ -3235,17 +3253,18 @@ INCLUDE "input.asm"
   RTS
 ; ---------------------------------------------------------------------------
 .THINK_8
+{
   DEC byte_49
-  BNE locret_D2B3
-  LDA #10
-  STA M_TYPE
-  LDA #40
-  STA M_FRAME
-  LDA #20
-  STA byte_49
+  BNE done
 
-.locret_D2B3
+  LDA #10:STA M_TYPE
+  LDA #40:STA M_FRAME
+  LDA #20:STA byte_49
+
+.done
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
 .locret_D2B4
@@ -3254,11 +3273,14 @@ INCLUDE "input.asm"
 .THINK_4
   LDA #&10 ; Doria
   LDY #&13
+
   JSR sub_D5DA
   JSR sub_D37E
+
   LDA FRAME_CNT
   AND #3
   BNE locret_D2B4
+
   JMP loc_D310
 ; ---------------------------------------------------------------------------
 
@@ -3268,15 +3290,19 @@ INCLUDE "input.asm"
 .THINK_2
   LDA #8 ; Dahl
   LDY #&B
+
   JSR sub_D5DA
   JSR sub_D37E
+
   LDA FRAME_CNT
   AND #3
   BEQ locret_D2C8
+
   DEC byte_4C
   LDA byte_4C
   CMP #&96
   BCS loc_D2E4
+
   JSR TURN_HORIZONTALLY
 
 .loc_D2E4
@@ -3289,15 +3315,19 @@ INCLUDE "input.asm"
 .THINK_1
   LDA #4 ; O'Neal
   LDY #7
+
   JSR sub_D5DA
   JSR sub_D37E
+
   LDA FRAME_CNT
   AND #3
   BEQ locret_D2E7
+
   DEC byte_4C
   LDA byte_4C
   CMP #&96
   BCS loc_D303
+
   JSR TURN_VERTICALLY
 
 .loc_D303
@@ -3306,6 +3336,7 @@ INCLUDE "input.asm"
 .THINK_3
   LDA #&C ; Minvo
   LDY #&F
+
   JSR sub_D5DA
   JSR sub_D37E
 
@@ -3322,6 +3353,7 @@ INCLUDE "input.asm"
 .THINK_5
   LDA #20 ; Ovape
   LDY #23
+
   JMP loc_D325
 ; ---------------------------------------------------------------------------
 .THINK_0
@@ -3331,40 +3363,45 @@ INCLUDE "input.asm"
 .loc_D325
   JSR sub_D5DA
   JSR sub_D37E
+
   LDA FRAME_CNT
   AND #1
   BEQ THINK_SKIP
+
   DEC byte_4C
   LDA byte_4C
   CMP #20
 
 .loc_D337
   BCS loc_D33F
+
   JSR TURN_VERTICALLY
   JSR TURN_HORIZONTALLY
 
 .loc_D33F
   LDA byte_49
   BEQ loc_D365
+
   DEC byte_49
   LDA M_FACE
+
   JSR STEP_MONSTER
+
   BEQ locret_D364
+
   CMP #3
   BCC loc_D360
+
   LDY M_FACE
-  LDA byte_D412,Y
-  STA M_FACE
-  LDA #0
-  STA byte_4C
-  LDA #&60
-  STA byte_49
+  LDA byte_D412,Y:STA M_FACE
+  LDA #0:STA byte_4C
+  LDA #&60:STA byte_49
+
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_D360
-  LDA #0
-  STA byte_49
+  LDA #0:STA byte_49
 
 .locret_D364
   RTS
@@ -3372,6 +3409,7 @@ INCLUDE "input.asm"
 
 .loc_D365
   JSR RAND
+
   PHA
   AND #&18
   ASL A
@@ -3379,6 +3417,7 @@ INCLUDE "input.asm"
   CLC
   ADC #&20
   STA byte_49
+
   PLA
   ROL A
   ROL A
@@ -3387,31 +3426,37 @@ INCLUDE "input.asm"
   CLC
   ADC #1
   STA M_FACE
+
   RTS
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_D37E
+{
   LDY #0
   LDA M_FACE
   CMP #3
-  BCC loc_D388
+  BCC done
+
   LDY #&40
 
-.loc_D388
+.done
   STY byte_48
+
   RTS
+}
 
 ; ---------------------------------------------------------------------------
 .THINK_7
   LDA #&1C ; Pontan
   LDY #&1F
+
   JSR sub_D5DA
+
   LDY #0
   LDA M_FRAME
   CMP #&1D
   BNE loc_D39C
+
   LDY #&40
 
 .loc_D39C
@@ -3421,14 +3466,17 @@ INCLUDE "input.asm"
 .THINK_6
   LDA #&18 ; Pass
   LDY #&1B
+
   JSR sub_D5DA
   JSR sub_D37E
 
 .loc_D3AB
   LDA byte_4C
   BEQ loc_D3B4
+
   DEC byte_4C
   BNE loc_D3BA
+
   RTS
 ; ---------------------------------------------------------------------------
 
@@ -3443,8 +3491,7 @@ INCLUDE "input.asm"
   TAY
   LDA byte_D412+5,Y:STA byte_53
   TAY
-  LDA byte_D412+&F,Y
-  STA byte_52
+  LDA byte_D412+&F,Y:STA byte_52
   JSR sub_D454
   AND byte_52
   BEQ loc_D3E0
@@ -3454,14 +3501,15 @@ INCLUDE "input.asm"
   LDA #1
   EOR byte_4B
   STA byte_4B
-  LDA #0
-  STA byte_49
+
+  LDA #0:STA byte_49
 
 .loc_D3E0
   INC byte_49
   LDA byte_49
   CMP #&1F
   BCC loc_D3EE
+
   LDA #1
   EOR byte_4B
   STA byte_4B
@@ -3470,12 +3518,15 @@ INCLUDE "input.asm"
   LDA M_FACE
   JSR STEP_MONSTER
   BEQ locret_D405
+
   CMP #3
   BCS loc_D406
+
   INC M_FACE
   LDA M_FACE
   CMP #5
   BNE locret_D405
+
   LDA #1
   STA M_FACE
 
@@ -3484,11 +3535,9 @@ INCLUDE "input.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_D406
-  LDA #&60
-  STA byte_4C
+  LDA #&60:STA byte_4C
   LDY M_FACE
-  LDA byte_D412,Y
-  STA M_FACE
+  LDA byte_D412,Y:STA M_FACE
   RTS
 ; ---------------------------------------------------------------------------
 .byte_D412
@@ -3496,9 +3545,8 @@ INCLUDE "input.asm"
   EQUB   3,  1,  0,  1,  2,  4,  8
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .TURN_HORIZONTALLY
+{
   LDA byte_5C
   BNE NO_VTURN
 
@@ -3516,14 +3564,13 @@ INCLUDE "input.asm"
 .FACE_RIGHT
   STA M_FACE
 
-.NO_VTURN
+.^NO_VTURN
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .TURN_VERTICALLY
+{
   LDA byte_5C
   BNE NO_VTURN
 
@@ -3543,7 +3590,7 @@ INCLUDE "input.asm"
 
 .NO_HTURN
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -3617,9 +3664,8 @@ INCLUDE "input.asm"
   RTS
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .ENEMY_COLLISION
+{
   ; Look what's here on the map
   LDA (STAGE_MAP),Y
 
@@ -3639,9 +3685,11 @@ INCLUDE "input.asm"
   BEQ BRICK_WALL
 
   RTS
-; ---------------------------------------------------------------------------
+}
 
+; ---------------------------------------------------------------------------
 .BRICK_WALL
+{
   LDA M_TYPE
 
   CMP #5      ; Enemies 5/6/8 (Doria/Ovape/Pontan) can walk through brick walls
@@ -3652,12 +3700,12 @@ INCLUDE "input.asm"
 
   CMP #8
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Take a step with this enemy (gaze direction in A)
-
 .STEP_MONSTER
+{
   LDX #0:STX byte_4E
 
   TAX
@@ -3670,212 +3718,231 @@ INCLUDE "input.asm"
   TXA
   CMP #3
   BNE CASE_NOT_LEFT
+
   JSR STEP_ENEMY_LEFT
 
 .CASE_NOT_LEFT
   TXA
   CMP #2
   BNE CASE_NOT_UP
+
   JSR STEP_ENEMY_UP
 
 .CASE_NOT_UP
   TXA
   CMP #4
   BNE CASE_NOT_DOWN
+
   JSR STEP_ENEMY_DOWN
 
 .CASE_NOT_DOWN
   LDA byte_4E
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .STEP_ENEMY_DOWN
+{
   LDA M_V
   CMP #SPR_HALFSIZE
   BCS loc_D50E
+
   INC M_V
+
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_D50E
   LDY M_Y
   INY
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY M_X
   JSR ENEMY_COLLISION
   BNE loc_D534
+
   JSR sub_D5BC
+
   INC M_V
   LDA M_V
   CMP #16
   BNE locret_D533
-  LDA #0
-  STA M_V
+
+  LDA #0:STA M_V
   INC M_Y
 
 .locret_D533
   RTS
+
 ; ---------------------------------------------------------------------------
 
-.loc_D534
+.^loc_D534
   STA byte_4E
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .STEP_ENEMY_UP
+{
   LDA M_V
   CMP #9
   BCC loc_D540
+
   DEC M_V
+
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_D540
   LDY M_Y
   DEY
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY M_X
   JSR ENEMY_COLLISION
   BNE loc_D534
+
   JSR sub_D5BC
   DEC M_V
   BPL locret_D561
-  LDA #&F
-  STA M_V
+
+  LDA #&F:STA M_V
   DEC M_Y
 
 .locret_D561
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .STEP_ENEMY_LEFT
+{
   LDA M_U
   CMP #9
   BCC loc_D56B
+
   DEC M_U
+
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_D56B
   LDY M_Y
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY M_X
   DEY
   JSR ENEMY_COLLISION
   BNE loc_D534
+
   JSR sub_D5CB
   DEC M_U
   BPL locret_D58C
-  LDA #&F
-  STA M_U
+
+  LDA #&F:STA M_U
   DEC M_X
 
 .locret_D58C
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .STEP_ENEMY_RIGHT
+{
   LDA M_U
   CMP #SPR_HALFSIZE
   BCS loc_D596
+
   INC M_U
+
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_D596
   LDY M_Y
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY M_X
   INY
   JSR ENEMY_COLLISION
   BNE loc_D534
+
   JSR sub_D5CB
   INC M_U
   LDA M_U
   CMP #16
   BNE locret_D5BB
-  LDA #0
-  STA M_U
+
+  LDA #0:STA M_U
   INC M_X
 
 .locret_D5BB
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_D5BC
+{
   LDA M_U
   CMP #SPR_HALFSIZE
   BCC loc_D5C7
-  BEQ locret_D5CA
+  BEQ done
+
   DEC M_U
+
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_D5C7
   INC M_U
-  RTS
+
+  RTS ; *** Not needed ***
 ; ---------------------------------------------------------------------------
 
-.locret_D5CA
+.done
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_D5CB
+{
   LDA M_V
   CMP #SPR_HALFSIZE
   BCC loc_D5D6
-  BEQ locret_D5D9
+  BEQ done
+
   DEC M_V
+
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_D5D6
   INC M_V
-  RTS
+
+  RTS ; *** Not needed ***
 ; ---------------------------------------------------------------------------
 
-.locret_D5D9
+.done
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_D5DA
+{
   PHA
   LDA FRAME_CNT
   AND #7
   BNE loc_D5F0
+
   PLA
   INC M_FRAME
   CMP M_FRAME
@@ -3883,40 +3950,46 @@ INCLUDE "input.asm"
 
 .loc_D5E8
   STA M_FRAME
+
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_D5EB
   CPY M_FRAME
   BCC loc_D5E8
+
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_D5F0
   PLA
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 .SPR_DRAW
+{
   STX SPR_SAVEDX
   STY SPR_SAVEDY
+
   ASL A
   PHA
   AND #&E
   STA SPR_ID
   PLA
+
   ASL A
   AND #&E0
   ORA SPR_ID
   STA SPR_ID
+
   LDA SPR_TAB_INDEX
   INC SPR_TAB_INDEX
   CLC
   ADC SPR_TAB_TOGGLE
   CMP #12
   BCC INDEX_UNBOUND
+
   SBC #10
 
 .INDEX_UNBOUND
@@ -3927,9 +4000,11 @@ INCLUDE "input.asm"
   TAY
   LDA SPR_ATTR ; Check for horizontal flip
   BNE loc_D622
+
   ; Going left (not flipped)
   JSR SPR_WRITE_OBJ_HALF ; Writes one of the halves (8x16) of the sprite
   INC SPR_ID
+
   JMP loc_D629
 ; ---------------------------------------------------------------------------
 
@@ -3942,14 +4017,16 @@ INCLUDE "input.asm"
 .loc_D629
   ; Other half
   JSR SPR_WRITE_OBJ_HALF ; Writes one of the halves (8x16) of the sprite
+
   LDX SPR_SAVEDX
   LDY SPR_SAVEDY
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 .SPR_WRITE_OBJ_HALF
+{
   ; Upper half of sprite
   LDA SPR_Y ; OAM byte 0 (Y position)
   STA SPR_TAB,Y
@@ -3996,12 +4073,11 @@ INCLUDE "input.asm"
   STA SPR_X
 
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .RAND
+{
   LDA SEED
   ROL A
   ROL A
@@ -4011,6 +4087,7 @@ INCLUDE "input.asm"
   EOR #&93
   ADC SEED+1
   STA SEED
+
   ROL A
   ROL A
   EOR #&12
@@ -4018,9 +4095,11 @@ INCLUDE "input.asm"
   ROL A
   ADC SEED+2
   STA SEED+1
+
   ADC SEED
   INC SEED+2
   BNE RAND2
+
   PHA
   LDA SEED+3
   CLC
@@ -4031,15 +4110,15 @@ INCLUDE "input.asm"
 .RAND2
   EOR SEED+3
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .SPAWN_MONSTERS
+{
   LDA STAGE
   CMP #&1A
   BCC loc_D6A8
+
   SBC #&19
   LDX #2
   LDY #&D8
@@ -4056,6 +4135,7 @@ INCLUDE "input.asm"
   SBC #1
   ASL A
   STA TEMP_X
+
   ASL A
   ASL A
   CLC
@@ -4064,22 +4144,26 @@ INCLUDE "input.asm"
   LDX #MAX_ENEMY-1
 
 .loc_D6BE
-  LDA (MTAB_PTR),Y
-  STA ENEMY_TYPE,X
+  LDA (MTAB_PTR),Y:STA ENEMY_TYPE,X
   BEQ loc_D703
+
   SEC
   SBC #1
   ASL A
   ASL A
   STA ENEMY_FRAME,X
+
   LDA #SPR_HALFSIZE
   STA ENEMY_U,X
   STA ENEMY_V,X
+
   JSR RAND
+
   AND #3
   CLC
   ADC #1
   STA ENEMY_FACE,X
+
   STY TEMP_Y3
 
 .loc_D6E2
@@ -4107,6 +4191,7 @@ INCLUDE "input.asm"
   BPL loc_D6BE
 
   RTS
+}
 
 ; ---------------------------------------------------------------------------
 
@@ -4173,6 +4258,7 @@ INCLUDE "input.asm"
 {
   STX TEMP_X
   STY TEMP_Y
+
   PHA
 
 .loop
@@ -4183,27 +4269,30 @@ INCLUDE "input.asm"
   BEQ loop
 
   PLA
+
   JSR sub_D924
+
   LDY TILE_PTR
   LDX #0
 
 .COPY_TILE
-  LDA byte_17,X
-  STA TILE_TAB,Y
+  LDA byte_17,X:STA TILE_TAB,Y
+
   INY
   INX
   CPX #8
   BNE COPY_TILE
+
   STY TILE_PTR
   LDX TEMP_X
   LDY TEMP_Y
+
   RTS
 }
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_D924
+{
   TAY
   ASL A
   ASL A
@@ -4334,6 +4423,7 @@ INCLUDE "input.asm"
   EQUB   2
   EQUB   2
   EQUB   3
+}
 
 .TILE_MAP
   EQUB &5F,&5F,&5F,&5F
@@ -4389,8 +4479,6 @@ INCLUDE "input.asm"
 
 ; =============== S U B R O U T I N E =======================================
 ; Password entry screen
-
-
 .READ_PASSWORD
   JSR PPUD
   JSR VBLD
