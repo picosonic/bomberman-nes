@@ -812,6 +812,7 @@ INCLUDE "input.asm"
   LDA byte_B0
   AND #3
   BEQ loc_C4D2
+
   JMP GAME_MENU
 ; ---------------------------------------------------------------------------
 
@@ -843,9 +844,11 @@ INCLUDE "input.asm"
   SEC
   SBC #5
   BCS SELECT_BONUS_MONSTER
+
   DEY
   CPY #8
   BCC SELECT_STAGE_TYPE
+
   LDY #8      ; Type of monster limited to 1 ... 8
 
 .SELECT_STAGE_TYPE
@@ -853,6 +856,7 @@ INCLUDE "input.asm"
   ADC #5
   CMP #1
   BEQ START_BONUS_STAGE
+
   JMP START_STAGE
 ; ---------------------------------------------------------------------------
 
@@ -884,6 +888,7 @@ INCLUDE "input.asm"
   JSR PAUSED      ; Check for START pressed, if so pause
   LDA TIMELEFT
   BEQ BONUS_STAGE_END ; Check for running out of time
+
   JSR SPRD        ; Hide sprites
   JSR RESPAWN_BONUS_ENEMY ; Respawn if < 10 enemies
   JSR sub_CC36    ; Process button presses
@@ -1018,13 +1023,14 @@ INCLUDE "input.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Wait for current melody to finish
-
 .WAITTUNE
+{
   LDA APU_MUSIC
   BNE WAITTUNE
+
   RTS
+}
 
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR PAUSED
@@ -1075,10 +1081,9 @@ INCLUDE "input.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Change the time by 1 second (common level)
-
 .STAGE_TIMER
+{
   ; Limit this function to roughly once per second (64 frames)
   LDA FRAME_CNT:AND #&3F:BNE STAGE_TIMER_END
 
@@ -1101,15 +1106,14 @@ INCLUDE "input.asm"
   JMP RESPAWN_BONUS_ENEMY
 ; ---------------------------------------------------------------------------
 
-.STAGE_TIMER_END
+.^STAGE_TIMER_END
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Change the time by 1 second (bonus level)
-
 .BONUS_STAGE_TIMER
+{
   ; Limit this function to roughly once per second (64 frames)
   LDA FRAME_CNT:AND #&3F:BNE STAGE_TIMER_END
 
@@ -1120,7 +1124,7 @@ INCLUDE "input.asm"
   DEC TIMELEFT
 
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -1135,26 +1139,28 @@ INCLUDE "input.asm"
   BPL loc_C688
   AND #&7F
   TAY
-  LDA FIRE_X,X
-  STA byte_1F
-  LDA FIRE_Y,X
-  STA byte_20
+
+  LDA FIRE_X,X:STA byte_1F
+  LDA FIRE_Y,X:STA byte_20
+
   LDA byte_C75D,Y
   JMP loc_C6DA
 ; ---------------------------------------------------------------------------
 
 .loc_C688
-  LDA FIRE_X,X
-  STA byte_1F
-  LDA FIRE_Y,X
-  STA byte_20
+  LDA FIRE_X,X:STA byte_1F
+  LDA FIRE_Y,X:STA byte_20
+
   LDA byte_526,X
   AND #&78
   BEQ loc_C6CD
+
   LDA byte_526,X
   BPL loc_C6B2
+
   AND #7
   STA byte_32
+
   LDA byte_526,X
   LSR A
   AND #&3C
@@ -1202,16 +1208,21 @@ INCLUDE "input.asm"
 .loc_C6DA
   AND #&FF
   BEQ loc_C753
+
   JSR DRAW_TILE   ; Add a new tile to TILE_TAB
   LDA byte_5C
   BNE loc_C705
+
   LDA BONUS_FIRESUIT
   BNE loc_C705
+
   LDA INVUL_UNK1
   BNE loc_C705
+
   LDA BOMBMAN_X
   CMP byte_1F
   BNE loc_C705
+
   LDA BOMBMAN_Y
   CMP byte_20
   BNE loc_C705
@@ -1219,11 +1230,9 @@ INCLUDE "input.asm"
   ; Collision between this enemy and bomberman, play sound 5
   LDA #5:STA APU_SOUND
 
-  LDA #1
-  STA byte_5C
+  LDA #1:STA byte_5C
 
-  LDA #12
-  STA BOMBMAN_FRAME
+  LDA #12:STA BOMBMAN_FRAME
 
 .loc_C705
   LDY #MAX_ENEMY-1
@@ -1231,14 +1240,18 @@ INCLUDE "input.asm"
 .loc_C707
   LDA ENEMY_TYPE,Y
   BEQ loc_C74E
+
   CMP #9
   BCS loc_C74E
+
   LDA ENEMY_X,Y
   CMP byte_1F
   BNE loc_C74E
+
   LDA ENEMY_Y,Y
   CMP byte_20
   BNE loc_C74E
+
   INC ENEMIES_DEFEATED
 
   ; Reset visit counters
@@ -1318,17 +1331,18 @@ INCLUDE "input.asm"
 
 .loc_C7A7
   PHA
-  LDY FIRE_Y,X
-  STY byte_20
+  LDY FIRE_Y,X:STY byte_20
   JSR FIX_STAGE_PTR   ; Set pointer to level data
-  LDY FIRE_X,X
-  STY byte_1F
+  LDY FIRE_X,X:STY byte_1F
   PLA
+
   BPL loc_C7CB
+
   INC FIRE_ACTIVE,X
   LDA FIRE_ACTIVE,X
   CMP #&87
   BNE loc_C7A4
+
   LDA #MAP_EMPTY
   STA FIRE_ACTIVE,X
   STA (STAGE_MAP),Y
@@ -1338,30 +1352,37 @@ INCLUDE "input.asm"
   LDA (STAGE_MAP),Y
   TAY
   BEQ loc_C838
+
   CPY #MAP_BRICK
   BNE loc_C7DE
+
   INC BRICKS_BLOWN_UP
-  LDA #&80
-  STA FIRE_ACTIVE,X
+
+  LDA #&80:STA FIRE_ACTIVE,X
+
   JMP loc_C8A6
 ; ---------------------------------------------------------------------------
 
 .loc_C7DE
   CPY #MAP_BOMB
   BNE loc_C7EE
+
   LDA byte_4D6,X
   ORA #&10
   LDY byte_1F
   STA (STAGE_MAP),Y
+
   JMP loc_C830
 ; ---------------------------------------------------------------------------
 
 .loc_C7EE
   CPY #MAP_HIDDEN_EXIT ; Was this the hidden exit door?
   BNE loc_C800
+
   LDY byte_1F
   LDA #MAP_EXIT ; Place exit door here
   STA (STAGE_MAP),Y
+
   LDA #&28
   JSR DRAW_TILE   ; Add a new tile to TILE_TAB
   JMP loc_C830
@@ -1373,6 +1394,7 @@ INCLUDE "input.asm"
   LDY byte_1F
   LDA #MAP_BONUS ; Place bonus here
   STA (STAGE_MAP),Y
+
   LDA #&28
   CLC
   ADC EXIT_ENEMY_TYPE
@@ -1411,36 +1433,41 @@ INCLUDE "input.asm"
   CLC
   ADC #8
   STA byte_526,X
+
   AND #&7F
   CMP #&48
   BCS loc_C7EE
-  LDA byte_4D6,X
-  STA byte_36
+
+  LDA byte_4D6,X:STA byte_36
+
   AND #7
   BEQ loc_C835
+
   TAY
   LDA #0
-  STA byte_4D6,X
-  LDA FIRE_X,X
+  STA byte_4D6,X:LDA FIRE_X,X
+
   CLC
   ADC byte_CA16,Y
   STA byte_1F
+
   LDA FIRE_Y,X
   CLC
   ADC byte_CA11,Y
   STA byte_20
+
   LDY #&4F
   JSR sub_CBE5
   BNE loc_C8A6
-  LDA byte_1F
-  STA FIRE_X,Y
-  LDA byte_20
-  STA FIRE_Y,Y
-  LDA #1
-  STA FIRE_ACTIVE,Y
+
+  LDA byte_1F:STA FIRE_X,Y
+  LDA byte_20:STA FIRE_Y,Y
+  LDA #1:STA FIRE_ACTIVE,Y
+
   LDA byte_36
   AND #7
   STA byte_526,Y
+
   LDA byte_36
   CLC
   ADC #&10
@@ -1467,6 +1494,7 @@ INCLUDE "input.asm"
 .loc_C8A6
   DEX
   BMI locret_C8AC
+
   JMP loc_C79F
 ; ---------------------------------------------------------------------------
 
@@ -1498,11 +1526,8 @@ INCLUDE "input.asm"
   ADC #1
   STA ENEMY_FACE,Y
 
-  LDA byte_1F
-  STA ENEMY_X,Y
-
-  LDA byte_20
-  STA ENEMY_Y,Y
+  LDA byte_1F:STA ENEMY_X,Y
+  LDA byte_20:STA ENEMY_Y,Y
 
   LDA #0
   STA byte_5DA,Y
@@ -1552,11 +1577,8 @@ INCLUDE "input.asm"
   JSR RAND_COORDS
 
   LDY TEMP_Y3
-  LDA TEMP_X
-  STA ENEMY_X,Y
-
-  LDA TEMP_Y
-  STA ENEMY_Y,Y
+  LDA TEMP_X:STA ENEMY_X,Y
+  LDA TEMP_Y:STA ENEMY_Y,Y
 
   LDA #0
   STA byte_5DA,Y
@@ -1573,10 +1595,9 @@ INCLUDE "input.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Detonate all active bombs
-
 .DETONATE
+{
   LDX #MAX_BOMB-1
 
 .DETONATE_LOOP
@@ -1589,8 +1610,8 @@ INCLUDE "input.asm"
   LDA MULT_TABX,Y:STA STAGE_MAP+1
 
   STY byte_20
-  LDY BOMB_X,X
-  STY byte_1F
+  LDY BOMB_X,X:STY byte_1F
+
   LDA #0
   JSR sub_C9B6
   JSR PLAY_BOOM_SOUND ; Play explosion sound
@@ -1599,20 +1620,21 @@ INCLUDE "input.asm"
   LDA #MAP_EMPTY:STA (STAGE_MAP),Y
 
   LDA #DISABLE:STA BOMB_ACTIVE,X
+
   RTS
 ; ---------------------------------------------------------------------------
 
 .DETONATE_NEXT
   DEX
   BPL DETONATE_LOOP
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Bomb timer operation and explosion inititation
-
 .BOMB_TICK
+{
   LDX #MAX_BOMB-1
 
 .BOMB_TICK_LOOP
@@ -1625,8 +1647,7 @@ INCLUDE "input.asm"
   LDA MULT_TABX,Y:STA STAGE_MAP+1
 
   STY byte_20
-  LDY BOMB_X,X
-  STY byte_1F
+  LDY BOMB_X,X:STY byte_1F
   LDA (STAGE_MAP),Y
 
   CMP #MAP_BOMB
@@ -1648,6 +1669,7 @@ INCLUDE "input.asm"
   LDA CHAIN_REACTIONS
   CMP #&FF
   BEQ loc_C9A6
+
   INC CHAIN_REACTIONS
 
 .loc_C9A6
@@ -1663,14 +1685,13 @@ INCLUDE "input.asm"
   DEX
   BPL BOMB_TICK_LOOP
 
-.BOMB_TICK_END
+.^BOMB_TICK_END
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_C9B6
+{
   ; Cache X and Y regs
   STX TEMP_X2
   STY TEMP_Y2
@@ -1694,11 +1715,11 @@ INCLUDE "input.asm"
 ; ---------------------------------------------------------------------------
 .byte_C9DE
   EQUB &FF,  3,  4,  1,  2
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_C9E3
+{
   CMP byte_2E
   BEQ BOMB_TICK_END
 
@@ -1726,6 +1747,7 @@ INCLUDE "input.asm"
 
 .locret_CA10
   RTS
+}
 
 ; ---------------------------------------------------------------------------
 .byte_CA11
@@ -1734,23 +1756,22 @@ INCLUDE "input.asm"
   EQUB   0,  1,  0,&FF,  0
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Draw animation of the bombs
-
 .BOMB_ANIMATE
+{
   LDX #MAX_BOMB-1
 
 .BOMB_ANIM_LOOP
   ; Skip inactive bombs
   LDA BOMB_ACTIVE,X:BEQ BOMB_ANIM_NEXT
 
-  LDA BOMB_X,X
-  STA byte_1F
-  LDA BOMB_Y,X
-  STA byte_20
+  LDA BOMB_X,X:STA byte_1F
+  LDA BOMB_Y,X:STA byte_20
+
   LDA BOMB_TIME_ELAPSED,X
   AND #&F     ; Animation delay
   BNE BOMB_ANIM_NEXT
+
   LDA BOMB_TIME_ELAPSED,X
   LSR A
   LSR A
@@ -1764,17 +1785,20 @@ INCLUDE "input.asm"
 .BOMB_ANIM_NEXT
   DEX
   BPL BOMB_ANIM_LOOP
+
   RTS
 
 ; ---------------------------------------------------------------------------
 .BOMB_ANIM
   EQUB   9, &A,  9,  8
+}
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Generate a level stage
 
 .BUILD_MAP
+{
   JSR BUILD_CONCRETE_WALLS ; Create a clean level
 
   ; Randomly place exit door (hidden by brick)
@@ -1799,13 +1823,12 @@ INCLUDE "input.asm"
   DEC byte_1F:BNE NEXT_BRICK
 
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Reset level map to just the concrete walls
-
 .BUILD_CONCRETE_WALLS
+{
   LDA #lo(stage_buffer)
   STA STAGE_MAP
   LDA #hi(stage_buffer)
@@ -1827,16 +1850,14 @@ INCLUDE "input.asm"
   LDX #MAP_WIDTH:JSR STAGE_ROW
   LDX #&00 ; Bottom wall
 
-
 ; =============== S U B R O U T I N E =======================================
-
-
 .STAGE_ROW
+{
   LDA #MAP_WIDTH:STA TEMP_X
 
 .STAGE_CELL
-  LDA STAGE_ROWS,X
-  STA (STAGE_MAP),Y
+  LDA STAGE_ROWS,X:STA (STAGE_MAP),Y
+
   INC STAGE_MAP
 
   ; Check for page overflow
@@ -1847,29 +1868,36 @@ INCLUDE "input.asm"
   INX
   DEC TEMP_X
   BNE STAGE_CELL
-  RTS
 
+  RTS
+}
+
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .RAND_COORDS
+{
   JSR RAND
+
   ROR A
   ROR A
   AND #&1F
   BEQ RAND_COORDS
+
   STA TEMP_X
 
 .loc_CADA
   JSR RAND
+
   ROR A
   ROR A
   ROR A
   AND #&F
   BEQ loc_CADA
+
   CMP #&C
   BCS loc_CADA
+
   STA TEMP_Y
   TAY
 
@@ -1889,11 +1917,9 @@ INCLUDE "input.asm"
 
 .locret_CB05
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_CB06
   JSR PPUD
 
@@ -1946,55 +1972,58 @@ INCLUDE "input.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_CB4E
+{
   STY TEMP_Y
+
   JSR sub_D924
+
   LDX #0
 
 .loc_CB55
-  LDA byte_17,X
-  STA TILE_TAB,X
+  LDA byte_17,X:STA TILE_TAB,X
+
   INX
   CPX #8
   BNE loc_CB55
-  JSR sub_CB65
-  LDY TEMP_Y
-  RTS
 
+  JSR sub_CB65
+
+  LDY TEMP_Y
+
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_CB65
+{
   LDA TILE_TAB+2
   ORA TILE_TAB
+
   PHA
   STA PPU_ADDRESS
-  LDX TILE_TAB+1
-  STX PPU_ADDRESS
+  LDX TILE_TAB+1:STX PPU_ADDRESS
   LDX TILE_TAB+3
-  LDA TILE_MAP,X
-  STA PPU_DATA
-  LDA TILE_MAP+1,X
-  STA PPU_DATA
+  LDA TILE_MAP,X:STA PPU_DATA
+  LDA TILE_MAP+1,X:STA PPU_DATA
   PLA
+
   STA PPU_ADDRESS
+
   LDA TILE_TAB+1
   CLC
   ADC #&20
   STA PPU_ADDRESS
-  LDA TILE_MAP+2,X
-  STA PPU_DATA
-  LDA TILE_MAP+3,X
-  STA PPU_DATA
+
+  LDA TILE_MAP+2,X:STA PPU_DATA
+  LDA TILE_MAP+3,X:STA PPU_DATA
+
   LDA #&23
   ORA TILE_TAB
+
   PHA
   STA PPU_ADDRESS
-  LDA TILE_TAB+4
-  STA PPU_ADDRESS
+  LDA TILE_TAB+4:STA PPU_ADDRESS
   TAX
   LDA PPU_DATA
   LDA PPU_DATA
@@ -2002,11 +2031,13 @@ INCLUDE "input.asm"
   ORA TILE_TAB+7
   TAY
   PLA
+
   STA PPU_ADDRESS
   STX PPU_ADDRESS
   STY PPU_DATA
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -2062,36 +2093,34 @@ INCLUDE "input.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Create pointer to row specified in Y within level map
-
 .FIX_STAGE_PTR
+{
   LDA MULT_TABY,Y:STA STAGE_MAP
   LDA MULT_TABX,Y:STA STAGE_MAP+1
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Play explosion sound
-
 .PLAY_BOOM_SOUND
-  LDA #1
-  STA BOOM_SOUND
-  RTS
+{
+  LDA #1:STA BOOM_SOUND
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .NEXTFRAME
+{
   LDA FRAMEDONE
   BNE NEXTFRAME
-  LDA #1
-  STA FRAMEDONE
 
-.locret_CC03
+  LDA #1:STA FRAMEDONE
+
   RTS
+}
 
 ; ---------------------------------------------------------------------------
 .EXIT_ENEMY_TAB
@@ -2102,21 +2131,23 @@ INCLUDE "input.asm"
   EQUB   5,  4,  6,  5,  8,  4,  6,  5,  7,  8
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Pressing the buttons
-
 .sub_CC36
   LDA INVUL_UNK2
   BNE loc_CC4C
+
   LDA INVUL_UNK1
   BEQ loc_CC4C
+
   LDA FRAME_CNT
   AND #7
   BNE loc_CC4C
+
   DEC INVUL_UNK1
   BNE loc_CC4C
-  LDA #3
-  STA APU_MUSIC
+
+  ; Play melody 3
+  LDA #3:STA APU_MUSIC
 
 .loc_CC4C
   LDA byte_5C
@@ -2135,6 +2166,7 @@ INCLUDE "input.asm"
 
 .locret_CC62
   RTS
+
 ; ---------------------------------------------------------------------------
 
 .loc_CC63
@@ -2281,9 +2313,8 @@ INCLUDE "input.asm"
 
 ; =============== S U B R O U T I N E =======================================
 ; Move down
-
-
 .sub_CD39
+{
   LDA BOMBMAN_V
   CMP #SPR_HALFSIZE
   BCS loc_CD44
@@ -2314,13 +2345,12 @@ INCLUDE "input.asm"
   LDA #4
   LDY #7
   JMP loc_CE2E
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Move up
-
-
 .sub_CD70
+{
   LDA BOMBMAN_V
   CMP #9
   BCC loc_CD7B
@@ -2349,13 +2379,12 @@ INCLUDE "input.asm"
   LDA #8
   LDY #&B
   JMP loc_CE2E
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Move left
-
-
 .sub_CDA3
+{
   LDA BOMBMAN_U
   CMP #9
   BCC loc_CDAE
@@ -2383,13 +2412,12 @@ INCLUDE "input.asm"
 .loc_CDCF
   LDA #0 ; Show sprite normally (not flipped horizontally)
   JMP loc_CE06
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Move right
-
-
 .sub_CDD4
+{
   LDA BOMBMAN_U
   CMP #SPR_HALFSIZE
   BCS loc_CDDF
@@ -2419,25 +2447,26 @@ INCLUDE "input.asm"
 .loc_CE04
   LDA #&40 ; Flip sprite horizontally
 
-.loc_CE06
+.^loc_CE06
   STA SPR_ATTR_TEMP
   LDA #0
   LDY #3
   JMP loc_CE2E
+}
 
 ; ---------------------------------------------------------------------------
   EQUB &60 ; ? Is this a rogue RTS ?
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Adjust bomberman horizontal position
-
 .ADJUST_BOMBMAN_HPOS
+{
   LDA BOMBMAN_U
   CMP #SPR_HALFSIZE
   BCC ADJUST_RIGHT
   BEQ DONT_ADJUST
   DEC BOMBMAN_U
+
   RTS
 ; ---------------------------------------------------------------------------
 
@@ -2448,13 +2477,12 @@ INCLUDE "input.asm"
 
 .DONT_ADJUST
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Adjust bomberman vertical position
-
 .ADJUST_BOMBMAN_VPOS
+{
   LDA BOMBMAN_V
   CMP #SPR_HALFSIZE
   BCC ADJUST_DOWN
@@ -2470,6 +2498,7 @@ INCLUDE "input.asm"
 
 .DONT_ADJUST2
   RTS
+}
 
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_CD39
@@ -2609,6 +2638,7 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 .HUMAN_ANIM
+  ; Game completed human animation
   EQUB &10,&11,&12,&11
 
 .BOMBER_ANIM
@@ -2620,6 +2650,7 @@ INCLUDE "input.asm"
   EQUB 6,  7,  8,  7
   ; Explode
   EQUB 9, 10, 11, 12, 13, 14, 15
+
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_CC36
 
@@ -2656,8 +2687,7 @@ INCLUDE "input.asm"
   INC BONUS_BOMBS
 
 .loc_CF15
-  LDA #4
-  STA APU_MUSIC
+  LDA #4:STA APU_MUSIC
   RTS
 ; ---------------------------------------------------------------------------
 
@@ -2665,61 +2695,49 @@ INCLUDE "input.asm"
   LDA BONUS_POWER
   CMP #&50
   BEQ loc_CF25
+
   CLC
   ADC #&10
   STA BONUS_POWER
 
 .loc_CF25
-  LDA #4
-  STA APU_MUSIC
+  LDA #4:STA APU_MUSIC
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_CF2A
-  LDA #1
-  STA BONUS_SPEED
-  LDA #4
-  STA APU_MUSIC
+  LDA #1:STA BONUS_SPEED
+  LDA #4:STA APU_MUSIC
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_CF33
-  LDA #1
-  STA BONUS_NOCLIP
-  LDA #4
-  STA APU_MUSIC
+  LDA #1:STA BONUS_NOCLIP
+  LDA #4:STA APU_MUSIC
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_CF3C
-  LDA #1
-  STA BONUS_REMOTE
-  LDA #4
-  STA APU_MUSIC
+  LDA #1:STA BONUS_REMOTE
+  LDA #4:STA APU_MUSIC
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_CF45
-  LDA #1
-  STA BONUS_BOMBWALK
-  LDA #4
-  STA APU_MUSIC
+  LDA #1:STA BONUS_BOMBWALK
+  LDA #4:STA APU_MUSIC
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_CF4E
-  LDA #1
-  STA BONUS_FIRESUIT
-  LDA #5
-  STA APU_MUSIC
+  LDA #1:STA BONUS_FIRESUIT
+  LDA #5:STA APU_MUSIC
   RTS
 ; ---------------------------------------------------------------------------
 
 .loc_CF57
-  LDA #&FF
-  STA INVUL_UNK1
-  LDA #5
-  STA APU_MUSIC
+  LDA #&FF:STA INVUL_UNK1
+  LDA #5:STA APU_MUSIC
   RTS
 
 ; =============== S U B R O U T I N E =======================================
@@ -2728,16 +2746,22 @@ INCLUDE "input.asm"
 .sub_CF60
   LDA (STAGE_MAP),Y
   BEQ locret_CF7C
+
   CMP #MAP_EXIT
   BEQ locret_CF7C
+
   CMP #MAP_BONUS
   BEQ locret_CF7C
+
   CMP #MAP_BRICK
   BEQ loc_CF7D
+
   CMP #MAP_HIDDEN_EXIT
   BEQ loc_CF7D
+
   CMP #MAP_HIDDEN_BONUS
   BEQ loc_CF7D
+
   CMP #MAP_BOMB
   BEQ loc_CF82
 
@@ -2758,22 +2782,21 @@ INCLUDE "input.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Return to A to set the buttons P1 | P2
-
 .GET_INPUT
+{
   LDA DEMOPLAY
   BEQ NOT_DEMO
+
   LDA DEMOKEY_PAD1
   DEC DEMOKEY_TIMEOUT
   BNE SKIP_DEMO_KEY
+
   PHA
   LDY #0
-  LDA (DEMOKEY_DATA),Y
-  STA DEMOKEY_TIMEOUT
+  LDA (DEMOKEY_DATA),Y:STA DEMOKEY_TIMEOUT
   JSR DEMO_GETNEXT
-  LDA (DEMOKEY_DATA),Y
-  STA DEMOKEY_PAD1
+  LDA (DEMOKEY_DATA),Y:STA DEMOKEY_PAD1
   JSR DEMO_GETNEXT
   PLA
 
@@ -2785,42 +2808,43 @@ INCLUDE "input.asm"
   LDA JOYPAD1
   ORA JOYPAD2
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Read next byte from DEMO input data
-
 .DEMO_GETNEXT
+{
   INC DEMOKEY_DATA
   BNE DEMO_GETNEXT_HI
+
   INC DEMOKEY_DATA+1
 
 .DEMO_GETNEXT_HI
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Enemy AI
-
 .THINK
-  LDA #0
-  STA ENEMIES_LEFT
-  LDA #&C0
-  STA byte_6B
+{
+  LDA #0:STA ENEMIES_LEFT
+  LDA #&C0:STA byte_6B
+
   LDX #MAX_ENEMY-1
 
 .THINK_LOOP
   LDA ENEMY_TYPE,X
   BEQ THINK_NEXT
+
   CMP #9
   BCS loc_CFC5
+
   INC ENEMIES_LEFT
 
 .loc_CFC5
   LDY byte_5B2,X
   BEQ loc_CFCF
+
   DEC byte_5B2,X
   BNE THINK_NEXT
 
@@ -2829,16 +2853,15 @@ INCLUDE "input.asm"
   TAY
   JSR ENEMY_SAVE ; Cache current monster attributes
 
-  LDA #&CF
-  PHA
-  LDA #&E2
-  PHA
-  LDA THINK_PROC-1,Y
-  PHA
-  LDA THINK_PROC-2,Y
-  PHA
+  LDA #&CF:PHA
+  LDA #&E2:PHA
+  LDA THINK_PROC-1,Y:PHA
+  LDA THINK_PROC-2,Y:PHA
+
   RTS
+
 ; ---------------------------------------------------------------------------
+ 
   JSR ENEMY_LOAD ; Restore current monster attributes after THINK proc
   JSR loc_D006
 
@@ -2846,9 +2869,9 @@ INCLUDE "input.asm"
   DEX
   BPL THINK_LOOP
 
-.THINK_END
+.^THINK_END
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 
