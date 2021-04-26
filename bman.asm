@@ -8,8 +8,10 @@ INCLUDE "vars.asm"
 
 .RESET
   SEI
+
   LDA #0
   STA PPU_CTRL_REG2:STA PPU_CTRL_REG1 ; Reset PPU
+
   CLD ; NES 6502 does not have BCD-mode, clear the flag in all cases
 
   LDX #&FF:TXS ; Clear stack
@@ -5753,6 +5755,7 @@ INCLUDE "sound.asm"
   EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
   EQUB &FF,&FF,&FF,&FF,&FF,&FF
 
+; NOTE : PCM address must a multiple of 64
 ORG     &F000
 .BOOMPCM
 INCBIN "boom.bin"
