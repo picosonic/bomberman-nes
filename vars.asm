@@ -9,8 +9,9 @@ SOFT_RESET_FLAG     = &08
 CLEAR_TOPSCORE1     = &09
 CLEAR_TOPSCORE2     = &0A
 FRAMEDONE           = &0B
-LAST_2000           = &0C
-LAST_2001           = &0D
+
+LAST_2000           = &0C ; Cache of what was sent to PPU_CTRL_REG1
+LAST_2001           = &0D ; Cache of what was sent to PPU_CTRL_REG2
 
 ; Scroll offsets
 H_SCROLL            = &0E ; Horizontal
@@ -41,7 +42,8 @@ byte_22             = &22
 byte_23             = &23
 TEMP_X              = &24
 TEMP_Y              = &25
-word_26             = &26
+
+word_26             = &26 ; PPU related pointer
 
 BOMBMAN_X           = &28
 BOMBMAN_U           = &29
@@ -50,7 +52,7 @@ BOMBMAN_V           = &2B
 BOMBMAN_FRAME       = &2C
 
 SPR_ATTR_TEMP       = &2D
-byte_2E             = &2E
+byte_2E             = &2E ; Bomb/fire related
 
 TEMP_X2             = &2F
 TEMP_Y2             = &30
@@ -60,7 +62,9 @@ byte_32             = &32
 FRAME_CNT           = &33
 STAGE_MAP           = &34
 byte_36             = &36
+
 BOOM_SOUND          = &38
+
 SPR_TAB_INDEX       = &39
 SPR_X               = &3A
 SPR_Y               = &3B
@@ -100,11 +104,11 @@ STAGE               = &58
 ; Boolean for DEMO being played
 DEMOPLAY            = &59
 
-byte_5A             = &5A
+TEMP_Y3             = &5A
 EXIT_ENEMY_TYPE     = &5B
 byte_5C             = &5C
 byte_5D             = &5D
-byte_5E             = &5E
+byte_5E             = &5E ; Boolean
 
 ; Title screen cursor, either 0 or 1
 CURSOR              = &5F
@@ -147,15 +151,17 @@ PW_BUFF             = &7F
 TIMELEFT            = &93
 
 DEBUG               = &94
-byte_95             = &95
+PW_CXSUM4           = &95
 MTAB_PTR            = &97 ; Pointer to enemy table
-byte_99             = &99
-byte_9A             = &9A
-byte_9B             = &9B
+PW_CXSUM1           = &99
+PW_CXSUM2           = &9A
+PW_CXSUM3           = &9B
+
+; Extra bonus item criteria
 ENEMIES_LEFT        = &9C
 BONUS_AVAILABLE     = &9D
 ENEMIES_DEFEATED    = &9E
-byte_9F             = &9F
+EXIT_DWELL_TIME     = &9F
 VISITS_TOP_LEFT     = &A0
 VISITS_TOP_RIGHT    = &A1
 VISITS_BOTTOM_LEFT  = &A2
@@ -166,8 +172,8 @@ byte_A6             = &A6
 byte_A7             = &A7
 byte_A8             = &A8
 byte_A9             = &A9
-byte_AA             = &AA
-byte_AB             = &AB
+EXTRA_BONUS_ITEM_X  = &AA ; X position where extra bonus is placed
+EXTRA_BONUS_ITEM_Y  = &AB ; Y position where extra bonus is placed
 
 DEMOKEY_DATA        = &AC ; Pointer to DEMO timeout/pad data
 DEMOKEY_TIMEOUT     = &AE ; Current DEMO key timeout
@@ -189,8 +195,8 @@ byte_B9             = &B9
 
 APU_CHANDAT         = &BC
 
-unk_BD              = &BD
-unk_C0              = &C0
+unk_BD              = &BD ; Not used
+unk_C0              = &C0 ; Not used
 
 APU_PTR             = &C2
 

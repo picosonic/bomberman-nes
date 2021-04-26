@@ -38,7 +38,7 @@ INCLUDE "vars.asm"
   LDX #0
   STX FRAMEDONE   ; Cancel waiting for the start of the frame
   STX PPU_SPR_ADDR
-  LDA STAGE_STARTED
+  LDA STAGE_STARTED ; Check for level started
   BEQ SEND_SPRITES
 
   LDA #25     ; Draw a small one at the top right of the screen
@@ -260,21 +260,21 @@ INCLUDE "input.asm"
 
 ; =============== S U B R O U T I N E =======================================
 .PPU_RESET
+{
   JSR PPUD
   JSR VBLD
-  LDA #&10
-  STA LAST_2000
-  STA PPU_CTRL_REG1
+  LDA #&10:STA LAST_2000:STA PPU_CTRL_REG1
   LDA #0
   STA H_SCROLL
   STA TILE_CUR
   STA TILE_PTR
   STA V_SCROLL
+
   JSR SPRD        ; Hide sprites
   JSR PPUD
   JSR WAITVBL
   JSR PAL_RESET
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Clear screen
@@ -425,8 +425,7 @@ INCLUDE "input.asm"
 
 .PPU_RESTORE
 {
-  LDA LAST_2001
-  STA PPU_CTRL_REG2
+  LDA LAST_2001:STA PPU_CTRL_REG2
 
   LDA #0:LDX #0
   JSR VRAMADDR
@@ -456,8 +455,7 @@ INCLUDE "input.asm"
   AND #&7F
 
 .WRITE2000
-  STA LAST_2000
-  STA PPU_CTRL_REG1
+  STA LAST_2000:STA PPU_CTRL_REG1
 
   RTS
 }
@@ -695,7 +693,7 @@ INCLUDE "input.asm"
 
   ; Initialise extra bonus criteria
   STA ENEMIES_DEFEATED ; Enemies defeated
-  STA byte_9F ; Exit dwell time ?
+  STA EXIT_DWELL_TIME ; Exit dwell time
   STA ENEMIES_LEFT ; Remaining enemies
   STA VISITS_TOP_LEFT ; Visits to top left square
   STA VISITS_TOP_RIGHT ; Visits to top right square
@@ -733,8 +731,10 @@ INCLUDE "input.asm"
   JSR BOMB_ANIMATE    ; Animate on-screen bombs
   JSR STAGE_TIMER ; Tick the stage timer
   JSR sub_E399
+
   LDA byte_5D
   BNE loc_C481
+
   LDA byte_5E
   BNE loc_C4BF
 
@@ -743,6 +743,7 @@ INCLUDE "input.asm"
 
   JSR sub_C79D ; Drawing explosions?
   JSR sub_C66C ; Explosion hit detection?
+
   JMP STAGE_LOOP
 ; ---------------------------------------------------------------------------
 
@@ -1167,9 +1168,11 @@ INCLUDE "input.asm"
 .loc_C6B2
   AND #7
   BEQ loc_C6D0
+
   AND #1
   EOR #1
   STA byte_32
+
   LDA byte_526,X
   LSR A
   LSR A
@@ -1545,10 +1548,10 @@ INCLUDE "input.asm"
   ADC #1
   STA ENEMY_FACE,Y
 
-  STY byte_5A
+  STY TEMP_Y3
   JSR RAND_COORDS
 
-  LDY byte_5A
+  LDY TEMP_Y3
   LDA TEMP_X
   STA ENEMY_X,Y
 
@@ -1698,24 +1701,28 @@ INCLUDE "input.asm"
 .sub_C9E3
   CMP byte_2E
   BEQ BOMB_TICK_END
+
   STA TEMP_A2
   TAX
   LDY #&4F
   JSR sub_CBE5
   BMI locret_CA10
+
   LDA byte_20
   CLC
   ADC byte_CA11,X
   STA FIRE_Y,Y
+
   LDA byte_1F
   CLC
   ADC byte_CA16,X
   STA FIRE_X,Y
+
   LDA TEMP_A2
   STA byte_4D6,Y
   STA byte_526,Y
-  LDA #1
-  STA FIRE_ACTIVE,Y
+
+  LDA #1:STA FIRE_ACTIVE,Y
 
 .locret_CA10
   RTS
@@ -1865,15 +1872,17 @@ INCLUDE "input.asm"
   BCS loc_CADA
   STA TEMP_Y
   TAY
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY TEMP_X
   LDA (STAGE_MAP),Y
   BNE RAND_COORDS
+
   CPY #3
   BCS locret_CB05
+
   LDA TEMP_Y
   CMP #3
   BCC RAND_COORDS
@@ -1888,14 +1897,12 @@ INCLUDE "input.asm"
 .sub_CB06
   JSR PPUD
 
-  LDA #0
-  STA byte_20
+  LDA #0:STA byte_20
 
-  LDA #0
-  STA word_26
+  ; Set up pointer
+  LDA #0:STA word_26
+  LDA #2:STA word_26+1
 
-  LDA #2
-  STA word_26+1
   LDY #0
 
 .loc_CB17
@@ -2114,15 +2121,17 @@ INCLUDE "input.asm"
 .loc_CC4C
   LDA byte_5C
   BEQ loc_CC63
+
   LDA FRAME_CNT
   AND #&F
   BNE locret_CC62
+
   INC BOMBMAN_FRAME
   LDA BOMBMAN_FRAME
   CMP #20
   BNE locret_CC62
-  LDA #1
-  STA byte_5D
+
+  LDA #1:STA byte_5D
 
 .locret_CC62
   RTS
@@ -2132,6 +2141,7 @@ INCLUDE "input.asm"
   LDA BOMBMAN_U
   CMP #SPR_HALFSIZE
   BNE loc_CCA4
+
   LDA BOMBMAN_V
   CMP #SPR_HALFSIZE
   BNE loc_CCA4
@@ -2159,7 +2169,7 @@ INCLUDE "input.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_CC95
-  INC byte_9F
+  INC EXIT_DWELL_TIME
 
   LDA #0:STA byte_A6
 
@@ -2848,13 +2858,14 @@ INCLUDE "input.asm"
   CLC
   ADC #&2C
   STA M_FRAME
-  LDA byte_AA
-  STA M_X
-  LDA byte_AB
-  STA M_Y
+
+  LDA EXTRA_BONUS_ITEM_X:STA M_X
+  LDA EXTRA_BONUS_ITEM_Y:STA M_Y
+
   LDA #SPR_HALFSIZE
   STA M_U
   STA M_V
+
   LDA #0
   BEQ loc_D010
 
@@ -2930,10 +2941,8 @@ INCLUDE "input.asm"
   ; Play sound 5
   LDA #5:STA APU_SOUND
 
-  LDA #1
-  STA byte_5C
-  LDA #12
-  STA BOMBMAN_FRAME
+  LDA #1:STA byte_5C
+  LDA #12:STA BOMBMAN_FRAME
 
 .locret_D08B
   RTS
@@ -3409,16 +3418,16 @@ INCLUDE "input.asm"
   ASL A
   ORA byte_4B
   TAY
-  LDA byte_D412+5,Y
-  STA byte_53
+  LDA byte_D412+5,Y:STA byte_53
   TAY
   LDA byte_D412+&F,Y
   STA byte_52
   JSR sub_D454
   AND byte_52
   BEQ loc_D3E0
-  LDA byte_53
-  STA M_FACE
+
+  LDA byte_53:STA M_FACE
+
   LDA #1
   EOR byte_4B
   STA byte_4B
@@ -3469,13 +3478,16 @@ INCLUDE "input.asm"
 .TURN_HORIZONTALLY
   LDA byte_5C
   BNE NO_VTURN
+
   LDA M_Y
   CMP BOMBMAN_Y
   BNE NO_VTURN    ; IF BY != MY, then return
+  
   LDA M_X
   CMP BOMBMAN_X
   LDA #1
   BCC FACE_RIGHT  ; IF BX > MX, go right, otherwise go left
+  
   LDA #3
 
 .FACE_RIGHT
@@ -3491,13 +3503,16 @@ INCLUDE "input.asm"
 .TURN_VERTICALLY
   LDA byte_5C
   BNE NO_VTURN
+
   LDA M_X
   CMP BOMBMAN_X
   BNE NO_HTURN    ; IF BX != MX, then return
+  
   LDA M_Y
   CMP BOMBMAN_Y
   LDA #4
   BCC FACE_DOWN   ; IF BY > MY, then go down, otherwise go up
+  
   LDA #2
 
 .FACE_DOWN
@@ -3511,33 +3526,37 @@ INCLUDE "input.asm"
 
 
 .sub_D454
-  LDA #0
-  STA byte_51
+  LDA #0:STA byte_51
+
   LDA M_U
   CMP #SPR_HALFSIZE
   BNE loc_D462
+
   LDA M_V
   CMP #SPR_HALFSIZE
 
 .loc_D462
   BNE loc_D4BD
+
   LDY M_Y
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY M_X
   INY
   JSR ENEMY_COLLISION
   BNE loc_D47C
-  LDA #1
-  STA byte_51
+
+  LDA #1:STA byte_51
 
 .loc_D47C
   DEY
   DEY
+
   JSR ENEMY_COLLISION
+
   BNE loc_D489
+
   LDA #4
   ORA byte_51
   STA byte_51
@@ -3545,10 +3564,9 @@ INCLUDE "input.asm"
 .loc_D489
   LDY M_Y
   DEY
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY M_X
   JSR ENEMY_COLLISION
   BNE loc_D4A3
@@ -3559,10 +3577,9 @@ INCLUDE "input.asm"
 .loc_D4A3
   LDY M_Y
   INY
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY M_X
   JSR ENEMY_COLLISION
   BNE loc_D4BD
@@ -3603,10 +3620,13 @@ INCLUDE "input.asm"
 
 .BRICK_WALL
   LDA M_TYPE
+
   CMP #5      ; Enemies 5/6/8 (Doria/Ovape/Pontan) can walk through brick walls
   BEQ locret_D4BF
+
   CMP #6
   BEQ locret_D4BF
+
   CMP #8
   RTS
 
@@ -3615,11 +3635,12 @@ INCLUDE "input.asm"
 ; Take a step with this enemy (gaze direction in A)
 
 .STEP_MONSTER
-  LDX #0
-  STX byte_4E
+  LDX #0:STX byte_4E
+
   TAX
   CMP #1
   BNE CASE_NOT_RIGHT
+
   JSR STEP_ENEMY_RIGHT
 
 .CASE_NOT_RIGHT
@@ -4036,27 +4057,32 @@ INCLUDE "input.asm"
   CLC
   ADC #1
   STA ENEMY_FACE,X
-  STY byte_5A
+  STY TEMP_Y3
 
 .loc_D6E2
   JSR RAND_COORDS
+
   LDA TEMP_X
   CMP #5
   BCC loc_D6E2
+
   STA ENEMY_X,X
-  LDA TEMP_Y
-  STA ENEMY_Y,X
+
+  LDA TEMP_Y:STA ENEMY_Y,X
+
   LDA #0
   STA byte_5B2,X
   STA byte_5DA,X
   STA byte_5C6,X
   STA byte_5E4,X
-  LDY byte_5A
+
+  LDY TEMP_Y3
 
 .loc_D703
   INY
   DEX
   BPL loc_D6BE
+
   RTS
 
 ; ---------------------------------------------------------------------------
@@ -5322,23 +5348,23 @@ INCLUDE "input.asm"
 
   JSR sub_E33C
 
-  LDA byte_99
+  LDA PW_CXSUM1
   ASL A
   CLC
   ADC TEMP_X
   STA TEMP_X
 
-  LDA byte_9A
+  LDA PW_CXSUM2
   ASL A
   CLC
   ADC TEMP_X
   STA TEMP_X
 
-  LDA byte_9B
+  LDA PW_CXSUM3
   ASL A
   CLC
   ADC TEMP_X
-  STA byte_95
+  STA PW_CXSUM4
 
   LDY #0
   STY SEED
@@ -5377,41 +5403,43 @@ INCLUDE "input.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_E33C
-  LDA #4
-  STA byte_20
-  LDA #0
-  STA TEMP_X
+{
+  LDA #4:STA byte_20
+  LDA #0:STA TEMP_X
 
 .loc_E344
   JSR _get_pass_data_var_addr
+
   LDA (STAGE_MAP),Y
   CLC
   ADC TEMP_X
   STA TEMP_X
+
   DEC byte_20
   BNE loc_E344
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
+; Point to the Xth password data variable (using STAGE_MAP)
 ._get_pass_data_var_addr
-  LDA _pass_data_vars,X
-  STA STAGE_MAP
+{
+  LDA _pass_data_vars,X:STA STAGE_MAP
   INX
-  LDA _pass_data_vars,X
-  STA STAGE_MAP+1
+
+  LDA _pass_data_vars,X:STA STAGE_MAP+1
   INX
+
   RTS
 
 ; ---------------------------------------------------------------------------
+
 ._pass_data_vars
-  EQUW   SCORE+6,  BONUS_REMOTE,  STAGE_LO,  SCORE,  byte_99,  SCORE+5,  BOMB_PWR,  SCORE+3,  BONUS_FIRESUIT,  byte_9A
-  EQUW   BONUS_BOMBS,  SCORE+2,  BONUS_SPEED,  SCORE+1,  byte_9B,  SCORE+4,  DEBUG,  STAGE_HI,  BONUS_NOCLIP,  byte_95
+  EQUW   SCORE+6,  BONUS_REMOTE,  STAGE_LO,  SCORE,  PW_CXSUM1,  SCORE+5,  BOMB_PWR,  SCORE+3,  BONUS_FIRESUIT,  PW_CXSUM2
+  EQUW   BONUS_BOMBS,  SCORE+2,  BONUS_SPEED,  SCORE+1,  PW_CXSUM3,  SCORE+4,  DEBUG,  STAGE_HI,  BONUS_NOCLIP,  PW_CXSUM4
+}
 
 .aAofkcpgelbhmjd
   EQUS "AOFKCPGELBHMJDNI"
@@ -5427,8 +5455,10 @@ INCLUDE "input.asm"
 .sub_E399
   LDA ENEMIES_LEFT
   BNE loc_E3A7
+
   LDA NO_ENEMIES_CELEBRATED
   BNE loc_E3A7
+
   INC NO_ENEMIES_CELEBRATED
 
   ; Play sound 6 to indicate we've just defeated all the enemies
@@ -5437,23 +5467,27 @@ INCLUDE "input.asm"
 .loc_E3A7
   LDA byte_A8
   BEQ loc_E3E7
+
   CMP #2
   BEQ locret_E398
+
   LDA FRAME_CNT
   AND #1
   BNE loc_E3BD
+
   DEC byte_A9
   BNE loc_E3BD
-  LDA #2
-  STA byte_A8
+
+  LDA #2:STA byte_A8
 
 .loc_E3BD
   JSR sub_CFED
-  LDA byte_AA
+  LDA EXTRA_BONUS_ITEM_X
   CMP BOMBMAN_X
   BNE locret_E3E6
+
   LDA BOMBMAN_Y
-  CMP byte_AB
+  CMP EXTRA_BONUS_ITEM_Y
   BNE locret_E3E6
 
   ; Play sound 4
@@ -5470,8 +5504,7 @@ INCLUDE "input.asm"
   JSR sub_DD77
 
 .loc_E3E2
-  LDA #2
-  STA byte_A8
+  LDA #2:STA byte_A8
 
 .locret_E3E6
   RTS
@@ -5543,7 +5576,7 @@ INCLUDE "input.asm"
 .loc_E448 ; 9D = 0 "Bonus target"
   LDA ENEMIES_DEFEATED
   BNE locret_E467 ; Skip if any enemies killed
-  LDA byte_9F
+  LDA EXIT_DWELL_TIME
   BEQ locret_E467 ; Skip if 9F == 0
 
 .PLACE_BONUS
@@ -5552,8 +5585,8 @@ INCLUDE "input.asm"
   LDA #1:STA byte_A8
   LDA #0:STA byte_A9
   JSR RAND_COORDS ; Place bonus item randomly
-  LDA TEMP_X:STA byte_AA
-  LDA TEMP_Y:STA byte_AB
+  LDA TEMP_X:STA EXTRA_BONUS_ITEM_X
+  LDA TEMP_Y:STA EXTRA_BONUS_ITEM_Y
 
 .locret_E467
   RTS
@@ -5593,7 +5626,7 @@ INCLUDE "input.asm"
 
 ; Reveal the exit, walk over it, and don't let go of the d pad for at least 16.5 seconds [while making sure not to defeat any enemies]
 .loc_E48D ; 9D = 4 "Cola bottle"
-  LDA byte_9F
+  LDA EXIT_DWELL_TIME
   BEQ locret_E467 ; Skip if 9F = 0
   LDA byte_A6
   CMP #248
