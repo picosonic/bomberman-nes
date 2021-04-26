@@ -11,12 +11,17 @@ CLEAR_TOPSCORE2     = &0A
 FRAMEDONE           = &0B
 LAST_2000           = &0C
 LAST_2001           = &0D
-H_SCROLL            = &0E
-V_SCROLL            = &0F
-PAD1_TEST           = &10
-PAD2_TEST           = &11
+
+; Scroll offsets
+H_SCROLL            = &0E ; Horizontal
+V_SCROLL            = &0F ; Vertical
+
+; Joypad bit fields
+PAD1_TEST           = &10 ; Cache for multiple reads to work around NTSC bug with PCM playback
+PAD2_TEST           = &11 ; Cache as above
 JOYPAD1             = &12
 JOYPAD2             = &13
+
 TILE_CUR            = &14
 TILE_PTR            = &15
 TILE_CNT            = &16
@@ -86,9 +91,15 @@ byte_51             = &51
 byte_52             = &52
 byte_53             = &53
 
+; PRNG seed
 SEED                = &54
+
+; Current level (1..50)
 STAGE               = &58
+
+; Boolean for DEMO being played
 DEMOPLAY            = &59
+
 byte_5A             = &5A
 EXIT_ENEMY_TYPE     = &5B
 byte_5C             = &5C
@@ -98,6 +109,7 @@ byte_5E             = &5E
 ; Title screen cursor, either 0 or 1
 CURSOR              = &5F
 
+; Boolean to indicate level has been started
 STAGE_STARTED       = &60
 
 ; 7 bytes BCD
