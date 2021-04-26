@@ -27,60 +27,61 @@ INCLUDE "vars.asm"
 ; ---------------------------------------------------------------------------
 
 .NMI
+{
+  ; Cache A/X/Y registers
   PHA
-  TXA
-  PHA
-  TYA
-  PHA
+  TXA:PHA
+  TYA:PHA
+
   LDX #0
   STX FRAMEDONE   ; Cancel waiting for the start of the frame
   STX PPU_SPR_ADDR
   LDA STAGE_STARTED
   BEQ SEND_SPRITES
+
   LDA #25     ; Draw a small one at the top right of the screen
   STA SPR_TAB ; Apparently used for debugging (forgot to remove)
-  LDA #&EC
-  STA SPR_TAB+1
-  LDA #0
-  STA SPR_TAB+2
-  LDA #248
-  STA SPR_TAB+3
+
+  LDA #&EC:STA SPR_TAB+1
+  LDA #0:STA SPR_TAB+2
+  LDA #248:STA SPR_TAB+3
 
 .SEND_SPRITES
-  LDA #7
-  STA PPU_SPR_DMA
-  LDX #9 ; Draw tiles from a circular buffer
-  STX TILE_CNT
+  LDA #7:STA PPU_SPR_DMA
+  LDX #9:STX TILE_CNT ; Draw tiles from a circular buffer
   BNE DRAW_NEXT_TILE
 
 .DRAW_TILES
   LDA TILE_TAB+2,Y ; Draw new tiles to the end of the buffer, but no more than TILE_CNT pieces
   ORA TILE_TAB,Y
+
   PHA
   STA PPU_ADDRESS
-  LDX TILE_TAB+1,Y
-  STX PPU_ADDRESS
+
+  LDX TILE_TAB+1,Y:STX PPU_ADDRESS
   LDX TILE_TAB+3,Y
-  LDA TILE_MAP,X
-  STA PPU_DATA
-  LDA TILE_MAP+1,X
-  STA PPU_DATA
+  LDA TILE_MAP,X:STA PPU_DATA
+  LDA TILE_MAP+1,X:STA PPU_DATA
   PLA
+
   STA PPU_ADDRESS
+
   LDA TILE_TAB+1,Y
   CLC
   ADC #32
   STA PPU_ADDRESS
-  LDA TILE_MAP+2,X
-  STA PPU_DATA
-  LDA TILE_MAP+3,X
-  STA PPU_DATA
+
+  LDA TILE_MAP+2,X:STA PPU_DATA
+  LDA TILE_MAP+3,X:STA PPU_DATA
+
   LDA #&23 ; '#'
   ORA TILE_TAB,Y
+
   PHA
   STA PPU_ADDRESS
-  LDA TILE_TAB+4,Y
-  STA PPU_ADDRESS
+
+  LDA TILE_TAB+4,Y:STA PPU_ADDRESS
+
   TAX
   LDA PPU_DATA
   LDA PPU_DATA
@@ -88,13 +89,16 @@ INCLUDE "vars.asm"
   ORA TILE_TAB+7,Y
   TAY
   PLA
+
   STA PPU_ADDRESS
   STX PPU_ADDRESS
   STY PPU_DATA
+
   LDA #8
   CLC
   ADC TILE_CUR
   STA TILE_CUR
+
   DEC TILE_CNT
   BEQ DRAW_MENU_ARROW
 
@@ -134,6 +138,7 @@ INCLUDE "vars.asm"
 .DRAW_ARROW_SKIP
   LDA STAGE_STARTED
   BEQ UPDATE_FPS
+
   LDA TILE_CNT
   CMP #4
   BCC UPDATE_FPS
@@ -182,61 +187,62 @@ INCLUDE "vars.asm"
   BEQ TICK_FPS
   INC FPS
   LDA FPS
-  CMP #HW_FPS
+  CMP #HW_FPS ; Compare frame count with hardware FPS
   BCC TICK_FPS
-  LDA #0
-  STA IS_SECOND_PASSED
+
+  LDA #0:STA IS_SECOND_PASSED
 
 .TICK_FPS
-  STA FPS
-  JSR PAD_READ
+  STA FPS ; ** This could be placed prior to the label **
+
+  JSR PAD_READ ; Read gamepad inputs
   JSR APU_PLAY_MELODY ; Play melody
   JSR APU_PLAY_SOUND  ; Play sound
-  LDA BOOM_SOUND
-  BEQ SET_SCROLL_REG
-  LDA DEMOPLAY
-  BNE SET_SCROLL_REG
-  LDA #&E
-  STA APU_DELTA_REG
-  LDA #DISABLE
-  STA BOOM_SOUND
-  LDA #&C0
-  STA APU_DELTA_REG+2
-  LDA #&FF
-  STA APU_DELTA_REG+3
-  LDA #&F
-  STA APU_MASTERCTRL_REG
-  LDA #&1F
-  STA APU_MASTERCTRL_REG
+
+  LDA BOOM_SOUND ; Check if explosion sound effect is playing
+  BEQ SET_SCROLL_REG ; Skip if not
+
+  LDA DEMOPLAY ; Check if we're in DEMO mode
+  BNE SET_SCROLL_REG ; Skip if we are
+
+  LDA #&E:STA APU_DELTA_REG ; Disable IRQ/loop, set frequncy to 14 (=72 ~ 24858 Hz)
+  LDA #DISABLE:STA BOOM_SOUND ; Stop explosion sound effect from playing
+  LDA #lo((BOOMPCM-ROMSTART) / 64):STA APU_DELTA_REG+2 ; PCM sample address
+  LDA #&FF:STA APU_DELTA_REG+3 ; PCM sample length (4081 bytes)
+  LDA #&F:STA APU_MASTERCTRL_REG ; Disable DMC
+  LDA #&1F:STA APU_MASTERCTRL_REG ; Enable DMC
 
 .SET_SCROLL_REG
-  LDA STAGE_STARTED
-  BEQ LEAVE_NMI
+  LDA STAGE_STARTED ; Check if stage started
+  BEQ LEAVE_NMI ; Leave the NMI if not
 
+  ; Prevent status bar from scrolling
 .WAIT_SPR0_HIT
-  LDA PPU_STATUS
+  LDA PPU_STATUS     ; Check for sprite 0 hit (for raster timing)
   AND #&40
-  BNE WAIT_SPR0_HIT
+  BNE WAIT_SPR0_HIT  ; Keep waiting until not hit
 
 .WAIT_SPR0_MISS
-  LDA PPU_STATUS
+  LDA PPU_STATUS     ; Check for sprite 0 hit
   AND #&40
-  BEQ WAIT_SPR0_MISS
-  LDA H_SCROLL
-  STA PPU_SCROLL_REG
-  LDA V_SCROLL
-  STA PPU_SCROLL_REG
+  BEQ WAIT_SPR0_MISS ; Keep waiting until hit
+
+  ; Set scroll offset
+  LDA H_SCROLL:STA PPU_SCROLL_REG ; Set scroll X
+  LDA V_SCROLL:STA PPU_SCROLL_REG ; Set scroll Y
 
 .LEAVE_NMI
   LDA #5
   EOR SPR_TAB_TOGGLE
   STA SPR_TAB_TOGGLE
+
+  ; Restore A/X/Y registers
+  PLA:TAY
+  PLA:TAX
   PLA
-  TAY
-  PLA
-  TAX
-  PLA
+
   RTI
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Set graphics pointer to absolute address in A:X
@@ -5743,6 +5749,7 @@ INCLUDE "sound.asm"
   EQUB &FF,&FF,&FF,&FF,&FF,&FF
 
 ORG     &F000
+.BOOMPCM
 INCBIN "boom.bin"
 
 .DUMMY
