@@ -4194,10 +4194,8 @@ INCLUDE "input.asm"
 }
 
 ; ---------------------------------------------------------------------------
-
 ; Table of monster types for every one of the 50 levels
 ; On each stage, there is up to 10 monsters
-
 .MONSTER_TAB
   EQUB    1, 1, 1, 1, 1, 1, 0, 0, 0, 0
   EQUB    1, 1, 1, 2, 2, 2, 0, 0, 0, 0
@@ -4251,9 +4249,7 @@ INCLUDE "input.asm"
   EQUB    5, 5, 6, 7, 7, 7, 7, 7, 8, 8
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Add a new tile to TILE_TAB
-
 .DRAW_TILE
 {
   STX TEMP_X
@@ -4297,12 +4293,14 @@ INCLUDE "input.asm"
   ASL A
   ASL A
   STA byte_1A
-  LDA unk_D994,Y
-  STA byte_1E
+
+  LDA unk_D994,Y:STA byte_1E
+
   LDY #0
   LDA byte_1F
   CMP #16
   BCC loc_D93A
+
   LDY #4
   SBC #16
 
@@ -4310,14 +4308,17 @@ INCLUDE "input.asm"
   STY byte_17
   ASL A
   STA byte_21
+
   LDA byte_20
   CLC
   ADC #2
   ASL A
   STA byte_22
+
   AND #&FC
   ASL A
   STA byte_1B
+
   LDA byte_21
   LSR A
   LSR A
@@ -4326,11 +4327,13 @@ INCLUDE "input.asm"
   CLC
   ADC #&C0
   STA byte_1B
-  LDA #&23
-  STA byte_1C
+
+  LDA #&23:STA byte_1C
+
   LDA #2
   AND byte_22
   STA byte_23
+
   LDA byte_21
   AND #3
   LSR A
@@ -4352,8 +4355,7 @@ INCLUDE "input.asm"
   BNE loc_D974
 
 .loc_D97C
-  LDA #1
-  STA byte_19
+  LDA #1:STA byte_19
   LDA byte_22
   LDX #5
 
@@ -4362,10 +4364,12 @@ INCLUDE "input.asm"
   ROL byte_19
   DEX
   BNE loc_D984
+
   CLC
   ADC byte_21
   STA byte_18
   BCC locret_D993
+
   INC byte_19
 
 .locret_D993
@@ -4425,57 +4429,58 @@ INCLUDE "input.asm"
   EQUB   3
 }
 
+; Table for the 4 tile ids used to make a sprite
 .TILE_MAP
-  EQUB &5F,&5F,&5F,&5F
-  EQUB &64,&65,&66,&67
-  EQUB &68,&69,&6A,&6B
-  EQUB &6C,&6D,&6E,&6F
-  EQUB &70,&71,&72,&73
-  EQUB &74,&75,&76,&77
-  EQUB &78,&79,&7A,&7B
-  EQUB &7C,&7D,&7E,&7F
-  EQUB &80,&81,&82,&83
-  EQUB &84,&85,&86,&87
-  EQUB &88,&89,&8A,&8B
-  EQUB &8C,&8D,&8E,&8F
-  EQUB &90,&91,&92,&93
-  EQUB &94,&95,&96,&97
-  EQUB &98,&99,&9A,&9B
-  EQUB &20,&20,&21,&21
-  EQUB &22,&23,&22,&23
-  EQUB &24,&24,&25,&25
-  EQUB &26,&27,&26,&27
-  EQUB &28,&28,&29,&29
-  EQUB &2A,&2B,&2A,&2B
-  EQUB &2C,&2C,&2D,&2D
-  EQUB &2E,&2F,&2E,&2F
-  EQUB &20,&9D,&21,&9F
-  EQUB &9C,&9D,&22,&23
-  EQUB &9C,&20,&9E,&21
-  EQUB &22,&23,&9E,&9F
-  EQUB &24,&A1,&25,&A3
-  EQUB &A0,&A1,&26,&27
-  EQUB &A0,&24,&A2,&25
-  EQUB &26,&27,&A2,&A3
-  EQUB &28,&A5,&29,&A7
-  EQUB &A4,&A5,&2A,&2B
-  EQUB &A4,&28,&A6,&29
-  EQUB &2A,&2B,&A6,&A7
-  EQUB &2C,&A9,&2D,&AB
-  EQUB &A8,&A9,&2E,&2F
-  EQUB &A8,&2C,&AA,&2D
-  EQUB &2E,&2F,&AA,&AB
-  EQUB &68,&69,&6A,&6B
-  EQUB &3C,&3D,&3E,&3F
-  EQUB   0,  1,&10,&11
-  EQUB   2,  3,&12,&13
-  EQUB   4,  5,&14,&15
-  EQUB   6,  7,&16,&17
-  EQUB   8,  9,&18,&19
-  EQUB  &A, &B,&1A,&1B
-  EQUB  &C, &D,&1C,&1D
-  EQUB  &E, &F,&1E,&1F
-  EQUB &68,&69,&6A,&6B
+  EQUB &5F,&5F,&5F,&5F ; Empty space
+  EQUB &64,&65,&66,&67 ; Concrete block
+  EQUB &68,&69,&6A,&6B ; Brick wall
+  EQUB &6C,&6D,&6E,&6F ; Brick wall 2
+  EQUB &70,&71,&72,&73 ; Brick wall 3
+  EQUB &74,&75,&76,&77 ; Brick wall 4
+  EQUB &78,&79,&7A,&7B ; Brick wall 5
+  EQUB &7C,&7D,&7E,&7F ; Brick wall 6
+  EQUB &80,&81,&82,&83 ; Bomb 1
+  EQUB &84,&85,&86,&87 ; Bomb 2
+  EQUB &88,&89,&8A,&8B ; Bomb 3
+  EQUB &8C,&8D,&8E,&8F ; Explosion centre 1
+  EQUB &90,&91,&92,&93 ; Explosion centre 2
+  EQUB &94,&95,&96,&97 ; Explosion centre 3
+  EQUB &98,&99,&9A,&9B ; Explosion centre 4
+  EQUB &20,&20,&21,&21 ; Explosion horizontal 1
+  EQUB &22,&23,&22,&23 ; Explosion vertical 1
+  EQUB &24,&24,&25,&25 ; Explosion horizontal 2
+  EQUB &26,&27,&26,&27 ; Explosion vertical 2
+  EQUB &28,&28,&29,&29 ; Explosion horizontal 3
+  EQUB &2A,&2B,&2A,&2B ; Explosion vertical 3
+  EQUB &2C,&2C,&2D,&2D ; Explosion horizontal 4
+  EQUB &2E,&2F,&2E,&2F ; Explosion vertical 4
+  EQUB &20,&9D,&21,&9F ; Explosion horizontal right edge 1
+  EQUB &9C,&9D,&22,&23 ; Explosion vertical top edge 1
+  EQUB &9C,&20,&9E,&21 ; Explosion horizontal left edge 1
+  EQUB &22,&23,&9E,&9F ; Explosion vertical bottom edge 1
+  EQUB &24,&A1,&25,&A3 ; Explosion horizontal right edge 2
+  EQUB &A0,&A1,&26,&27 ; Explosion vertical top edge 2
+  EQUB &A0,&24,&A2,&25 ; Explosion horizontal left edge 2
+  EQUB &26,&27,&A2,&A3 ; Explosion vertical bottom edge 2
+  EQUB &28,&A5,&29,&A7 ; Explosion horizontal right edge 3
+  EQUB &A4,&A5,&2A,&2B ; Explosion vertical top edge 3
+  EQUB &A4,&28,&A6,&29 ; Explosion horizontal left edge 3
+  EQUB &2A,&2B,&A6,&A7 ; Explosion vertical bottom edge 3
+  EQUB &2C,&A9,&2D,&AB ; Explosion horizontal right edge 4
+  EQUB &A8,&A9,&2E,&2F ; Explosion vertical top edge 4
+  EQUB &A8,&2C,&AA,&2D ; Explosion horizontal left edge 4
+  EQUB &2E,&2F,&AA,&AB ; Explosion vertical bottom edge 4
+  EQUB &68,&69,&6A,&6B ; Brick wall
+  EQUB &3C,&3D,&3E,&3F ; Exit door
+  EQUB   0,  1,&10,&11 ; Bonus item bomb
+  EQUB   2,  3,&12,&13 ; Bonus item flame
+  EQUB   4,  5,&14,&15 ; Bonus item skates
+  EQUB   6,  7,&16,&17 ; Bonus item speed
+  EQUB   8,  9,&18,&19 ; Bonus item heart bomb
+  EQUB  &A, &B,&1A,&1B ; Bonus item bomb push
+  EQUB  &C, &D,&1C,&1D ; Bonus item fire suit
+  EQUB  &E, &F,&1E,&1F ; Bonus item question mark
+  EQUB &68,&69,&6A,&6B ; Brick wall
 
 ; =============== S U B R O U T I N E =======================================
 ; Password entry screen
