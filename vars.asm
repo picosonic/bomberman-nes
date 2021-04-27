@@ -35,11 +35,13 @@ byte_1B             = &1B
 byte_1C             = &1C
 byte_1D             = &1D
 byte_1E             = &1E
-byte_1F             = &1F
-byte_20             = &20
+
+byte_1F             = &1F ; Cached X position ?
+byte_20             = &20 ; Cached Y position ?
 byte_21             = &21
 byte_22             = &22
 byte_23             = &23
+
 TEMP_X              = &24
 TEMP_Y              = &25
 
