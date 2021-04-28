@@ -63,6 +63,12 @@ MAX_FIRE = (MAX_BOMB*8)
 ; Enemy related
 MAX_ENEMY = 10
 
+; Gaze directions
+GAZE_RIGHT = 1
+GAZE_UP = 2
+GAZE_LEFT = 3
+GAZE_DOWN = 4
+
 ; Password related
 MAX_PW_CHARS = 20
 
