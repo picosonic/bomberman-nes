@@ -645,7 +645,7 @@ INCLUDE "input.asm"
 
 .loc_C3C7
   ; Default bomb radius
-  LDA #&10:STA BONUS_POWER
+  LDA #SPR_SIZE:STA BONUS_POWER
 
   ; Clear bonus items
   LDA #NO
@@ -660,8 +660,8 @@ INCLUDE "input.asm"
   BEQ loc_C40A
 
   ; Enhance capabilites for demo playback
-  LDA #9:STA BONUS_BOMBS
-  LDA #&40:STA BONUS_POWER
+  LDA #MAX_BOMB-1:STA BONUS_BOMBS
+  LDA #DEMO_BOMB_RANGE*SPR_SIZE:STA BONUS_POWER
   LDA #YES:STA BONUS_REMOTE
 
   LDA #0
@@ -948,7 +948,7 @@ INCLUDE "input.asm"
   LDA FRAME_CNT
   ROR A
   BCS loc_C5A4
-  JSR sub_CDD4 ; Move character right
+  JSR MOVE_RIGHT ; Move character right
 
 .loc_C5A4
   LDA BOMBMAN_X
@@ -964,7 +964,7 @@ INCLUDE "input.asm"
   LDA FRAME_CNT
   ROR A
   BCS loc_C5BF
-  JSR sub_CDD4
+  JSR MOVE_RIGHT
 
 .loc_C5BF
   LDA APU_MUSIC
@@ -1470,7 +1470,7 @@ INCLUDE "input.asm"
 
   LDA byte_36
   CLC
-  ADC #&10
+  ADC #SPR_SIZE
   CMP BONUS_POWER
   BCC loc_C89E
 
@@ -2230,38 +2230,38 @@ INCLUDE "input.asm"
 
 .CASE_RIGHT
   TAX
-  AND #1      ; Right
+  AND #PAD_RIGHT      ; Right
   BEQ CASE_LEFT
-  JSR sub_CDD4
+  JSR MOVE_RIGHT
 
 .CASE_LEFT
   TXA
-  AND #2      ; Left
+  AND #PAD_LEFT      ; Left
   BEQ CASE_UP
-  JSR sub_CDA3
+  JSR MOVE_LEFT
 
 .CASE_UP
   TXA
-  AND #8      ; Up
+  AND #PAD_UP      ; Up
   BEQ CASE_DOWN
-  JSR sub_CD70
+  JSR MOVE_UP
 
 .CASE_DOWN
   TXA
-  AND #4      ; Down
+  AND #PAD_DOWN      ; Down
   BEQ CASE_ACTION
-  JSR sub_CD39
+  JSR MOVE_DOWN
 
 .CASE_ACTION
   TXA
-  AND #&80 ; A
+  AND #PAD_A ; A
   BNE CASE_A
-  LDA BONUS_REMOTE    ; Use remote detinator (if you have it)
+  LDA BONUS_REMOTE    ; Use remote detonator (if you have it)
   BEQ CASE_NOTHING
   LDA LAST_INPUT
   BNE CASE_NOTHING
   TXA
-  AND #&40 ; B
+  AND #PAD_B ; B
   BEQ CASE_NOTHING
   STA LAST_INPUT
   JSR DETONATE    ; Explode the bombs
@@ -2272,26 +2272,32 @@ INCLUDE "input.asm"
 
 .CASE_A
   LDY BOMBMAN_Y
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY BOMBMAN_X
   LDA (STAGE_MAP),Y
   BNE CASE_NOTHING    ; Don't allow bomb placement if map is not empty here
+
   JSR ADJUST_BOMBMAN_HPOS ; Adjust bomberman horizontal position
   JSR ADJUST_BOMBMAN_VPOS ; Adjust bomberman vertical position
+
   LDX BONUS_BOMBS
 
 .CHECK_AMMO_LEFT
   LDA BOMB_ACTIVE,X
   BEQ PLACE_BOMB
+
   DEX
   BPL CHECK_AMMO_LEFT
+
   RTS
+
 ; ---------------------------------------------------------------------------
 
 .PLACE_BOMB
+{
   ; Place a bomb on the map
   LDA #MAP_BOMB:STA (STAGE_MAP),Y
 
@@ -2299,6 +2305,7 @@ INCLUDE "input.asm"
   LDA BOMBMAN_X:STA BOMB_X,X
   LDA BOMBMAN_Y:STA BOMB_Y,X
 
+  ; Initalise bomb vars
   LDA #0:STA BOMB_TIME_ELAPSED,X
   LDA #0:STA BOMB_UNUSED,X
   LDA #160:STA BOMB_TIME_LEFT,X
@@ -2308,146 +2315,152 @@ INCLUDE "input.asm"
 
   ; Play sound 3
   LDA #3:STA APU_SOUND
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-; Move down
-.sub_CD39
+; Move bomberman down
+.MOVE_DOWN
 {
+  ; Check for movement outside cell
   LDA BOMBMAN_V
   CMP #SPR_HALFSIZE
-  BCS loc_CD44
+  BCS advance_cell
+
   INC BOMBMAN_V
-  JMP loc_CD69
+  JMP done
 ; ---------------------------------------------------------------------------
 
-.loc_CD44
+.advance_cell
   LDY BOMBMAN_Y
   INY
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY BOMBMAN_X
-  JSR sub_CF60
-  BNE loc_CD69
+  JSR IS_SOLID
+  BNE done
+
   JSR ADJUST_BOMBMAN_HPOS ; Adjust bomberman horizontal position
   INC BOMBMAN_V
   LDA BOMBMAN_V
-  CMP #&10
-  BNE loc_CD69
-  LDA #0
-  STA BOMBMAN_V
+  CMP #SPR_SIZE
+  BNE done
+
+  LDA #0:STA BOMBMAN_V
   INC BOMBMAN_Y
 
-.loc_CD69
+.done
   LDA #4
   LDY #7
   JMP loc_CE2E
 }
 
 ; =============== S U B R O U T I N E =======================================
-; Move up
-.sub_CD70
+; Move bomberman up
+.MOVE_UP
 {
   LDA BOMBMAN_V
-  CMP #9
-  BCC loc_CD7B
+  CMP #SPR_HALFSIZE+1
+  BCC advance_cell
+
   DEC BOMBMAN_V
-  JMP loc_CD9C
+  JMP done
 ; ---------------------------------------------------------------------------
 
-.loc_CD7B
+.advance_cell
   LDY BOMBMAN_Y
   DEY
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY BOMBMAN_X
-  JSR sub_CF60
-  BNE loc_CD9C
+  JSR IS_SOLID
+  BNE done
+
   JSR ADJUST_BOMBMAN_HPOS ; Adjust bomberman horizontal position
   DEC BOMBMAN_V
-  BPL loc_CD9C
-  LDA #&F
-  STA BOMBMAN_V
+  BPL done
+
+  LDA #SPR_SIZE-1:STA BOMBMAN_V
   DEC BOMBMAN_Y
 
-.loc_CD9C
+.done
   LDA #8
   LDY #&B
   JMP loc_CE2E
 }
 
 ; =============== S U B R O U T I N E =======================================
-; Move left
-.sub_CDA3
+; Move bomberman left
+.MOVE_LEFT
 {
   LDA BOMBMAN_U
-  CMP #9
-  BCC loc_CDAE
+  CMP #SPR_HALFSIZE+1
+  BCC advance_cell
+
   DEC BOMBMAN_U
-  JMP loc_CDCF
+  JMP done
 ; ---------------------------------------------------------------------------
 
-.loc_CDAE
+.advance_cell
   LDY BOMBMAN_Y
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY BOMBMAN_X
   DEY
-  JSR sub_CF60
-  BNE loc_CDCF
+  JSR IS_SOLID
+  BNE done
+
   JSR ADJUST_BOMBMAN_VPOS ; Adjust bomberman vertical position
   DEC BOMBMAN_U
-  BPL loc_CDCF
-  LDA #&F
-  STA BOMBMAN_U
+  BPL done
+
+  LDA #SPR_SIZE-1:STA BOMBMAN_U
   DEC BOMBMAN_X
 
-.loc_CDCF
-  LDA #0 ; Show sprite normally (not flipped horizontally)
-  JMP loc_CE06
+.done
+  LDA #OAM_FLIP_NONE ; Show sprite normally (not flipped horizontally)
+  JMP SET_OAM_ATTR
 }
 
 ; =============== S U B R O U T I N E =======================================
-; Move right
-.sub_CDD4
+; Move bomberman right
+.MOVE_RIGHT
 {
   LDA BOMBMAN_U
   CMP #SPR_HALFSIZE
-  BCS loc_CDDF
+  BCS advance_cell
+
   INC BOMBMAN_U
-  JMP loc_CE04
+  JMP done
 ; ---------------------------------------------------------------------------
 
-.loc_CDDF
+.advance_cell
   LDY BOMBMAN_Y
-  LDA MULT_TABY,Y
-  STA STAGE_MAP
-  LDA MULT_TABX,Y
-  STA STAGE_MAP+1
+  LDA MULT_TABY,Y:STA STAGE_MAP
+  LDA MULT_TABX,Y:STA STAGE_MAP+1
+
   LDY BOMBMAN_X
   INY
-  JSR sub_CF60
-  BNE loc_CE04
+  JSR IS_SOLID
+  BNE done
+
   JSR ADJUST_BOMBMAN_VPOS ; Adjust bomberman vertical position
   INC BOMBMAN_U
   LDA BOMBMAN_U
-  CMP #&10
-  BNE loc_CE04
-  LDA #0
-  STA BOMBMAN_U
+  CMP #SPR_SIZE
+  BNE done
+
+  LDA #0:STA BOMBMAN_U
   INC BOMBMAN_X
 
-.loc_CE04
-  LDA #&40 ; Flip sprite horizontally
+.done
+  LDA #OAM_FLIP_X ; Flip sprite horizontally
 
-.^loc_CE06
+.^SET_OAM_ATTR
   STA SPR_ATTR_TEMP
   LDA #0
   LDY #3
@@ -2488,6 +2501,7 @@ INCLUDE "input.asm"
   BCC ADJUST_DOWN
   BEQ DONT_ADJUST2
   DEC BOMBMAN_V
+
   RTS
 ; ---------------------------------------------------------------------------
 
@@ -2501,8 +2515,7 @@ INCLUDE "input.asm"
 }
 
 ; ---------------------------------------------------------------------------
-; START OF FUNCTION CHUNK FOR sub_CD39
-
+; START OF FUNCTION CHUNK FOR MOVE_DOWN
 .loc_CE2E
   ; Limit to once per 4 frames
   PHA
@@ -2510,6 +2523,7 @@ INCLUDE "input.asm"
   AND #3
   CMP #2
   BNE loc_CE59
+
   LDA FRAME_CNT
   PLA
 
@@ -2533,6 +2547,7 @@ INCLUDE "input.asm"
   STA BOMBMAN_FRAME
   CMP #4
   BCC loc_CE54
+
   LDA #2
   BNE loc_CE56
 
@@ -2551,23 +2566,23 @@ INCLUDE "input.asm"
   RTS
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Draw bomberman
-
 .DRAW_BOMBERMAN
   LDA BOMBMAN_FRAME
   CMP #19
   BCS INCORRECT_FRAMENUM
-  LDA SPR_ATTR_TEMP
-  STA SPR_ATTR
-  LDY #0
-  STY SPR_COL
+
+  LDA SPR_ATTR_TEMP:STA SPR_ATTR
+  LDY #0:STY SPR_COL
+
   LDA BOMBMAN_X
   CMP #8
   BCC DONT_SCROLL
+
   LDY #&F0
   CMP #23
   BCS DONT_SCROLL
+
   ASL A
   ASL A
   ASL A
@@ -2591,6 +2606,7 @@ INCLUDE "input.asm"
   SBC #8
   SBC H_SCROLL
   STA SPR_X
+
   LDA BOMBMAN_Y
   ASL A
   ASL A
@@ -2600,19 +2616,16 @@ INCLUDE "input.asm"
   ADC BOMBMAN_V
   ADC #23
   STA SPR_Y
+
   LDX BOMBMAN_FRAME
   LDA BOMBER_ANIM,X
   JMP SPR_DRAW
 
-
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_CEA7
-  LDA SPR_ATTR_TEMP
-  STA SPR_ATTR
-  LDY #3
-  STY SPR_COL
+  LDA SPR_ATTR_TEMP:STA SPR_ATTR
+  LDY #3:STY SPR_COL
+
   LDA BOMBMAN_X
   ASL A
   ASL A
@@ -2623,6 +2636,7 @@ INCLUDE "input.asm"
   SEC
   SBC #8
   STA SPR_X
+
   LDA BOMBMAN_Y
   ASL A
   ASL A
@@ -2632,13 +2646,14 @@ INCLUDE "input.asm"
   ADC BOMBMAN_V
   ADC #&17
   STA SPR_Y
+
   LDX BOMBMAN_FRAME
   LDA HUMAN_ANIM,X
   JMP SPR_DRAW
 
 ; ---------------------------------------------------------------------------
 .HUMAN_ANIM
-  ; Game completed human animation
+  ; Game completed human walk animation
   EQUB &10,&11,&12,&11
 
 .BOMBER_ANIM
@@ -2653,133 +2668,189 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_CC36
-
 .loc_CEE9
   ; Play sound 4
   LDA #4:STA APU_SOUND
 
   LDA #&A
   JSR sub_DD83
+
   LDX EXIT_ENEMY_TYPE
-  DEX
-  BEQ loc_CF0D
-  DEX
-  BEQ loc_CF1A
-  DEX
-  BEQ loc_CF2A
-  DEX
-  BEQ loc_CF33
-  DEX
-  BEQ loc_CF3C
-  DEX
-  BEQ loc_CF45
-  DEX
-  BEQ loc_CF4E
-  DEX
-  BEQ loc_CF57
+  DEX:BEQ powerup_bomb ; 1 Valcom (Balloon)
+  DEX:BEQ powerup_power ; 2 O'Neal (Onion)
+  DEX:BEQ powerup_speed ; 3 Dahl (Barrel)
+  DEX:BEQ powerup_noclip ; 4 Minvo (Happy face)
+  DEX:BEQ powerup_detonator ; 5 Doria (Blob)
+  DEX:BEQ powerup_bombwalk ; 6 Ovape (Ghost)
+  DEX:BEQ powerup_firesuit ; 7 Pass (Tiger)
+  DEX:BEQ powerup_questionmark ; 8 Pontan (Coin)
   RTS
+
 ; ---------------------------------------------------------------------------
 
-.loc_CF0D
+.powerup_bomb
+{
+  ; Prevent more than 10 bombs
   LDA BONUS_BOMBS
-  CMP #9
-  BEQ loc_CF15
+  CMP #MAX_BOMB-1
+  BEQ done
+
+  ; Increment available bombs
   INC BONUS_BOMBS
 
-.loc_CF15
+.done
+  ; Play powerup collected melody
   LDA #4:STA APU_MUSIC
+
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
-.loc_CF1A
+.powerup_power
+{
+  ; Prevent bomb range exceeding 5 squares
   LDA BONUS_POWER
-  CMP #&50
-  BEQ loc_CF25
+  CMP #MAX_BOMB_RANGE*SPR_SIZE
+  BEQ done
 
-  CLC
-  ADC #&10
-  STA BONUS_POWER
+  ; Increase bomb range by 1 square
+  CLC:ADC #SPR_SIZE:STA BONUS_POWER
 
-.loc_CF25
+.done
+  ; Play powerup collected melody
   LDA #4:STA APU_MUSIC
+
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
-.loc_CF2A
-  LDA #1:STA BONUS_SPEED
+.powerup_speed
+{
+  ; Enable speed walking (4x faster)
+  LDA #ENABLE:STA BONUS_SPEED
+
+  ; Play powerup collected melody
   LDA #4:STA APU_MUSIC
+
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
-.loc_CF33
-  LDA #1:STA BONUS_NOCLIP
+.powerup_noclip
+{
+  ; Enable noclip (walk through brick walls)
+  LDA #ENABLE:STA BONUS_NOCLIP
+
+  ; Play powerup collected melody
   LDA #4:STA APU_MUSIC
+
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
-.loc_CF3C
-  LDA #1:STA BONUS_REMOTE
+.powerup_detonator
+{
+  ; Enable remote detonator
+  LDA #ENABLE:STA BONUS_REMOTE
+
+  ; Play powerup collected melody
   LDA #4:STA APU_MUSIC
+
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
-.loc_CF45
-  LDA #1:STA BONUS_BOMBWALK
+.powerup_bombwalk
+{
+  ; Enable walking through bombs
+  LDA #ENABLE:STA BONUS_BOMBWALK
+
+  ; Play powerup collected melody
   LDA #4:STA APU_MUSIC
+
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
-.loc_CF4E
-  LDA #1:STA BONUS_FIRESUIT
+.powerup_firesuit
+{
+  ; Enable firesuit (flames from explosions don't hurt)
+  LDA #ENABLE:STA BONUS_FIRESUIT
+
+  ; Play special powerup collected melody
   LDA #5:STA APU_MUSIC
+
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
-.loc_CF57
+.powerup_questionmark
+{
+  ; Enable invulnerability timer (~34 seconds @ 60Hz)
   LDA #&FF:STA INVUL_UNK1
+
+  ; Play special powerup collected melody
   LDA #5:STA APU_MUSIC
+
   RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
-.sub_CF60
+; Check map for current tile being "solid"
+;   Sets the zero flag to 1 for solid, or 0 for not solid
+.IS_SOLID
+{
   LDA (STAGE_MAP),Y
-  BEQ locret_CF7C
+  BEQ done ; Empty space
 
+  ; Exit door can always be walked on
   CMP #MAP_EXIT
-  BEQ locret_CF7C
+  BEQ done
 
+  ; Bonus items need to be not solid so we can collect them
   CMP #MAP_BONUS
-  BEQ locret_CF7C
+  BEQ done
 
+  ; For bricks and items hidden behind bricks, a further check for noclip powerup is needed
   CMP #MAP_BRICK
-  BEQ loc_CF7D
+  BEQ CHECK_NOCLIP
 
   CMP #MAP_HIDDEN_EXIT
-  BEQ loc_CF7D
+  BEQ CHECK_NOCLIP
 
   CMP #MAP_HIDDEN_BONUS
-  BEQ loc_CF7D
+  BEQ CHECK_NOCLIP
 
+  ; For bombs a further check for bombwalk powerup is needed
   CMP #MAP_BOMB
-  BEQ loc_CF82
+  BEQ CHECK_BOMBWALK
 
-.locret_CF7C
+.done
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_CF7D
-  LDA BONUS_NOCLIP
-  EOR #1
-  RTS
+  .CHECK_NOCLIP
+  {
+    LDA BONUS_NOCLIP:EOR #1
+
+    RTS
+  }
 ; ---------------------------------------------------------------------------
 
-.loc_CF82
-  LDA BONUS_BOMBWALK
-  EOR #1
-  RTS
+  .CHECK_BOMBWALK
+  {
+    LDA BONUS_BOMBWALK:EOR #1
 
+    RTS
+  }
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Return to A to set the buttons P1 | P2
@@ -4472,14 +4543,14 @@ INCLUDE "input.asm"
   EQUB &2E,&2F,&AA,&AB ; Explosion vertical bottom edge 4
   EQUB &68,&69,&6A,&6B ; Brick wall
   EQUB &3C,&3D,&3E,&3F ; Exit door
-  EQUB   0,  1,&10,&11 ; Bonus item bomb
-  EQUB   2,  3,&12,&13 ; Bonus item flame
-  EQUB   4,  5,&14,&15 ; Bonus item skates
-  EQUB   6,  7,&16,&17 ; Bonus item speed
-  EQUB   8,  9,&18,&19 ; Bonus item heart bomb
-  EQUB  &A, &B,&1A,&1B ; Bonus item bomb push
-  EQUB  &C, &D,&1C,&1D ; Bonus item fire suit
-  EQUB  &E, &F,&1E,&1F ; Bonus item question mark
+  EQUB   0,  1,&10,&11 ; Bonus item bomb (increase bombs)
+  EQUB   2,  3,&12,&13 ; Bonus item flame (increase explosion radius)
+  EQUB   4,  5,&14,&15 ; Bonus item skates (4x speed mode)
+  EQUB   6,  7,&16,&17 ; Bonus item walk through walls (no clip walls)
+  EQUB   8,  9,&18,&19 ; Bonus item remote (detonator)
+  EQUB  &A, &B,&1A,&1B ; Bonus item bomb walk (no clip bombs)
+  EQUB  &C, &D,&1C,&1D ; Bonus item fire suit (explosions don't hurt)
+  EQUB  &E, &F,&1E,&1F ; Bonus item question mark (invulnerability 1)
   EQUB &68,&69,&6A,&6B ; Brick wall
 
 ; =============== S U B R O U T I N E =======================================
