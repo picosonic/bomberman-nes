@@ -45,7 +45,7 @@ byte_23             = &23
 TEMP_X              = &24
 TEMP_Y              = &25
 
-word_26             = &26 ; PPU related pointer
+OAM_PTR             = &26 ; Pointer to cache of OAM data
 
 BOMBMAN_X           = &28
 BOMBMAN_U           = &29

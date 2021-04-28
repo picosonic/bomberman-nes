@@ -465,10 +465,10 @@ INCLUDE "input.asm"
 .PAL_RESET
 {
   ; Point to palette RAM
-  LDA #&3F:LDX #0
+  LDA #hi(BASE_PAL):LDX #lo(BASE_PAL)
   JSR VRAMADDR
 
-  ; Copy palette data
+  ; Copy all palette data
   LDY #32
 
 .loop
@@ -482,14 +482,15 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 
 .^VRAMADDRZ
-  LDA #&3F
+{
+  LDA #hi(BASE_PAL):STA PPU_ADDRESS
+  LDA #0:STA PPU_ADDRESS
+
+  STA PPU_ADDRESS
   STA PPU_ADDRESS
 
-  LDA #0
-  STA PPU_ADDRESS
-  STA PPU_ADDRESS
-  STA PPU_ADDRESS
   RTS
+}
 
 .STARTPAL
   EQUB &19 ; Universal background colour
@@ -920,7 +921,7 @@ INCLUDE "input.asm"
 
 .END_GAME
   JSR PPU_RESET
-  JSR sub_DBF9
+  JSR DRAW_GAME_COMPLETED
   JSR BUILD_CONCRETE_WALLS ; Reset level map
 
   LDA #SPR_HALFSIZE
@@ -1926,8 +1927,8 @@ INCLUDE "input.asm"
   LDA #0:STA byte_20
 
   ; Set up pointer
-  LDA #0:STA word_26
-  LDA #2:STA word_26+1
+  LDA #lo(OAM_CACHE):STA OAM_PTR
+  LDA #hi(OAM_CACHE):STA OAM_PTR+1
 
   LDY #0
 
@@ -1938,12 +1939,12 @@ INCLUDE "input.asm"
 .loc_CB1B
   LDA DEBUG
   BEQ loc_CB24
-  LDA (word_26),Y
+  LDA (OAM_PTR),Y
   JMP loc_CB30
 ; ---------------------------------------------------------------------------
 
 .loc_CB24
-  LDA (word_26),Y
+  LDA (OAM_PTR),Y
   CMP #4
   BEQ loc_CB2E
   CMP #5
@@ -1956,7 +1957,7 @@ INCLUDE "input.asm"
   JSR sub_CB4E
   INY
   BNE loc_CB38
-  INC word_26+1
+  INC OAM_PTR+1
 
 .loc_CB38
   INC byte_1F
@@ -1980,12 +1981,12 @@ INCLUDE "input.asm"
 
   LDX #0
 
-.loc_CB55
+.loop
   LDA byte_17,X:STA TILE_TAB,X
 
   INX
   CPX #8
-  BNE loc_CB55
+  BNE loop
 
   JSR sub_CB65
 
@@ -3383,7 +3384,7 @@ INCLUDE "input.asm"
   LDA #&10 ; Doria
   LDY #&13
 
-  JSR sub_D5DA
+  JSR ENEMY_ADVANCE_FRAME
   JSR sub_D37E
 
   LDA FRAME_CNT
@@ -3404,7 +3405,7 @@ INCLUDE "input.asm"
   LDA #8 ; Dahl
   LDY #&B
 
-  JSR sub_D5DA
+  JSR ENEMY_ADVANCE_FRAME
   JSR sub_D37E
 
   LDA FRAME_CNT
@@ -3433,7 +3434,7 @@ INCLUDE "input.asm"
   LDA #4 ; O'Neal
   LDY #7
 
-  JSR sub_D5DA
+  JSR ENEMY_ADVANCE_FRAME
   JSR sub_D37E
 
   LDA FRAME_CNT
@@ -3457,7 +3458,7 @@ INCLUDE "input.asm"
   LDA #&C ; Minvo
   LDY #&F
 
-  JSR sub_D5DA
+  JSR ENEMY_ADVANCE_FRAME
   JSR sub_D37E
 
 .^loc_D310
@@ -3489,7 +3490,7 @@ INCLUDE "input.asm"
   LDY #3
 
 .^loc_D325
-  JSR sub_D5DA
+  JSR ENEMY_ADVANCE_FRAME
   JSR sub_D37E
 
   LDA FRAME_CNT
@@ -3581,7 +3582,7 @@ INCLUDE "input.asm"
   LDA #&1C ; Pontan
   LDY #&1F
 
-  JSR sub_D5DA
+  JSR ENEMY_ADVANCE_FRAME
 
   LDY #0
   LDA M_FRAME
@@ -3601,7 +3602,7 @@ INCLUDE "input.asm"
   LDA #&18 ; Pass
   LDY #&1B
 
-  JSR sub_D5DA
+  JSR ENEMY_ADVANCE_FRAME
   JSR sub_D37E
 
 .^loc_D3AB
@@ -4033,79 +4034,93 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
+; Advance enemy horizontal offset position up to half sprite width
 .sub_D5BC
 {
   LDA M_U
   CMP #SPR_HALFSIZE
-  BCC loc_D5C7
-  BEQ done
+  BCC under_threshold
+  BEQ at_threshold
 
+  ; Over so decrement
   DEC M_U
 
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D5C7
+.under_threshold
   INC M_U
 
   RTS ; *** Not needed ***
 ; ---------------------------------------------------------------------------
 
-.done
+.at_threshold
   RTS
 }
 
 ; =============== S U B R O U T I N E =======================================
+; Advance enemy vertical offset position up to half sprite height
 .sub_D5CB
 {
   LDA M_V
   CMP #SPR_HALFSIZE
-  BCC loc_D5D6
-  BEQ done
+  BCC under_threshold
+  BEQ at_threshold
 
+  ; Over so decrement
   DEC M_V
 
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D5D6
+.under_threshold
   INC M_V
 
   RTS ; *** Not needed ***
 ; ---------------------------------------------------------------------------
 
-.done
+.at_threshold
   RTS
 }
 
 ; =============== S U B R O U T I N E =======================================
-.sub_D5DA
+; Advance enemy animation frame
+; A = minimum frame number, Y = maximum frame number
+.ENEMY_ADVANCE_FRAME
 {
+  ; Limit to once every 8 frames (7.5/sec @ 60Hz)
   PHA
   LDA FRAME_CNT
   AND #7
-  BNE loc_D5F0
-
+  BNE done
   PLA
+
+  ; Advance frame
   INC M_FRAME
+
+  ; Check for current frame being prior to first frame
   CMP M_FRAME
-  BCC loc_D5EB
+  BCC compare_to_end
 
-.loc_D5E8
-  STA M_FRAME
+.restart_animation
+  STA M_FRAME ; Reset animation to first frame
 
   RTS
+
 ; ---------------------------------------------------------------------------
 
-.loc_D5EB
+.compare_to_end
+  ; Check for current frame being past last frame
   CPY M_FRAME
-  BCC loc_D5E8
+  BCC restart_animation
 
   RTS
+
 ; ---------------------------------------------------------------------------
 
-.loc_D5F0
+.done
   PLA
+
   RTS
 }
 
@@ -4259,10 +4274,10 @@ INCLUDE "input.asm"
 .SPAWN_MONSTERS
 {
   LDA STAGE
-  CMP #&1A
+  CMP #(MAP_LEVELS/2)+1
   BCC loc_D6A8
 
-  SBC #&19
+  SBC #(MAP_LEVELS/2)
   LDX #2
   LDY #&D8
   BNE loc_D6AC
@@ -4423,6 +4438,7 @@ INCLUDE "input.asm"
   BNE COPY_TILE
 
   STY TILE_PTR
+
   LDX TEMP_X
   LDY TEMP_Y
 
@@ -4628,22 +4644,26 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 ; Password entry screen
 .READ_PASSWORD
+{
   JSR PPUD
   JSR VBLD
   JSR SETSTAGEPAL
+
   LDA #0
   STA STAGE_STARTED
   STA INMENU
   STA APU_MUSIC
-  LDY #&9F
-  LDA #&20
-  LDX #&E7
-  JSR sub_DC41 ; Print "ENTER SECRET CODE"
+
+  ; Print "ENTER SECRET CODE" for password prompt
+  LDY #(PASSWORD_PROMPT-STRING_TABLE)
+  LDA #&20:LDX #&E7 ; Position cursor for write
+  JSR PRINT_ASCIIZ
+
   JSR PPUE
-  LDA #6
-  STA byte_1F
-  LDA #':'
-  STA byte_20 ; Set current char to "blank"
+
+  LDA #6:STA byte_1F
+  LDA #':':STA byte_20 ; Set current char to "blank"
+
   LDY #0
 
 .loc_DAB5
@@ -4664,6 +4684,7 @@ INCLUDE "input.asm"
   LDA JOYPAD1
   AND #&8F
   BNE loc_DAF8
+
   DEX
   BNE loc_DAC9
   JSR WAITVBL
@@ -4672,20 +4693,25 @@ INCLUDE "input.asm"
   LDA #&22:LDX byte_1F
   JSR VRAMADDR
 
-  LDA #&3B ; ';'
-  STA PPU_DATA
+  LDA #SOLIDWHITE:STA PPU_DATA
 
   JSR PPU_RESTORE
+
   LDX #10
 
 .loc_DAE9
   JSR WAITVBL
+
+  ; Check for something being pressed on JOYPAD 1
   LDA JOYPAD1
   AND #&8F
   BNE loc_DAF8 ; Branch if A/Up/Down/Left/Right is pressed
+
   DEX
   BNE loc_DAE9
+
   JMP loc_DAB5
+
 ; ---------------------------------------------------------------------------
 ; Keypress on password screen handler
 
@@ -4755,7 +4781,7 @@ INCLUDE "input.asm"
   BEQ loc_DB40 ; Branch if current char is "blank"
   AND #&F
   TAX             ; X = current char & 0x0F
-  LDA byte_DFA0,X ; Use lookup for current char
+  LDA PW_DECODE_TABLE,X ; Use lookup for current char
   STA PW_BUFF,Y    ; Store this in 0x7F to 0x92
   JSR WAITVBL
 
@@ -4872,115 +4898,117 @@ INCLUDE "input.asm"
   STA STAGE
 
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
-.sub_DBF9
+.DRAW_GAME_COMPLETED
+{
   JSR PPUD
   JSR VBLD
   JSR SETSTAGEPAL
+
   LDA #6
   JSR sub_DD04
+
+  ; Print the 7 game completed lines of text
   LDY #0
-  JSR loc_DC39
-  JSR loc_DC39
-  JSR loc_DC39
-  JSR loc_DC39
-  JSR loc_DC39
-  JSR loc_DC39
-  JSR loc_DC39
+  JSR PRINT_XY_ASCIIZ
+  JSR PRINT_XY_ASCIIZ
+  JSR PRINT_XY_ASCIIZ
+  JSR PRINT_XY_ASCIIZ
+  JSR PRINT_XY_ASCIIZ
+  JSR PRINT_XY_ASCIIZ
+  JSR PRINT_XY_ASCIIZ
 
   LDA #&A:STA byte_20
   LDA #0:STA byte_1F
 
-.loc_DC26
+.loop
   LDA #&31
   JSR sub_CB4E
+
   INC byte_1F
   LDA byte_1F
   CMP #&10
-  BNE loc_DC26
+  BNE loop
+
   JSR VBLE
   JMP PPUE
+}
 
 ; ---------------------------------------------------------------------------
-
-.loc_DC39
-  LDA unk_DC53,Y
-  INY
-  LDX unk_DC53,Y
-  INY
+; Print ASCIIZ string with A:X screen location prefix
+.PRINT_XY_ASCIIZ
+{
+  ; Get the screen location first
+  LDA STRING_TABLE,Y:INY
+  LDX STRING_TABLE,Y:INY
 
 ; =============== S U B R O U T I N E =======================================
-
-
-.sub_DC41
+.^PRINT_ASCIIZ
   JSR VRAMADDR
 
-.loc_DC44
-  LDA unk_DC53,Y
+.loop
+  LDA STRING_TABLE,Y
   INY
-  CMP #0
-  BEQ locret_DC52
-  STA PPU_DATA
-  JMP loc_DC44
+  CMP #0 ; Check for null terminator
+  BEQ done
+
+  STA PPU_DATA ; Write character to screen
+  JMP loop
+
 ; ---------------------------------------------------------------------------
 
-.locret_DC52
+.done
   RTS
+}
 
 ; ---------------------------------------------------------------------------
-.unk_DC53
-  EQUB &20
-  EQUB &88
+
+.STRING_TABLE
+  EQUB &20, &88
   EQUS "CONGRATULATIONS", 0
 
-  EQUB &20
-  EQUB &E4
+  EQUB &20, &E4
   EQUS "YOU:HAVE:SUCCEEDED:IN", 0
 
-  EQUB &21
-  EQUB &22
+  EQUB &21, &22
   EQUS "HELPING:BOMBERMAN:TO:BECOME", 0
 
-  EQUB &21
-  EQUB &62
+  EQUB &21, &62
   EQUS "A:HUMAN:BEING", 0
 
-  EQUB &21
-  EQUB &A4
+  EQUB &21, &A4
   EQUS "MAYBE:YOU:CAN:RECOGNIZE:HIM", 0
 
-  EQUB &21
-  EQUB &E2
+  EQUB &21, &E2
   EQUS "IN:ANOTHER:HUDSON:SOFT:GAME", 0
 
-  EQUB &22
-  EQUB &4B
+  EQUB &22, &4B
   EQUS "GOOD:BYE", 0
 
+.PASSWORD_PROMPT
   EQUS "ENTER:SECRET:CODE", 0
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_DD04
+{
   PHA
   JSR WAITVBL
 
-  LDA #&3F:LDX #&1C
+  ; Point to palette RAM
+  LDA #hi(SPR_PAL_3-1):LDX #lo(SPR_PAL_3-1)
   JSR VRAMADDR
 
   PLA
+
   ASL A
   ASL A
   TAX
   LDY #4
 
 .loc_DD15
-  LDA STAGE_LO22,X
+  LDA byte_DD22,X
   STA PPU_DATA
   INX
   DEY
@@ -4988,9 +5016,15 @@ INCLUDE "input.asm"
   JMP VRAMADDRZ
 
 ; ---------------------------------------------------------------------------
-.STAGE_LO22
-  EQUB  &F,  0,  0,  0, &F,  0,  0,  0, &F,  0,  0,  0, &F,  0,  0,  0
-  EQUB  &F,  0,  0,  0, &F,  0,  0,  0, &F,&15,&36,&21
+.byte_DD22
+  EQUB  &F,  0,  0,  0    ; 0
+  EQUB  &F,  0,  0,  0    ; 1
+  EQUB  &F,  0,  0,  0    ; 2
+  EQUB  &F,  0,  0,  0    ; 3
+  EQUB  &F,  0,  0,  0    ; 4
+  EQUB  &F,  0,  0,  0    ; 5
+  EQUB  &F, &15, &36, &21 ; 6
+}
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -5011,7 +5045,7 @@ INCLUDE "input.asm"
   STA PPU_DATA
   DEX
   BPL loc_DD50
-  JSR sub_E2BD
+  JSR GENERATE_PASSWORD
   JSR VBLE
   JMP PPUE
 
@@ -5228,25 +5262,26 @@ INCLUDE "input.asm"
   EQUS "EGATS:SUNOB"
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .DRAWMENU
+{
   JSR PPUD
   JSR CLS
   JSR WAITVBL
 
-  ; Set screen pointer for next character to write
-  LDA #&3F:LDX #0
+  ; Point to palette RAM
+  LDA #hi(BASE_PAL):LDX #lo(BASE_PAL)
   JSR VRAMADDR
 
   LDX #0
 
-.loc_DE95
-  LDA MENUPAL,X
-  STA PPU_DATA
+  ; Set up all 4 background palettes from MENU set
+.pal_loop
+  LDA MENUPAL,X:STA PPU_DATA
+
   INX
   CPX #&10
-  BNE loc_DE95
+  BNE pal_loop
+
   JSR VRAMADDRZ
   JSR DRAWMENUTEXT    ; Write text in menus (author's rights, license)
 
@@ -5261,17 +5296,16 @@ INCLUDE "input.asm"
   STA PPU_DATA
   DEX
   BNE loc_DEB1
+
   LDX #0
 
 .loc_DEB9
-  LDA MAINMENU_HI,X
-  STA PPU_DATA
+  LDA MAINMENU_HI,X:STA PPU_DATA
   INX
   BNE loc_DEB9
 
 .loc_DEC2
-  LDA MAINMENU_LO,X
-  STA PPU_DATA
+  LDA MAINMENU_LO,X:STA PPU_DATA
   INX
   BNE loc_DEC2
 
@@ -5331,45 +5365,49 @@ INCLUDE "input.asm"
   STA PPU_DATA
   DEX
   BNE loc_DF18
+
   JSR PPU_RESTORE
   JSR VBLE
-  JMP PPUE
 
+  JMP PPUE
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .SETSTAGEPAL
-  LDA #0
-  STA H_SCROLL
+{
+  LDA #0:STA H_SCROLL
+
   JSR WAITVBL
 
-  ; Set screen pointer for next character to write
-  LDA #&3F:LDX #0
+  ; Point to palette RAM
+  LDA #hi(BASE_PAL):LDX #lo(BASE_PAL)
   JSR VRAMADDR
 
+  ; Set up all 4 background palettes from STAGE set
   LDX #0
 
-.loc_DF37
-  LDA STAGEPAL,X
-  STA PPU_DATA
+.loop
+  LDA STAGEPAL,X:STA PPU_DATA
+
   INX
   CPX #&10
-  BNE loc_DF37
-  JSR VRAMADDRZ
-  JMP CLS
+  BNE loop
 
+  JSR VRAMADDRZ
+
+  JMP CLS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .DRAW_TIME
+{
   LDY #'0'
   SEC
 
 .loc_DF4B
   SBC #100
   BCC loc_DF52
+
   INY
   BNE loc_DF4B
 
@@ -5377,21 +5415,21 @@ INCLUDE "input.asm"
   ADC #100
   CPY #'0'
   BNE loc_DF76
+
   LDY #':'
   STY PPU_DATA
 
-
 ; =============== S U B R O U T I N E =======================================
-
 ; Print 2-digit number in A.
-
-.PUTNUMBER
+.^PUTNUMBER
+{
   LDY #'0'
   SEC         ; Convert to number 0 to 9
 
 .DECADES
   SBC #10     ; Number of tens in Y
   BCC DONE_DECADES
+
   INY
   BNE DECADES     ; Number of tens in Y
 
@@ -5399,19 +5437,21 @@ INCLUDE "input.asm"
   ADC #&3A ; ':'
   CPY #'0'      ; If the number is single-digit (from 0 to 9) add leading space
   BNE PUTNUMB2
-  LDY #&3A ; ':' - This is a space
+
+  LDY #':' ; This is a space
 
 .PUTNUMB2
   STY PPU_DATA
   STA PPU_DATA
-  RTS
 
+  RTS
+}
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR DRAW_TIME
 
 .loc_DF76
   STY PPU_DATA
-  LDY #&30 ; '0'
+  LDY #'0'
   SEC
 
 .loc_DF7C
@@ -5421,20 +5461,24 @@ INCLUDE "input.asm"
   BNE loc_DF7C
 
 .loc_DF83
-  ADC #&3A ; ':'
+  ADC #':'
   STY PPU_DATA
   STA PPU_DATA
+
   RTS
+}
 
 ; ---------------------------------------------------------------------------
 .STAGEPAL
-  EQUB  &F,  0, &F,&30
+  EQUB  &F,  0, &F,&30  ; S0 /      GREY  BLACK WHITE
 
 .MENUPAL
-  EQUB  &F,  5,&30,&28, &F,  0, &F,&30
-  EQUB  &F,  6,&26,&37, &F, &F, &F, &F
+  EQUB  &F,  5,&30,&28  ; S1 / M0   PINK  WHITE GOLD
+  EQUB  &F,  0, &F,&30  ; S2 / M1   GREY  BLACK WHITE
+  EQUB  &F,  6,&26,&37  ; S3 / M2   RED   CORAL GREY
+  EQUB  &F, &F, &F, &F  ;    / M3   BLACK BLACK BLACK
 
-.byte_DFA0
+.PW_DECODE_TABLE
   EQUB   5,  0,  9,  4, &D,  7,  2,  6
   EQUB  &A, &F, &C,  3,  8, &B, &E,  1
 
@@ -5492,18 +5536,16 @@ INCLUDE "input.asm"
   EQUB &F9
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Write text in menus (author's rights, license)
-
 .DRAWMENUTEXT
+{
   LDY #0
+
   LDX #5 ; Number of strings to draw
 
 .NEXTSTRING
-  JSR NEXTCHAR
-  STA PPU_ADDRESS
-  JSR NEXTCHAR
-  STA PPU_ADDRESS
+  JSR NEXTCHAR:STA PPU_ADDRESS
+  JSR NEXTCHAR:STA PPU_ADDRESS
 
 .CONTINUEDRAW
   JSR NEXTCHAR
@@ -5518,49 +5560,49 @@ INCLUDE "input.asm"
 .BREAKDRAW
   DEX
   BNE NEXTSTRING
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
-
+; Read next character from MENUTEXT
 .NEXTCHAR
+{
   LDA MENUTEXT,Y
   INY
+
   RTS
+}
 
 ; ---------------------------------------------------------------------------
 .MENUTEXT
-  EQUB &22
-  EQUB &69
+  EQUB &22, &69
   EQUS "START",&B0,&B0,&B0,"CONTINUE"
   EQUB END_OF_STRING
 
-  EQUB &22
-  EQUB &AA
+  EQUB &22, &AA
   EQUS "TOP"
   EQUB END_OF_STRING
 
-  EQUB &22
-  EQUB &E3
+  EQUB &22, &E3
   EQUS "TM",&B0,"AND",&B0,COPYRIGHT,&B0,"1987",&B0,"HUDSON",&B0,"SOFT"
   EQUB END_OF_STRING
 
-  EQUB &23
-  EQUB &2A
+  EQUB &23, &2A
   EQUS "LICENSED",&B0,"BY"
   EQUB END_OF_STRING
 
-  EQUB &23
-  EQUB &64
+  EQUB &23, &64
   EQUS "NINTENDO",&B0,"OF",&B0,"AMERICA",&B0,"INC",FULLSTOP
   EQUB END_OF_STRING
 
+; Tile ids used on stage rows
 .STAGE_ROWS
   EQUB   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1
   EQUB   1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1
   EQUB   1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  1
 
+; Multiplication tables to find offset within stage map buffer
 .MULT_TABY
   EQUB lo(stage_buffer+(MAP_WIDTH*0)),lo(stage_buffer+(MAP_WIDTH*1)),lo(stage_buffer+(MAP_WIDTH*2)),lo(stage_buffer+(MAP_WIDTH*3))
   EQUB lo(stage_buffer+(MAP_WIDTH*4)),lo(stage_buffer+(MAP_WIDTH*5)),lo(stage_buffer+(MAP_WIDTH*6)),lo(stage_buffer+(MAP_WIDTH*7))
@@ -5573,7 +5615,10 @@ INCLUDE "input.asm"
   EQUB hi(stage_buffer+(MAP_WIDTH*12))
 
 ; =============== S U B R O U T I N E =======================================
-.sub_E2BD
+; Generate a 20 character resume password
+.GENERATE_PASSWORD
+{
+  ; Shift high nibble to low nibble for bomb radius
   LDA BONUS_POWER
   LSR A
   LSR A
@@ -5581,6 +5626,7 @@ INCLUDE "input.asm"
   LSR A
   STA BOMB_PWR
 
+  ; Split stage number into high and low nibbles
   LDA STAGE
   AND #&F
   STA STAGE_LO
@@ -5592,44 +5638,49 @@ INCLUDE "input.asm"
   LSR A
   STA STAGE_HI
 
+  ; Calculate first 3 checksums
   LDY #0
   LDX #0
   LDA #3
   STA byte_1F
 
-.loc_E2DB
-  JSR sub_E33C
+.loop
+  JSR calc_cxsum
   JSR _get_pass_data_var_addr
-  LDA TEMP_X
-  STA (STAGE_MAP),Y
+
+  LDA TEMP_X:STA (STAGE_MAP),Y
+
   DEC byte_1F
-  BNE loc_E2DB
+  BNE loop
 
-  JSR sub_E33C
+  JSR calc_cxsum
 
+  ; Add checksum 1*2
   LDA PW_CXSUM1
   ASL A
   CLC
   ADC TEMP_X
   STA TEMP_X
 
+  ; Add checksum 2*2
   LDA PW_CXSUM2
   ASL A
   CLC
   ADC TEMP_X
   STA TEMP_X
 
+  ; Add checksum 3*2
   LDA PW_CXSUM3
   ASL A
   CLC
   ADC TEMP_X
-  STA PW_CXSUM4
+  STA PW_CXSUM4 ; Save checksum result as checksum 4
 
   LDY #0
   STY SEED
   LDX #0
 
-.loc_E30A
+.encode_loop
   JSR _get_pass_data_var_addr
   LDA (STAGE_MAP),Y
   AND #&F
@@ -5640,16 +5691,16 @@ INCLUDE "input.asm"
   AND #&F
   STA password_buffer,X
   STA SEED
-  CPX #&28
-  BNE loc_E30A
+  CPX #MAX_PW_CHARS*2
+  BNE encode_loop
 
   ; Set screen position to write next character to
   LDA #&23:LDX #6
   JSR VRAMADDR
 
-  LDX #2
+  LDX #2 ; Skip first char
 
-.loc_E32B
+.pw_print_loop
   LDA password_buffer,X
   TAY
   LDA aAofkcpgelbhmjd,Y ; "AOFKCPGELBHMJDNI"
@@ -5657,17 +5708,19 @@ INCLUDE "input.asm"
 
   INX:INX
   CPX #(MAX_PW_CHARS+1)*2
-  BNE loc_E32B
-  RTS
+  BNE pw_print_loop
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-.sub_E33C
+; Calculate a checksum from 4 data bytes
+.calc_cxsum
 {
   LDA #4:STA byte_20
   LDA #0:STA TEMP_X
 
-.loc_E344
+.loop
   JSR _get_pass_data_var_addr
 
   LDA (STAGE_MAP),Y
@@ -5676,7 +5729,7 @@ INCLUDE "input.asm"
   STA TEMP_X
 
   DEC byte_20
-  BNE loc_E344
+  BNE loop
 
   RTS
 }
@@ -5695,13 +5748,16 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 
+  ; Memory locations for each variable encoded into the password
 ._pass_data_vars
   EQUW   SCORE+6,  BONUS_REMOTE,  STAGE_LO,  SCORE,  PW_CXSUM1,  SCORE+5,  BOMB_PWR,  SCORE+3,  BONUS_FIRESUIT,  PW_CXSUM2
   EQUW   BONUS_BOMBS,  SCORE+2,  BONUS_SPEED,  SCORE+1,  PW_CXSUM3,  SCORE+4,  DEBUG,  STAGE_HI,  BONUS_NOCLIP,  PW_CXSUM4
 }
 
+; Password translate table
 .aAofkcpgelbhmjd
   EQUS "AOFKCPGELBHMJDNI"
+
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_E399
 
