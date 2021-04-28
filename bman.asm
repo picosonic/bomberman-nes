@@ -2856,13 +2856,16 @@ INCLUDE "input.asm"
 ; Return to A to set the buttons P1 | P2
 .GET_INPUT
 {
+  ; If in demo mode, read the next key from demo data, otherwise read the pads
   LDA DEMOPLAY
   BEQ NOT_DEMO
 
+  ; Decrease timer, then advance to next pad state upon timeout
   LDA DEMOKEY_PAD1
   DEC DEMOKEY_TIMEOUT
   BNE SKIP_DEMO_KEY
 
+  ; Get next timer and pad state from demo data
   PHA
   LDY #0
   LDA (DEMOKEY_DATA),Y:STA DEMOKEY_TIMEOUT
@@ -2871,13 +2874,17 @@ INCLUDE "input.asm"
   JSR DEMO_GETNEXT
   PLA
 
+  ; Wait for timer to elapse before getting next demo padstate
 .SKIP_DEMO_KEY
   RTS
+
 ; ---------------------------------------------------------------------------
 
+  ; Not in demo mode, so read (and combine) actual pads
 .NOT_DEMO
   LDA JOYPAD1
   ORA JOYPAD2
+
   RTS
 }
 
@@ -2885,9 +2892,12 @@ INCLUDE "input.asm"
 ; Read next byte from DEMO input data
 .DEMO_GETNEXT
 {
+  ; Advance pointer (lo)
   INC DEMOKEY_DATA
+  ; Check for overflow to next memory page
   BNE DEMO_GETNEXT_HI
 
+  ; Advance pointer (hi)
   INC DEMOKEY_DATA+1
 
 .DEMO_GETNEXT_HI
@@ -2924,15 +2934,16 @@ INCLUDE "input.asm"
   TAY
   JSR ENEMY_SAVE ; Cache current monster attributes
 
-  LDA #&CF:PHA
-  LDA #&E2:PHA
+  ; Use THINK_PROC jump table, but return to RETURN_POINT afterwards
+  LDA #hi(RETURN_POINT-1):PHA
+  LDA #lo(RETURN_POINT-1):PHA
   LDA THINK_PROC-1,Y:PHA
   LDA THINK_PROC-2,Y:PHA
 
   RTS
 
 ; ---------------------------------------------------------------------------
- 
+.RETURN_POINT 
   JSR ENEMY_LOAD ; Restore current monster attributes after THINK proc
   JSR loc_D006
 
@@ -3061,8 +3072,10 @@ INCLUDE "input.asm"
   PHA
   LDA #0
   STA SPR_ATTR
+
   LDY #0
   STY byte_50
+
   LDA M_X
   ASL A
   ASL A
@@ -3072,27 +3085,35 @@ INCLUDE "input.asm"
   CLC
   ADC M_U
   STA byte_4F
+
   LDA byte_50
   ADC #0
   STA byte_50
+
   LDA byte_4F
   SEC
   SBC #8
   STA byte_4F
+
   LDA byte_50
   SBC #0
   STA byte_50
+
   LDA byte_4F
   SEC
   SBC H_SCROLL
   STA byte_4F
+
   LDA byte_50
   SBC #0
   BNE loc_D0F7
+
   LDA byte_4F
   CMP #&F8
   BCS loc_D0F7
+
   STA SPR_X
+
   LDA M_Y
   ASL A
   ASL A
@@ -3102,20 +3123,24 @@ INCLUDE "input.asm"
   ADC M_V
   ADC #&1B
   STA SPR_Y
+
   LDA byte_4B
   CLC
   ADC M_FACE
   CMP #&10
   BCC loc_D0E3
+
   LDA #&10
 
 .loc_D0E3
   STA TEMP_X
+
   ASL A
   CLC
   ADC TEMP_X
   TAX
   LDY byte_6B
+
   JSR sub_D0FA
   JSR sub_D0FA
   JSR sub_D0FA
@@ -3124,6 +3149,7 @@ INCLUDE "input.asm"
 .loc_D0F7
   PLA
   TAX
+
   RTS
 
 
@@ -3132,18 +3158,20 @@ INCLUDE "input.asm"
 {
   LDA loc_D121,X
   BEQ loc_D11C
+
   PHA
-  LDA SPR_Y
-  STA SPR_TAB,Y
+  LDA SPR_Y:STA SPR_TAB,Y
   INY
   PLA
+
   STA SPR_TAB,Y
+
   INY
-  LDA #1
-  STA SPR_TAB,Y
+  LDA #1:STA SPR_TAB,Y
+
   INY
-  LDA SPR_X
-  STA SPR_TAB,Y
+  LDA SPR_X:STA SPR_TAB,Y
+
   INY
   CLC
   ADC #8
@@ -3162,34 +3190,34 @@ INCLUDE "input.asm"
   RTS
 
 ; ---------------------------------------------------------------------------
-  EQUB &EC,&46,  0
-  EQUB &ED,&46,  0
-  EQUB &EE,&46,  0
-  EQUB &EF,&46,  0
-  EQUB &FC,&46,  0
-  EQUB &FD,&46,  0
-  EQUB &FE,&46,  0
-  EQUB &FF,&46,  0
-  EQUB &EC,&46,&46
-  EQUB &ED,&46,&46
-  EQUB &EE,&46,&46
-  EQUB &EF,&46,&46
-  EQUB &FC,&46,&46
-  EQUB &FD,&46,&46
-  EQUB &FE,&46,&46
-  EQUB &FF,&46,&46
+  EQUB &EC,&46,  0 ; 1
+  EQUB &ED,&46,  0 ; 2
+  EQUB &EE,&46,  0 ; 3
+  EQUB &EF,&46,  0 ; 4
+  EQUB &FC,&46,  0 ; 5
+  EQUB &FD,&46,  0 ; 6
+  EQUB &FE,&46,  0 ; 7
+  EQUB &FF,&46,  0 ; 8
+  EQUB &EC,&46,&46 ; 9
+  EQUB &ED,&46,&46 ; 10
+  EQUB &EE,&46,&46 ; 11
+  EQUB &EF,&46,&46 ; 12
+  EQUB &FC,&46,&46 ; 13
+  EQUB &FD,&46,&46 ; 14
+  EQUB &FE,&46,&46 ; 15
+  EQUB &FF,&46,&46 ; 16
 }
 
 .MONSTER_TILE
-  ; Animation sprites (one set for each of the 8 monsters)
-  EQUB &18,&19,&1A,&19
-  EQUB &1C,&1D,&1E,&1D
-  EQUB &20,&21,&22,&21
-  EQUB &24,&25,&26,&25
-  EQUB &28,&29,&2A,&29
-  EQUB &2C,&2D,&2E,&2D
-  EQUB &30,&31,&32,&31
-  EQUB &34,&35,&36,&35
+  ; Animation sprites (one set for each of the 8 monsters)w
+  EQUB &18,&19,&1A,&19 ; Valcom (Balloon)
+  EQUB &1C,&1D,&1E,&1D ; O'Neal (Onion)
+  EQUB &20,&21,&22,&21 ; Dahl (Barrel)
+  EQUB &24,&25,&26,&25 ; Minvo (Happy face)
+  EQUB &28,&29,&2A,&29 ; Doria (Blob)
+  EQUB &2C,&2D,&2E,&2D ; Ovape (Ghost)
+  EQUB &30,&31,&32,&31 ; Pass (Tiger)
+  EQUB &34,&35,&36,&35 ; Pontan (Coin)
 
   ; First death sprite (one for each of the 8 monsters)
   EQUB &1B,&1F,&23,&27,&2B,&2F,&33,&37
@@ -3255,6 +3283,7 @@ INCLUDE "input.asm"
 }
 
 ; ---------------------------------------------------------------------------
+; Jump table
 .THINK_PROC
   EQUW THINK_0-1 ; Valcom (Balloon)
   EQUW THINK_1-1 ; O'Neal (Onion)
@@ -3269,17 +3298,21 @@ INCLUDE "input.asm"
   EQUW THINK_A-1
 
 ; ---------------------------------------------------------------------------
+
 .THINK_A
 {
   DEC byte_49
   BNE locret_D2A2
-  LDA #0
-  STA M_TYPE
+
+  LDA #0:STA M_TYPE
+
   RTS
 }
 
 ; ---------------------------------------------------------------------------
+
 .THINK_9
+{
   DEC byte_49
   BNE locret_D2A2
   LDA #10
@@ -3320,8 +3353,10 @@ INCLUDE "input.asm"
   LDA #&64
   STA byte_49
 
-.locret_D2A2
+.^locret_D2A2
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 .THINK_8
 {
@@ -3340,8 +3375,11 @@ INCLUDE "input.asm"
 
 .locret_D2B4
   RTS
+
 ; ---------------------------------------------------------------------------
+
 .THINK_4
+{
   LDA #&10 ; Doria
   LDY #&13
 
@@ -3353,12 +3391,16 @@ INCLUDE "input.asm"
   BNE locret_D2B4
 
   JMP loc_D310
+}
+
 ; ---------------------------------------------------------------------------
 
 .locret_D2C8
   RTS
+
 ; ---------------------------------------------------------------------------
 .THINK_2
+{
   LDA #8 ; Dahl
   LDY #&B
 
@@ -3378,12 +3420,16 @@ INCLUDE "input.asm"
 
 .loc_D2E4
   JMP loc_D33F
+}
+
 ; ---------------------------------------------------------------------------
 
 .locret_D2E7
   RTS
+
 ; ---------------------------------------------------------------------------
 .THINK_1
+{
   LDA #4 ; O'Neal
   LDY #7
 
@@ -3403,35 +3449,46 @@ INCLUDE "input.asm"
 
 .loc_D303
   JMP loc_D33F
+}
+
 ; ---------------------------------------------------------------------------
 .THINK_3
+{
   LDA #&C ; Minvo
   LDY #&F
 
   JSR sub_D5DA
   JSR sub_D37E
 
-.loc_D310
+.^loc_D310
   DEC byte_4C
   LDA byte_4C
   CMP #&C8
   JMP loc_D337
+}
+
 ; ---------------------------------------------------------------------------
 
 .THINK_SKIP
   RTS
+
 ; ---------------------------------------------------------------------------
+
 .THINK_5
+{
   LDA #20 ; Ovape
   LDY #23
 
   JMP loc_D325
+}
+
 ; ---------------------------------------------------------------------------
 .THINK_0
+{
   LDA #0 ; Valcom
   LDY #3
 
-.loc_D325
+.^loc_D325
   JSR sub_D5DA
   JSR sub_D37E
 
@@ -3443,13 +3500,13 @@ INCLUDE "input.asm"
   LDA byte_4C
   CMP #20
 
-.loc_D337
+.^loc_D337
   BCS loc_D33F
 
   JSR TURN_VERTICALLY
   JSR TURN_HORIZONTALLY
 
-.loc_D33F
+.^loc_D33F
   LDA byte_49
   BEQ loc_D365
 
@@ -3469,6 +3526,7 @@ INCLUDE "input.asm"
   LDA #&60:STA byte_49
 
   RTS
+
 ; ---------------------------------------------------------------------------
 
 .loc_D360
@@ -3488,8 +3546,8 @@ INCLUDE "input.asm"
   CLC
   ADC #&20
   STA byte_49
-
   PLA
+
   ROL A
   ROL A
   ROL A
@@ -3499,6 +3557,7 @@ INCLUDE "input.asm"
   STA M_FACE
 
   RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 .sub_D37E
@@ -3518,6 +3577,7 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 .THINK_7
+{
   LDA #&1C ; Pontan
   LDY #&1F
 
@@ -3533,15 +3593,18 @@ INCLUDE "input.asm"
 .loc_D39C
   STY byte_48
   JMP loc_D3AB
+}
+
 ; ---------------------------------------------------------------------------
 .THINK_6
+{
   LDA #&18 ; Pass
   LDY #&1B
 
   JSR sub_D5DA
   JSR sub_D37E
 
-.loc_D3AB
+.^loc_D3AB
   LDA byte_4C
   BEQ loc_D3B4
 
@@ -3609,7 +3672,10 @@ INCLUDE "input.asm"
   LDA #&60:STA byte_4C
   LDY M_FACE
   LDA byte_D412,Y:STA M_FACE
+
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 .byte_D412
   EQUB   0,  3,  4,  1,  2,  1,  4,  4,  2,  1,  3,  2,  4
@@ -3664,9 +3730,8 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_D454
+{
   LDA #0:STA byte_51
 
   LDA M_U
@@ -3731,8 +3796,9 @@ INCLUDE "input.asm"
 .loc_D4BD
   LDA byte_51
 
-.locret_D4BF
+.^locret_D4BF
   RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 .ENEMY_COLLISION
@@ -3759,6 +3825,7 @@ INCLUDE "input.asm"
 }
 
 ; ---------------------------------------------------------------------------
+
 .BRICK_WALL
 {
   LDA M_TYPE
@@ -3770,6 +3837,7 @@ INCLUDE "input.asm"
   BEQ locret_D4BF
 
   CMP #8
+
   RTS
 }
 
@@ -3779,34 +3847,38 @@ INCLUDE "input.asm"
 {
   LDX #0:STX byte_4E
 
+  ; Check for looking right
   TAX
-  CMP #1
+  CMP #GAZE_RIGHT
   BNE CASE_NOT_RIGHT
 
   JSR STEP_ENEMY_RIGHT
 
+  ; Check for looking left
 .CASE_NOT_RIGHT
   TXA
-  CMP #3
+  CMP #GAZE_LEFT
   BNE CASE_NOT_LEFT
 
   JSR STEP_ENEMY_LEFT
 
+  ; Check for looking up
 .CASE_NOT_LEFT
   TXA
-  CMP #2
+  CMP #GAZE_UP
   BNE CASE_NOT_UP
 
   JSR STEP_ENEMY_UP
 
+  ; Check for looking down
 .CASE_NOT_UP
   TXA
-  CMP #4
-  BNE CASE_NOT_DOWN
+  CMP #GAZE_DOWN
+  BNE done
 
   JSR STEP_ENEMY_DOWN
 
-.CASE_NOT_DOWN
+.done
   LDA byte_4E
 
   RTS
