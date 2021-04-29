@@ -717,7 +717,7 @@ INCLUDE "input.asm"
   JSR VBLD
   JSR BUILD_MAP   ; Generate level map
   JSR SPAWN       ; Spawn enemies
-  JSR sub_E4AF
+  JSR PICK_BONUS_ITEM ; Determine which bonus item is available for this level
   JSR PICTURE_ON  ; Turn on screen and display
   LDA #SECONDSPERLEVEL
   STA TIMELEFT
@@ -5765,27 +5765,30 @@ INCLUDE "input.asm"
   RTS
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .sub_E399
+{
+  ; Check how many enemies are left
   LDA ENEMIES_LEFT
-  BNE loc_E3A7
+  BNE no_fanfare
 
+  ; Check if we've already played the fanfare
   LDA NO_ENEMIES_CELEBRATED
-  BNE loc_E3A7
+  BNE no_fanfare
 
+  ; Prevent fanfare being played more than once
   INC NO_ENEMIES_CELEBRATED
 
-  ; Play sound 6 to indicate we've just defeated all the enemies
+  ; Play sound 6 (fanfare) to indicate we've just defeated all the enemies
   LDA #6:STA APU_SOUND
 
-.loc_E3A7
+.no_fanfare
   LDA byte_A8
   BEQ loc_E3E7
 
   CMP #2
   BEQ locret_E398
 
+  ; Limit to every other frame
   LDA FRAME_CNT
   AND #1
   BNE loc_E3BD
@@ -5799,20 +5802,22 @@ INCLUDE "input.asm"
   JSR sub_CFED
   LDA EXTRA_BONUS_ITEM_X
   CMP BOMBMAN_X
-  BNE locret_E3E6
+  BNE done
 
   LDA BOMBMAN_Y
   CMP EXTRA_BONUS_ITEM_Y
-  BNE locret_E3E6
+  BNE done
 
   ; Play sound 4
   LDA #4:STA APU_SOUND
+
   LDX BONUS_AVAILABLE
-  LDA byte_E4BC,X
+  LDA BONUS_SCORES,X
   CMP #100
   BCC loc_E3DF
   JSR loc_DD6B
   JMP loc_E3E2
+
 ; ---------------------------------------------------------------------------
 
 .loc_E3DF
@@ -5821,8 +5826,10 @@ INCLUDE "input.asm"
 .loc_E3E2
   LDA #2:STA byte_A8
 
-.locret_E3E6
+.done
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
 .loc_E3E7
@@ -5870,6 +5877,7 @@ INCLUDE "input.asm"
   CMP #&B
   BEQ loc_E434
 
+  ; Reset corner visit counters
   LDA #0
   STA VISITS_TOP_LEFT
   STA VISITS_TOP_RIGHT
@@ -5878,12 +5886,12 @@ INCLUDE "input.asm"
 
 .loc_E434
   LDX BONUS_AVAILABLE
-  BEQ loc_E448 ; Branch if 9D = 0 "Bonus target"
-  DEX:BEQ loc_E468 ; Branch if 9D = 1 "Goddess mask"
-  DEX:BEQ loc_E47D ; Branch if 9D = 2 "Nakamoto-san"
-  DEX:BEQ loc_E486 ; Branch if 9D = 3 "Famicom"
-  DEX:BEQ loc_E48D ; Branch if 9D = 4 "Cola bottle"
-  DEX:BEQ loc_E498 ; Branch if 9D = 5 "Dezeniman-san"
+  BEQ loc_E448 ; Branch if 0 "Bonus target"
+  DEX:BEQ loc_E468 ; Branch if 1 "Goddess mask"
+  DEX:BEQ loc_E47D ; Branch if 2 "Nakamoto-san"
+  DEX:BEQ loc_E486 ; Branch if 3 "Famicom"
+  DEX:BEQ loc_E48D ; Branch if 4 "Cola bottle"
+  DEX:BEQ loc_E498 ; Branch if 5 "Dezeniman-san"
   RTS
 ; ---------------------------------------------------------------------------
 
@@ -5965,24 +5973,33 @@ INCLUDE "input.asm"
   BEQ PLACE_BONUS ; Place bonus if A7 = 3
   RTS
 
-
 ; =============== S U B R O U T I N E =======================================
 ; Calculate which bonus item can be achieved for current level
-
-.sub_E4AF
+.PICK_BONUS_ITEM
+{
   LDA STAGE
   AND #7
   CMP #6
-  BCC loc_E4B9 ; IF (STAGE & 7) < 6 skip
+  BCC set_bonus ; IF (STAGE & 7) < 6 skip
   AND #1 ; Restrict bonus item to 0 or 1
 
-.loc_E4B9
+.set_bonus
   STA BONUS_AVAILABLE
+
   RTS
+}
 
 ; ---------------------------------------------------------------------------
-.byte_E4BC
-  EQUB   1,  2,&64,&32,  3,&C8
+; Scores for collecting bonus items
+;   multiplied by 10,000 for those < 100
+;   multiplied by 100,000 for those >= 100
+.BONUS_SCORES
+  EQUB   1 ; Bonus target (* 10,000 = 10,000)
+  EQUB   2 ; Goddess mask (* 10,000 = 20,000)
+  EQUB 100 ; Nakamoto-san (* 100,000 = 10,000,000)
+  EQUB  50 ; Famicom (* 10,000 = 500,000)
+  EQUB   3 ; Cola bottle (* 10,000 = 30,000)
+  EQUB 200 ; Dezeniman-san (* 100,000 = 20,000,000)
 
 INCLUDE "sound.asm"
 
@@ -6004,17 +6021,12 @@ INCLUDE "sound.asm"
   EQUB &19,  1,  1,  0, &E,  8,  3,&48,  1,  0,  6,&40,&14,  0,  6,&80,  2,&88,  4,  8
   EQUB   1,  0,  8,  8,  1,  0,  3,  8,  2,&88,  1,  0,  2,&88,  1,  0,&14,  8,  5,&88
   EQUB   4,  8,  2,  0,&1B,  1,  7,&81,&18,  1,  6,&81,&15,  1,  2,  9,&10,  8, &A,&40
-  EQUB &1A,  0, &A,  4,  1,  0,  6,  4,  1,  0,&1E,  2,  6,  0,&10,  8,  3,&84,&FF,&FF
-
-  EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
-  EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
-  EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
-  EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
-  EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
-  EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
-  EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
-  EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
-  EQUB &FF,&FF,&FF,&FF,&FF,&FF
+  EQUB &1A,  0, &A,  4,  1,  0,  6,  4,  1,  0,&1E,  2,  6,  0,&10,  8,  3,&84
+  
+.PADDING
+  FOR n, 1, &F000-PADDING
+    EQUB &FF
+  NEXT
 
 ; NOTE : PCM address must a multiple of 64
 ORG     &F000
@@ -6022,12 +6034,17 @@ ORG     &F000
 INCBIN "boom.bin"
 
 .DUMMY
-  EQUB &FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF,&FF
+  FOR n, 1, &FFF9-DUMMY
+    EQUB &FF
+  NEXT
+
 ; ---------------------------------------------------------------------------
 
 .IRQ
   RTI
+
 ; ---------------------------------------------------------------------------
+
   EQUW NMI
   EQUW RESET
   EQUW IRQ
