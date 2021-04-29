@@ -171,9 +171,9 @@ VISITS_BOTTOM_RIGHT = &A3
 BRICKS_BLOWN_UP     = &A4
 CHAIN_REACTIONS     = &A5
 byte_A6             = &A6
-byte_A7             = &A7
-byte_A8             = &A8
-byte_A9             = &A9
+EXIT_BOMBED_COUNT   = &A7
+BONUS_STATUS        = &A8 ; 0 = Criteria not met / 1 = Achieved / 2 = Collected
+BONUS_TIMER         = &A9 ; Time which the bonus is on screen for
 EXTRA_BONUS_ITEM_X  = &AA ; X position where extra bonus is placed
 EXTRA_BONUS_ITEM_Y  = &AB ; Y position where extra bonus is placed
 

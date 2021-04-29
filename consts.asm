@@ -23,6 +23,11 @@ YES = 1
 DISABLE = 0
 ENABLE = 1
 
+; Bonus states
+BONUS_NOT_MET = 0
+BONUS_ACHIEVED = 1
+BONUS_COLLECTED = 2
+
 ; Input
 PAD_RIGHT  = &01
 PAD_LEFT   = &02

@@ -687,9 +687,9 @@ INCLUDE "input.asm"
   STA INVUL_UNK1
 
 .START_STAGE
-  LDA #0
+  LDA #NO
   STA NO_ENEMIES_CELEBRATED
-  STA byte_A8
+  STA BONUS_STATUS
   STA STAGE_STARTED
 
   ; Initialise extra bonus criteria
@@ -703,7 +703,7 @@ INCLUDE "input.asm"
   STA BRICKS_BLOWN_UP ; Number of bricks blown up
   STA CHAIN_REACTIONS ; Number of chain reactions
   STA byte_A6 ; Something pressed on gamepad timer
-  STA byte_A7 ; Number of times exit has been bombed ?
+  STA EXIT_BOMBED_COUNT ; Number of times exit has been bombed
 
   JSR STAGE_SCREEN
 
@@ -715,23 +715,24 @@ INCLUDE "input.asm"
   LDA #3:STA APU_MUSIC
 
   JSR VBLD
-  JSR BUILD_MAP   ; Generate level map
-  JSR SPAWN       ; Spawn enemies
+  JSR BUILD_MAP       ; Generate level map
+  JSR SPAWN           ; Spawn enemies
   JSR PICK_BONUS_ITEM ; Determine which bonus item is available for this level
-  JSR PICTURE_ON  ; Turn on screen and display
-  LDA #SECONDSPERLEVEL
-  STA TIMELEFT
+  JSR PICTURE_ON      ; Turn on screen and display
+
+  ; Set level timer
+  LDA #SECONDSPERLEVEL:STA TIMELEFT
 
 .STAGE_LOOP
-  JSR PAUSED      ; Check for START being pressed, if so pause
-  JSR SPRD        ; Hide sprites
-  JSR sub_CC36    ; Process button presses
-  JSR BOMB_TICK   ; Bomb timer operations and explosion initiation
-  JSR DRAW_BOMBERMAN  ; Draw bomberman
-  JSR THINK       ; Enemy movements
-  JSR BOMB_ANIMATE    ; Animate on-screen bombs
-  JSR STAGE_TIMER ; Tick the stage timer
-  JSR sub_E399
+  JSR PAUSED         ; Check for START being pressed, if so pause
+  JSR SPRD           ; Hide sprites
+  JSR sub_CC36       ; Process button presses
+  JSR BOMB_TICK      ; Bomb timer operations and explosion initiation
+  JSR DRAW_BOMBERMAN ; Draw bomberman
+  JSR THINK          ; Enemy movements
+  JSR BOMB_ANIMATE   ; Animate on-screen bombs
+  JSR STAGE_TIMER    ; Tick the stage timer
+  JSR CHECK_BONUSES  ; Check bonus criteria
 
   LDA byte_5D
   BNE loc_C481
@@ -1415,10 +1416,10 @@ INCLUDE "input.asm"
   STA (STAGE_MAP),Y
 
   JSR DRAW_TILE   ; Add a new tile to TILE_TAB
-  DEC byte_A7
+  DEC EXIT_BOMBED_COUNT
 
 .loc_C828
-  INC byte_A7
+  INC EXIT_BOMBED_COUNT
   JSR sub_C8AD
   JMP loc_C830
 
@@ -5758,249 +5759,7 @@ INCLUDE "input.asm"
 .aAofkcpgelbhmjd
   EQUS "AOFKCPGELBHMJDNI"
 
-; ---------------------------------------------------------------------------
-; START OF FUNCTION CHUNK FOR sub_E399
-
-.locret_E398
-  RTS
-
-; =============== S U B R O U T I N E =======================================
-.sub_E399
-{
-  ; Check how many enemies are left
-  LDA ENEMIES_LEFT
-  BNE no_fanfare
-
-  ; Check if we've already played the fanfare
-  LDA NO_ENEMIES_CELEBRATED
-  BNE no_fanfare
-
-  ; Prevent fanfare being played more than once
-  INC NO_ENEMIES_CELEBRATED
-
-  ; Play sound 6 (fanfare) to indicate we've just defeated all the enemies
-  LDA #6:STA APU_SOUND
-
-.no_fanfare
-  LDA byte_A8
-  BEQ loc_E3E7
-
-  CMP #2
-  BEQ locret_E398
-
-  ; Limit to every other frame
-  LDA FRAME_CNT
-  AND #1
-  BNE loc_E3BD
-
-  DEC byte_A9
-  BNE loc_E3BD
-
-  LDA #2:STA byte_A8
-
-.loc_E3BD
-  JSR sub_CFED
-  LDA EXTRA_BONUS_ITEM_X
-  CMP BOMBMAN_X
-  BNE done
-
-  LDA BOMBMAN_Y
-  CMP EXTRA_BONUS_ITEM_Y
-  BNE done
-
-  ; Play sound 4
-  LDA #4:STA APU_SOUND
-
-  LDX BONUS_AVAILABLE
-  LDA BONUS_SCORES,X
-  CMP #100
-  BCC loc_E3DF
-  JSR loc_DD6B
-  JMP loc_E3E2
-
-; ---------------------------------------------------------------------------
-
-.loc_E3DF
-  JSR sub_DD77
-
-.loc_E3E2
-  LDA #2:STA byte_A8
-
-.done
-  RTS
-}
-
-; ---------------------------------------------------------------------------
-
-.loc_E3E7
-  LDA BOMBMAN_X
-  CMP #1
-  BNE loc_E401
-  LDA BOMBMAN_Y
-  CMP #1
-  BNE loc_E3F8
-  INC VISITS_TOP_LEFT
-  JMP loc_E416
-; ---------------------------------------------------------------------------
-
-.loc_E3F8
-  CMP #&B
-  BNE loc_E401
-  INC VISITS_BOTTOM_LEFT
-  JMP loc_E416
-; ---------------------------------------------------------------------------
-
-.loc_E401
-  CMP #&1D
-  BNE loc_E416
-  LDA BOMBMAN_Y
-  CMP #1
-  BNE loc_E410
-  INC VISITS_TOP_RIGHT
-  JMP loc_E416
-; ---------------------------------------------------------------------------
-
-.loc_E410
-  CMP #&B
-  BNE loc_E416
-  INC VISITS_BOTTOM_RIGHT
-
-.loc_E416
-  LDA BOMBMAN_X
-  CMP #1
-  BEQ loc_E434
-  CMP #&1D
-  BEQ loc_E434
-  LDA BOMBMAN_Y
-  CMP #1
-  BEQ loc_E434
-  CMP #&B
-  BEQ loc_E434
-
-  ; Reset corner visit counters
-  LDA #0
-  STA VISITS_TOP_LEFT
-  STA VISITS_TOP_RIGHT
-  STA VISITS_BOTTOM_LEFT
-  STA VISITS_BOTTOM_RIGHT
-
-.loc_E434
-  LDX BONUS_AVAILABLE
-  BEQ loc_E448 ; Branch if 0 "Bonus target"
-  DEX:BEQ loc_E468 ; Branch if 1 "Goddess mask"
-  DEX:BEQ loc_E47D ; Branch if 2 "Nakamoto-san"
-  DEX:BEQ loc_E486 ; Branch if 3 "Famicom"
-  DEX:BEQ loc_E48D ; Branch if 4 "Cola bottle"
-  DEX:BEQ loc_E498 ; Branch if 5 "Dezeniman-san"
-  RTS
-; ---------------------------------------------------------------------------
-
-; Reveal the exit and walk over it without defeating any enemies
-.loc_E448 ; 9D = 0 "Bonus target"
-  LDA ENEMIES_DEFEATED
-  BNE locret_E467 ; Skip if any enemies killed
-  LDA EXIT_DWELL_TIME
-  BEQ locret_E467 ; Skip if 9F == 0
-
-.PLACE_BONUS
-  LDA byte_A8
-  BNE locret_E467 ; Skip if A8 != 0
-  LDA #1:STA byte_A8
-  LDA #0:STA byte_A9
-  JSR RAND_COORDS ; Place bonus item randomly
-  LDA TEMP_X:STA EXTRA_BONUS_ITEM_X
-  LDA TEMP_Y:STA EXTRA_BONUS_ITEM_Y
-
-.locret_E467
-  RTS
-; ---------------------------------------------------------------------------
-
-; Defeat every enemy and circle the outer ring of the level
-.loc_E468 ; 9D = 1 "Goddess mask"
-  LDA ENEMIES_LEFT
-  BNE locret_E467 ; Skip if any enemies left
-  LDA VISITS_TOP_LEFT
-  BEQ locret_E467 ; Skip if not visited top left
-  LDA VISITS_TOP_RIGHT
-  BEQ locret_E467 ; Skip if not visited top right
-  LDA VISITS_BOTTOM_LEFT
-  BEQ locret_E467 ; Skip if not visited bottom left
-  LDA VISITS_BOTTOM_RIGHT
-  BNE PLACE_BONUS ; Place bonus if bottom right visited 
-  RTS
-; ---------------------------------------------------------------------------
-
-; Kill every enemy without blowing up any walls
-.loc_E47D ; 9D = 2 "Nakamoto-san"
-  LDA ENEMIES_LEFT
-  BNE locret_E467 ; Skip if any enemies left
-  LDA BRICKS_BLOWN_UP
-  BEQ PLACE_BONUS ; Place bonus if no bricks blown up
-  RTS
-; ---------------------------------------------------------------------------
-
-; Create 248 or more chain reactions with your bombs (one chain reaction = one bomb detonating another)
-.loc_E486 ; 9D = 3 "Famicom"
-  LDA CHAIN_REACTIONS
-  CMP #248
-  BCS PLACE_BONUS ; Place bonus if 248 or more chain reactions
-  RTS
-; ---------------------------------------------------------------------------
-
-; Reveal the exit, walk over it, and don't let go of the d pad for at least 16.5 seconds [while making sure not to defeat any enemies]
-.loc_E48D ; 9D = 4 "Cola bottle"
-  LDA EXIT_DWELL_TIME
-  BEQ locret_E467 ; Skip if 9F = 0
-  LDA byte_A6
-  CMP #248
-  BCS PLACE_BONUS ; Place bonus if A6 >= 248
-  RTS
-; ---------------------------------------------------------------------------
-
-; Destroy every wall and bomb the exit thrice while making sure not to defeat any enemies (including those that come out of the door)
-.loc_E498 ; 9D = 5 "Dezeniman-san"
-  LDA ENEMIES_DEFEATED
-  BNE locret_E467 ; Skip if any enemies have been killed
-
-  LDA STAGE:ASL A:CLC:ADC #50
-  CMP BRICKS_BLOWN_UP
-  BEQ loc_E4A8 ; Branch if bricks blown up = (STAGE * 2) + 50
-  BCS locret_E467 ; Skip if bricks blown up >= above
-
-.loc_E4A8
-  LDA byte_A7
-  CMP #3
-  BEQ PLACE_BONUS ; Place bonus if A7 = 3
-  RTS
-
-; =============== S U B R O U T I N E =======================================
-; Calculate which bonus item can be achieved for current level
-.PICK_BONUS_ITEM
-{
-  LDA STAGE
-  AND #7
-  CMP #6
-  BCC set_bonus ; IF (STAGE & 7) < 6 skip
-  AND #1 ; Restrict bonus item to 0 or 1
-
-.set_bonus
-  STA BONUS_AVAILABLE
-
-  RTS
-}
-
-; ---------------------------------------------------------------------------
-; Scores for collecting bonus items
-;   multiplied by 10,000 for those < 100
-;   multiplied by 100,000 for those >= 100
-.BONUS_SCORES
-  EQUB   1 ; Bonus target (* 10,000 = 10,000)
-  EQUB   2 ; Goddess mask (* 10,000 = 20,000)
-  EQUB 100 ; Nakamoto-san (* 100,000 = 10,000,000)
-  EQUB  50 ; Famicom (* 10,000 = 500,000)
-  EQUB   3 ; Cola bottle (* 10,000 = 30,000)
-  EQUB 200 ; Dezeniman-san (* 100,000 = 20,000,000)
-
+INCLUDE "bonuses.asm"
 INCLUDE "sound.asm"
 
 .DEMO_KEYDATA
