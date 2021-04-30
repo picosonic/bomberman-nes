@@ -5203,8 +5203,7 @@ INCLUDE "input.asm"
 .STAGE_SCREEN
   JSR PPUD
   JSR VBLD
-  LDA #0
-  STA H_SCROLL
+  LDA #0:STA H_SCROLL
   JSR SETSTAGEPAL
 
   ; Set screen pointer for next character to write

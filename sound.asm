@@ -2,11 +2,12 @@
 ; START OF FUNCTION CHUNK FOR APU_PLAY_MELODY
 
 .APU_STOP
-  LDA #0
-  STA APU_MUSIC
+{
+  LDA #0:STA APU_MUSIC
 
-.APU_ABORT
+.^APU_ABORT
   RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Play melody
@@ -14,14 +15,19 @@
 {
   LDA APU_DISABLE
   BNE APU_ABORT
+
   LDA APU_MUSIC
   BEQ APU_ABORT
   BMI UPDATE_MELODY
+
   CMP #&B
   BCS APU_STOP
+
   STA APU_TEMP
+
   ORA #&80
   STA APU_MUSIC
+
   DEC APU_TEMP
   LDA APU_TEMP
   ASL A
@@ -31,16 +37,14 @@
   LDX #0
 
 .START_MELODY
-  LDA APU_MELODIES_TAB,Y ; 1: TITLE
-  STA APU_CHANDAT,X
+  LDA APU_MELODIES_TAB,Y:STA APU_CHANDAT,X
   INY
   INX
   CPX #6
   BNE START_MELODY
-  LDA APU_MELODIES_TAB,Y ; 1: TITLE
-  STA byte_D3
-  LDA APU_MELODIES_TAB+1,Y ; 1: TITLE
-  STA byte_D4
+
+  LDA APU_MELODIES_TAB,Y:STA byte_D3
+  LDA APU_MELODIES_TAB+1,Y:STA byte_D4
 
   LDA #0
 
@@ -99,13 +103,13 @@
   TXA
   ASL A
   TAX
-  LDA APU_CHANDAT,X
-  STA APU_PTR
-  LDA APU_CHANDAT+1,X
-  STA APU_PTR+1
+  LDA APU_CHANDAT,X:STA APU_PTR
+  LDA APU_CHANDAT+1,X:STA APU_PTR+1
   ORA APU_PTR
   BEQ ADVANCE_CHANNEL
+
   JSR APU_WRITE_REGS
+
   JMP ADVANCE_CHANNEL
 }
 
@@ -115,39 +119,45 @@
 {
   LDX APU_CHAN
   LDY APU_CNT,X
-  LDA (APU_PTR),Y
-  STA APU_TEMP
+  LDA (APU_PTR),Y:STA APU_TEMP
   INC APU_CNT,X
   LDA APU_TEMP
   BMI CONTROL_BYTE
-  LDA byte_B9,X
-  STA byte_B6,X
+
+  LDA byte_B9,X:STA byte_B6,X
   CPX #2
   BEQ FIX_TRIANGLE
+
   LSR A
   LSR A
   CMP #&10
   BCC FIX_DELAY
+
   LDA #&F
   BNE FIX_DELAY
 
 .FIX_TRIANGLE
   ASL A
   BPL FIX_DELAY
+
   LDA #&7F
 
 .FIX_DELAY
   STA byte_D6,X
+
   LDA byte_D0,X
   BEQ loc_E57B
+
   LSR byte_D6,X
 
 .loc_E57B
   LDY APU_CHAN_DIS,X
   BNE ABORT_WRITE
+
   LDA APU_TEMP
   CMP #0
   BEQ ABORT_WRITE
+
   TXA
   ASL A
   ASL A
@@ -155,6 +165,7 @@
   LDA byte_CD,X
   BEQ loc_E59D
   BPL loc_E593
+
   INC byte_CD,X
   BEQ loc_E59D
 
@@ -162,6 +173,7 @@
   LDA #&9F
   CPX #2
   BNE loc_E5A1
+
   LDA #&7F
   BNE loc_E5A1
 
@@ -171,9 +183,11 @@
 
 .loc_E5A1
   STA APU_REG_BASE,Y ; Channel - flags
+
   LDA byte_CD,X
   CMP #2
   BNE loc_E5AB
+
   RTS
 }
 
@@ -182,15 +196,16 @@
 .loc_E5AB
   CPX #2
   BCS SET_WAVELEN
-  LDA APU_SWEEP,X
-  STA APU_REG_BASE+1,Y ; Pulse channel - sweep unit (hard coded to 8)
+
+  LDA APU_SWEEP,X:STA APU_REG_BASE+1,Y ; Pulse channel - sweep unit (hard coded to 8)
 
 .SET_WAVELEN
   LDA APU_TEMP
   ASL A
   TAX
-  LDA WAVELEN_TAB,X
-  STA APU_REG_BASE+2,Y ; Channel - timer low
+
+  LDA WAVELEN_TAB,X:STA APU_REG_BASE+2,Y ; Channel - timer low
+
   LDA WAVELEN_TAB+1,X
   ORA #8
   STA APU_REG_BASE+3,Y ; Channel - timer high
@@ -203,25 +218,29 @@
   AND #&F0
   CMP #&F0
   BEQ EXEC_EFFECT
+
   LDA APU_TEMP
   AND #&7F
   STA byte_B9,X
+
   JMP APU_WRITE_REGS
 ; ---------------------------------------------------------------------------
 
 .EXEC_EFFECT
+{
   SEC
   LDA #&FF
   SBC APU_TEMP
   ASL A
   TAY
-  LDA off_E5E6+1,Y
-  PHA
-  LDA off_E5E6,Y
-  PHA
+  LDA off_E5E6+1,Y:PHA
+  LDA off_E5E6,Y:PHA
+
   RTS
+}
 
 ; ---------------------------------------------------------------------------
+; Jump table
 .off_E5E6
   EQUW off_E5F4+1
   EQUW locret_E5FA
@@ -246,8 +265,7 @@
   JMP APU_WRITE_REGS
 ; ---------------------------------------------------------------------------
   LDY APU_CNT,X
-  LDA (APU_PTR),Y
-  STA unk_CA,X
+  LDA (APU_PTR),Y:STA unk_CA,X
   INY
   STY APU_CNT,X
   STY unk_C7,X
@@ -257,40 +275,36 @@
 ; ---------------------------------------------------------------------------
   DEC unk_CA,X
   BEQ loc_E618
-  LDA unk_C7,X
-  STA APU_CNT,X
+
+  LDA unk_C7,X:STA APU_CNT,X
 
 .loc_E618
   JMP APU_WRITE_REGS
 ; ---------------------------------------------------------------------------
   LDA byte_CD,X
   BEQ loc_E626
-  LDA #2
-  STA byte_CD,X
+
+  LDA #2:STA byte_CD,X
   JMP APU_WRITE_REGS
 ; ---------------------------------------------------------------------------
 
 .loc_E626
-  LDA #1
-  STA byte_CD,X
+  LDA #1:STA byte_CD,X
 
 .loc_E62A
   JMP APU_WRITE_REGS
 ; ---------------------------------------------------------------------------
-  LDA #&FF
-  STA byte_CD,X
+  LDA #&FF:STA byte_CD,X
 
 .loc_E631
   JMP APU_WRITE_REGS
 ; ---------------------------------------------------------------------------
-  LDA #&FF
-  STA byte_D0,X
+  LDA #&FF:STA byte_D0,X
 
 .loc_E638
   JMP APU_WRITE_REGS
 ; ---------------------------------------------------------------------------
-  LDA #0
-  STA byte_D0,X
+  LDA #0:STA byte_D0,X
 
 .loc_E63F
   JMP APU_WRITE_REGS
@@ -309,8 +323,7 @@
   STA APU_TRIANGLE_REG
   STA APU_NOISE_REG
 
-  LDA #&F
-  STA APU_MASTERCTRL_REG
+  LDA #&F:STA APU_MASTERCTRL_REG
 
   RTS
 }
@@ -324,19 +337,25 @@
 .MUTE_CHANNEL
   LDA APU_CHAN_DIS,X
   BEQ MUTE_NEXT_CHAN
+
   DEC APU_CHAN_DIS,X
 
 .MUTE_NEXT_CHAN
   DEX
   BPL MUTE_CHANNEL
+
   LDA APU_SOUND   ; Play sound
   BMI UPDATE_SOUND
+
   CMP #7
   BCS WRONG_SOUND ; >= 7
+
   CMP #3
   BCS START_SOUND ; >= 3
+
   LDX APU_PATTERN
   BEQ START_SOUND
+
   TXA
   ORA #&80
   STA APU_SOUND   ; Play sound
@@ -346,17 +365,17 @@
   STA APU_PATTERN
   ORA #&80
   STA APU_SOUND   ; Play sound
+
   LDA #0
   STA APU_SOUND_MOD
   STA APU_SOUND_MOD+1
   STA APU_SOUND_MOD+2
-  LDA APU_PATTERN
-  ASL A
-  TAX
-  LDA MOD_SOUND_TAB+1,X
-  PHA
-  LDA MOD_SOUND_TAB,X
-  PHA
+
+  ; Load up function pointer from jump table
+  LDA APU_PATTERN:ASL A:TAX
+  LDA MOD_SOUND_TAB+1,X:PHA
+  LDA MOD_SOUND_TAB,X:PHA
+
   RTS
 }
 
@@ -367,18 +386,19 @@
   LDA APU_PATTERN
   CMP #7
   BCS WRONG_SOUND
-  ASL A
-  TAX
-  LDA CONST_SOUND_TAB+1,X
-  PHA
-  LDA CONST_SOUND_TAB,X
-  PHA
+
+  ; Load up function pointer from jump table
+  ASL A:TAX
+  LDA CONST_SOUND_TAB+1,X:PHA
+  LDA CONST_SOUND_TAB,X:PHA
 
 .^WRONG_SOUND
   RTS
 }
 
 ; ---------------------------------------------------------------------------
+
+; Jump table for initialisation of sound effect
 .MOD_SOUND_TAB
   EQUW APU_RESET-1 ; 0 Reset APU
   EQUW S1_START-1  ; 1 Bomberman footsteps 1
@@ -388,6 +408,7 @@
   EQUW S5_START-1  ; 5 Collision between enemy and bomberman
   EQUW S6_START-1  ; 6 Pause/Unpause and all enemies defeated
 
+; Jump table for continuation of sound effect
 .CONST_SOUND_TAB
   EQUW WRONG_SOUND-1 ; 0
   EQUW WRONG_SOUND-1 ; 1
@@ -396,6 +417,7 @@
   EQUW S4_UPDATE-1   ; 4
   EQUW WRONG_SOUND-1 ; 5
   EQUW S6_UPDATE-1   ; 6
+
 ; ---------------------------------------------------------------------------
 
 .S1_START
@@ -521,20 +543,19 @@
 .^S6_UPDATE
   DEC APU_SDELAY
   BEQ S6_PITCH
+
   LDA APU_SDELAY
   AND #3
   BNE S6_END
+
   LDA APU_SDELAY
   LSR A
   LSR A
   AND #1
   TAX
 
-  LDA S6_SQ1MOD_TAB,X
-  STA APU_SQUARE1_REG+2
-
-  LDA S6_SQ2MOD_TAB,X
-  STA APU_SQUARE2_REG+2
+  LDA S6_SQ1MOD_TAB,X:STA APU_SQUARE1_REG+2
+  LDA S6_SQ2MOD_TAB,X:STA APU_SQUARE2_REG+2
 
   LDA #8
   STA APU_SQUARE1_REG
@@ -555,8 +576,7 @@
   STA APU_SOUND_MOD+1
   STA APU_SOUND_MOD+2
 
-  LDA #0
-  STA APU_PATTERN
+  LDA #0:STA APU_PATTERN
 
   RTS
 
