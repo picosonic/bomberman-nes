@@ -1,6 +1,7 @@
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR APU_PLAY_MELODY
 
+; Stop playback of music
 .APU_STOP
 {
   LDA #0:STA APU_MUSIC
@@ -13,38 +14,49 @@
 ; Play melody
 .APU_PLAY_MELODY
 {
+  ; If sound disabled, end now
   LDA APU_DISABLE
   BNE APU_ABORT
 
+  ; If no tune currently playing, end now
   LDA APU_MUSIC
   BEQ APU_ABORT
+
+  ; If tune already set up, then continue playing
   BMI UPDATE_MELODY
 
-  CMP #&B
+  ; Set up tune for playback
+
+  ; If tune to play >= number of tunes, stop playback and end now
+  CMP #NUM_TUNES+1
   BCS APU_STOP
 
+  ; Cache tune number
   STA APU_TEMP
 
+  ; Set top bit to indicate setup done
   ORA #&80
   STA APU_MUSIC
 
+  ; Make zero-based for offset calculation
   DEC APU_TEMP
   LDA APU_TEMP
-  ASL A
-  ASL A
-  ASL A
+  ASL A:ASL A:ASL A ; * 8 for offset into APU_MELODIES_TAB
+
+  ; Copy 6 bytes of APU_MELODIES_TAB to APU_CHANDAT
   TAY
   LDX #0
 
-.START_MELODY
+.loop
   LDA APU_MELODIES_TAB,Y:STA APU_CHANDAT,X
   INY
   INX
   CPX #6
-  BNE START_MELODY
+  BNE loop
 
-  LDA APU_MELODIES_TAB,Y:STA byte_D3
-  LDA APU_MELODIES_TAB+1,Y:STA byte_D4
+  ; Copy last 2 bytes of APU_MELODIES_TAB entry
+  LDA APU_MELODIES_TAB,Y:STA APU_FLAGS
+  LDA APU_MELODIES_TAB+1,Y:STA APU_FLAGS+1
 
   LDA #0
 
@@ -81,13 +93,13 @@
   STA APU_SWEEP
   STA APU_SWEEP+1
 
+  ; Continue playback
 .UPDATE_MELODY
-  LDA #2
-  STA APU_CHAN
+  LDA #2:STA APU_CHAN ; Start at triangle
 
 .NEXT_CHANNEL
   LDX APU_CHAN
-  DEC &B6,X
+  DEC byte_B6,X
   BEQ PLAY_CHANNEL
 
 .^ADVANCE_CHANNEL
@@ -96,20 +108,26 @@
 
   RTS
 }
+
 ; ---------------------------------------------------------------------------
 
 .PLAY_CHANNEL
 {
-  TXA
-  ASL A
-  TAX
+  ; X = X * 2
+  TXA:ASL A:TAX
+
+  ; Set up APU_PTR
   LDA APU_CHANDAT,X:STA APU_PTR
   LDA APU_CHANDAT+1,X:STA APU_PTR+1
+
+  ; If APU_PTR = &0000 for this channel, move to next channel
   ORA APU_PTR
   BEQ ADVANCE_CHANNEL
 
+  ; Process next action for this channel
   JSR APU_WRITE_REGS
 
+  ; Move to next channel
   JMP ADVANCE_CHANNEL
 }
 
@@ -121,6 +139,8 @@
   LDY APU_CNT,X
   LDA (APU_PTR),Y:STA APU_TEMP
   INC APU_CNT,X
+
+  ; Check for top bit being setm if so process as a control byte
   LDA APU_TEMP
   BMI CONTROL_BYTE
 
@@ -179,7 +199,7 @@
 
 .loc_E59D
   LDA byte_D6,X
-  ORA byte_D3,X
+  ORA APU_FLAGS,X
 
 .loc_E5A1
   STA APU_REG_BASE,Y ; Channel - flags
@@ -192,8 +212,8 @@
 }
 
 ; ---------------------------------------------------------------------------
-
 .loc_E5AB
+{
   CPX #2
   BCS SET_WAVELEN
 
@@ -210,114 +230,173 @@
   ORA #8
   STA APU_REG_BASE+3,Y ; Channel - timer high
 
-.ABORT_WRITE
+.^ABORT_WRITE
   RTS
-; ---------------------------------------------------------------------------
+}
 
+; ---------------------------------------------------------------------------
+; Top bit set indicates control byte
 .CONTROL_BYTE
+{
+  ; If top nibble is &F0 then process as an effect code
   AND #&F0
   CMP #&F0
   BEQ EXEC_EFFECT
 
   LDA APU_TEMP
-  AND #&7F
+  AND #&7F ; Clear top bit
   STA byte_B9,X
 
   JMP APU_WRITE_REGS
-; ---------------------------------------------------------------------------
+}
 
+; ---------------------------------------------------------------------------
+; Top nibble &F0 indicates effect byte
 .EXEC_EFFECT
 {
+  ; Calculate jump table offset
   SEC
   LDA #&FF
   SBC APU_TEMP
   ASL A
   TAY
-  LDA off_E5E6+1,Y:PHA
-  LDA off_E5E6,Y:PHA
+
+  LDA MELODY_EFFECT_JUMP_TABLE+1,Y:PHA
+  LDA MELODY_EFFECT_JUMP_TABLE,Y:PHA
 
   RTS
 }
 
 ; ---------------------------------------------------------------------------
-; Jump table
-.off_E5E6
-  EQUW off_E5F4+1
-  EQUW locret_E5FA
-  EQUW loc_E5FF+2
-  EQUW loc_E60D+2
-  EQUW loc_E618+2
-  EQUW loc_E62A+2
-  EQUW loc_E631+2
-.off_E5F4
-  EQUW loc_E638+2
-; ---------------------------------------------------------------------------
-  LDA #0
-  STA APU_MUSIC
+; Jump table for melody effects
+.MELODY_EFFECT_JUMP_TABLE
+  EQUW MELODY_STOP_MUSIC-1
+  EQUW MELODY_RESTART_CHANNEL-1
+  EQUW MELODY_SETUP_PAUSE-1
+  EQUW MELODY_DO_PAUSE-1
+  EQUW loc_E61B-1
+  EQUW loc_E62D-1
+  EQUW loc_E634-1
+  EQUW loc_E63B-1
 
-.locret_E5FA
+; ---------------------------------------------------------------------------
+; Melody effect &FF - stop melody playing
+.MELODY_STOP_MUSIC
+{
+  LDA #0:STA APU_MUSIC
+
   RTS
-; ---------------------------------------------------------------------------
-  LDA #0
-  STA APU_CNT,X
+}
 
-.loc_E5FF
-  JMP APU_WRITE_REGS
 ; ---------------------------------------------------------------------------
+; Melody effect &FE - restart current channel
+.MELODY_RESTART_CHANNEL
+{
+  LDA #0:STA APU_CNT,X
+
+  JMP APU_WRITE_REGS
+}
+
+; ---------------------------------------------------------------------------
+; Melody effect &FD - set up pause/sustain
+.MELODY_SETUP_PAUSE
+{
+  ; Read next byte in stream
   LDY APU_CNT,X
-  LDA (APU_PTR),Y:STA unk_CA,X
+  LDA (APU_PTR),Y
+  
+  ; Save byte as timer
+  STA APU_PAUSE_TIMER,X
+
+  ; Advance data pointer
   INY
   STY APU_CNT,X
-  STY unk_C7,X
 
-.loc_E60D
+  ; Record this position as the place to hold during the pause
+  STY APU_PAUSE_PTR,X
+
   JMP APU_WRITE_REGS
+}
+
 ; ---------------------------------------------------------------------------
-  DEC unk_CA,X
-  BEQ loc_E618
+; Melody effect &FC - do pause/sustain
+.MELODY_DO_PAUSE
+{
+  ; Decrement pause timer for current channel
+  DEC APU_PAUSE_TIMER,X
 
-  LDA unk_C7,X:STA APU_CNT,X
+  ; If timer expired, move on
+  BEQ done
 
-.loc_E618
+  ; Timer still going so maintain position
+  LDA APU_PAUSE_PTR,X:STA APU_CNT,X
+
+.done
   JMP APU_WRITE_REGS
+}
+
 ; ---------------------------------------------------------------------------
+; Melody effect &FB
+.loc_E61B
+{
+  ; If CD[X]=0 then
+  ;   CD[X]=1
+  ; else
+  ;   CD[X]=2
   LDA byte_CD,X
-  BEQ loc_E626
+  BEQ set_to_one
 
   LDA #2:STA byte_CD,X
   JMP APU_WRITE_REGS
+ 
 ; ---------------------------------------------------------------------------
 
-.loc_E626
+.set_to_one
   LDA #1:STA byte_CD,X
 
-.loc_E62A
   JMP APU_WRITE_REGS
+}
+
 ; ---------------------------------------------------------------------------
+; Melody effect &FA
+.loc_E62D
+{
+  ; CD[X]=&FF
   LDA #&FF:STA byte_CD,X
 
-.loc_E631
   JMP APU_WRITE_REGS
+}
+
 ; ---------------------------------------------------------------------------
+; Melody effect &F9
+.loc_E634
+{
   LDA #&FF:STA byte_D0,X
 
-.loc_E638
   JMP APU_WRITE_REGS
+}
+
 ; ---------------------------------------------------------------------------
+; Melody effect &F8
+.loc_E63B
+{
   LDA #0:STA byte_D0,X
 
-.loc_E63F
   JMP APU_WRITE_REGS
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Bring up the state of the APU
 .APU_RESET
 {
   LDA #0
+
   STA APU_DELTA_REG+1
+
   STA APU_CHAN_DIS
   STA APU_CHAN_DIS+1
   STA APU_CHAN_DIS+2
+
   STA APU_SQUARE1_REG
   STA APU_SQUARE2_REG
   STA APU_TRIANGLE_REG

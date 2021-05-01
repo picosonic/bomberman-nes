@@ -195,6 +195,7 @@ byte_B6             = &B6
 ; ?? for each of the 3 channels
 byte_B9             = &B9
 
+; Pointer to current melody/channel data
 APU_CHANDAT         = &BC
 
 unk_BD              = &BD ; Not used
@@ -206,20 +207,19 @@ APU_PTR             = &C2
 APU_CNT             = &C4
 
 ; Melody data counter when in sustain for each of the 3 channels
-unk_C7              = &C7
+APU_PAUSE_PTR       = &C7
 
 ; Sustain countdown for each of the 3 channels
-unk_CA              = &CA
+APU_PAUSE_TIMER     = &CA
 
 ; ?? for each of the 3 channels
-byte_CD             = &CD
+byte_CD     = &CD
 
 ; ?? (FF or 00) for each of the 3 channels
 byte_D0             = &D0
 
-; Cache for second and third bytes from melody table
-byte_D3             = &D3
-byte_D4             = &D4
+; Cache for seventh and eighth bytes from melody table
+APU_FLAGS           = &D3
 
 byte_D5             = &D5
 

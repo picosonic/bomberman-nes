@@ -98,3 +98,6 @@ END_OF_STRING = &FF
 SOLIDWHITE = &3B
 COPYRIGHT = &FE
 FULLSTOP = &FD
+
+; Sounc and music related
+NUM_TUNES = 10
