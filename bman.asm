@@ -1263,7 +1263,7 @@ INCLUDE "input.asm"
   STA VISITS_BOTTOM_LEFT
   STA VISITS_BOTTOM_RIGHT
 
-  LDA #&64
+  LDA #100
   STA byte_5C6,Y
 
   LDA ENEMY_TYPE,Y
@@ -2674,8 +2674,8 @@ INCLUDE "input.asm"
   ; Play sound 4
   LDA #4:STA APU_SOUND
 
-  LDA #&A
-  JSR sub_DD83
+  LDA #10 ; Score 1,000
+  JSR SCORE_100
 
   LDX EXIT_ENEMY_TYPE
   DEX:BEQ powerup_bomb ; 1 Valcom (Balloon)
@@ -3211,7 +3211,7 @@ INCLUDE "input.asm"
 }
 
 .MONSTER_TILE
-  ; Animation sprites (one set for each of the 8 monsters)w
+  ; Animation sprites (one set for each of the 8 monsters)
   EQUB &18,&19,&1A,&19 ; Valcom (Balloon)
   EQUB &1C,&1D,&1E,&1D ; O'Neal (Onion)
   EQUB &20,&21,&22,&21 ; Dahl (Barrel)
@@ -3236,9 +3236,27 @@ INCLUDE "input.asm"
   EQUB   1,  3,  2,  1,  3,  2,  1,  1,  1,  1,  1,  1,  1,  0,  1,  2
   EQUB   3
 
-.MONSTER_ATTR2
-  EQUB   1,  1,  2,  4,  8, &A,&14,&28,&50,&64,&C8,  2,  4,  5, &A
-  EQUB &14,&28
+.MONSTER_SCORES
+  ; Scores for killing monsters
+  EQUB   1 ; 100
+  EQUB   1 ; 100 - Valcom
+  EQUB   2 ; 200 - O'Neal
+  EQUB   4 ; 400 - Dahl
+  EQUB   8 ; 800 - Minvo
+  EQUB  10 ; 1,000 - Ovape
+  EQUB  20 ; 2,000 - Doria
+  EQUB  40 ; 4,000 - Pass
+  EQUB  80 ; 8,000 - Pontan
+  EQUB 100 ; 10,000
+  EQUB 200 ; 20,000
+
+  ; Score multipliers ( * 20,000 )
+  EQUB   2 ; 40,000
+  EQUB   4 ; 80,000
+  EQUB   5 ; 100,000
+  EQUB  10 ; 200,000
+  EQUB  20 ; 400,000
+  EQUB  40 ; 800,000 (max score)
 
 ; =============== S U B R O U T I N E =======================================
 ; Cache monster X attributes
@@ -3317,43 +3335,45 @@ INCLUDE "input.asm"
 {
   DEC byte_49
   BNE locret_D2A2
+
   LDA #10
   STA byte_49
   INC M_FRAME
   LDA M_FRAME
   CMP #44
   BNE locret_D2A2
-  LDA byte_4B
-  CLC
-  ADC M_FACE
-  TAY
-  CPY #&B
-  BCC loc_D294
-  CPY #&10
-  BCC loc_D285
-  LDY #&10
 
-.loc_D285
-  LDA MONSTER_ATTR2,Y
+  LDA byte_4B
+  CLC:ADC M_FACE
+  TAY
+  CPY #11
+  BCC add_score_hundreds ; If < 11 add score from MONSTER_SCORES
+
+  CPY #16
+  BCC add_score_multiple ; If < 16 add 20,000 * MONSTER_SCORES to score
+
+  ; If >=16 add max score (800,000)
+  LDY #16
+
+.add_score_multiple
+  LDA MONSTER_SCORES,Y
   TAX
 
-.loc_D289
-  LDA #&C8
-  JSR sub_DD83
+.score_multiply
+  LDA #200:JSR SCORE_100 ; Score 20,000
   DEX
-  BNE loc_D289
+  BNE score_multiply
+
   JMP loc_D29A
 ; ---------------------------------------------------------------------------
 
-.loc_D294
-  LDA MONSTER_ATTR2,Y
-  JSR sub_DD83
+.add_score_hundreds
+  LDA MONSTER_SCORES,Y ; Get score (in hundreds)
+  JSR SCORE_100
 
 .loc_D29A
-  LDA #&B
-  STA M_TYPE
-  LDA #&64
-  STA byte_49
+  LDA #11:STA M_TYPE
+  LDA #100:STA byte_49
 
 .^locret_D2A2
   RTS
@@ -3465,7 +3485,7 @@ INCLUDE "input.asm"
 .^loc_D310
   DEC byte_4C
   LDA byte_4C
-  CMP #&C8
+  CMP #200
   JMP loc_D337
 }
 
@@ -5053,90 +5073,114 @@ INCLUDE "input.asm"
 ; ---------------------------------------------------------------------------
 .aRevoEmag
   EQUS "REVO:EMAG"
-; ---------------------------------------------------------------------------
 
-.loc_DD6B
+; =============== S U B R O U T I N E =======================================
+; Add score (with * 100,000)
+.SCORE_100K
+{
+  ; Cache X and Y
   STX TEMP_X
   STY TEMP_Y
+
+  ; If we're in DEMO mode, skip scoring
   LDX DEMOPLAY
-  BNE loc_DDC2
+  BNE done
+
+  ; Add from position 3
   LDX #3
-  BNE loc_DD8D
+  BNE add_to_score
 
 ; =============== S U B R O U T I N E =======================================
-
-
-.sub_DD77
+; Add score (with * 10,000)
+.^SCORE_10K
+  ; Cache X and Y
   STX TEMP_X
   STY TEMP_Y
+
+  ; If we're in DEMO mode, skip scoring
   LDX DEMOPLAY
-  BNE loc_DDC2
+  BNE done
+
+  ; Add from position 4
   LDX #4
-  BNE loc_DD8D
-
+  BNE add_to_score
 
 ; =============== S U B R O U T I N E =======================================
-
-
-.sub_DD83
+; Add score (with * 100)
+.^SCORE_100
+  ; Cache X and Y
   STX TEMP_X
   STY TEMP_Y
+
+  ; If we're in DEMO mode, skip scoring
   LDX DEMOPLAY
-  BNE loc_DDC2
+  BNE done
+
+  ; Add from position 6
   LDX #6
 
-.loc_DD8D
+; ---------------------------------------------------------------------------
+
+; Actually add to the BCD score
+.add_to_score
   LDY #0
   CLC
   ADC SCORE,X
 
-.loc_DD92
+; While > 10 at this position, count how many 10s (into Y)
+.over_ten
   STA SCORE,X
   LDA SCORE,X
-  SEC
-  SBC #&A
-  BCC loc_DD9E
-  INY
-  BNE loc_DD92
+  SEC:SBC #10 ; Subtract 10
+  BCC in_BCD_range ; If it was < 10 we're done
+  INY ; Count an overflow
+  BNE over_ten
 
-.loc_DD9E
+; Check how much overflowed
+.in_BCD_range
   CPY #0
-  BEQ loc_DDAA
-  TYA
-  DEX
-  BPL loc_DD8D
-  LDA #9
-  STA SCORE
+  BEQ no_overflow
 
-.loc_DDAA
+  TYA ; Carry # overflows
+  DEX ; Move up to next digit column
+  BPL add_to_score
+
+  ; We've run out of digits in the score so set to 9 in first column
+  LDA #9:STA SCORE
+
+; No more overflows occured
+.no_overflow
   LDX #0
 
-.loc_DDAC
+; Check if this is higher than top score
+.check_score_digit
   LDA SCORE,X
-  CMP 1,X
-  BCC loc_DDC2
-  BNE loc_DDB9
+  CMP TOPSCORE,X
+  BCC done ; current score digit < top score digit, so skip checking rest
+
+  BNE new_high_score
   INX
-  CPX #8
-  BNE loc_DDAC
+  CPX #SCORE_DIGITS+1 ; Check all 7 digits against top score
+  BNE check_score_digit
 
-.loc_DDB9
-  LDX #6
+.new_high_score
+  LDX #SCORE_DIGITS-1
 
-.loc_DDBB
+.update_top_score
   LDA SCORE,X
-  STA 1,X
+  STA TOPSCORE,X
   DEX
-  BPL loc_DDBB
+  BPL update_top_score
 
-.loc_DDC2
+.done
+  ; Restore X and Y
   LDX TEMP_X
   LDY TEMP_Y
-  RTS
 
+  RTS
+}
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Draw the lines "TIME" and "LEFT XX" in the status bar
 
 .TIME_AND_LIFE

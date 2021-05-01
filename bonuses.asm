@@ -54,19 +54,23 @@
   ; Play sound 4
   LDA #4:STA APU_SOUND
 
+  ; Work out score for this bonus item
   LDX BONUS_AVAILABLE
   LDA BONUS_SCORES,X
+
+  ; If < 100 it's * 10,000
+  ;   else it's * 100,000
   CMP #100
-  BCC loc_E3DF
-  JSR loc_DD6B
-  JMP loc_E3E2
+  BCC low_score
+  JSR SCORE_100K ; add high score
+  JMP mark_bonus_collected
 
 ; ---------------------------------------------------------------------------
 
-.loc_E3DF
-  JSR sub_DD77
+.low_score
+  JSR SCORE_10K ; add low score
 
-.loc_E3E2
+.mark_bonus_collected
   LDA #BONUS_COLLECTED:STA BONUS_STATUS
 
 .done
@@ -74,7 +78,6 @@
 }
 
 ; ---------------------------------------------------------------------------
-
 .loc_E3E7
 {
   LDA BOMBMAN_X
@@ -88,7 +91,6 @@
 }
 
 ; ---------------------------------------------------------------------------
-
 .loc_E3F8
 {
   CMP #&B
@@ -98,7 +100,6 @@
 }
 
 ; ---------------------------------------------------------------------------
-
 .loc_E401
 {
   CMP #&1D
@@ -111,7 +112,6 @@
 }
 
 ; ---------------------------------------------------------------------------
-
 .loc_E410
 {
   CMP #&B
@@ -150,7 +150,6 @@
 }
 
 ; ---------------------------------------------------------------------------
-
 ; Reveal the exit and walk over it without defeating any enemies
 .BONUS_TARGET ; 9D = 0 "Bonus target"
 {
@@ -179,7 +178,6 @@
 }
 
 ; ---------------------------------------------------------------------------
-
 ; Defeat every enemy and circle the outer ring of the level
 .BONUS_GODDESS_MASK ; 9D = 1 "Goddess mask"
 {
@@ -202,7 +200,6 @@
 }
 
 ; ---------------------------------------------------------------------------
-
 ; Kill every enemy without blowing up any walls
 .BONUS_NAKAMOTO_SAN ; 9D = 2 "Nakamoto-san"
 {
@@ -214,8 +211,8 @@
 
   RTS
 }
-; ---------------------------------------------------------------------------
 
+; ---------------------------------------------------------------------------
 ; Create 248 or more chain reactions with your bombs (one chain reaction = one bomb detonating another)
 .BONUS_FAMICOM ; 9D = 3 "Famicom"
 {
@@ -227,7 +224,6 @@
 }
 
 ; ---------------------------------------------------------------------------
-
 ; Reveal the exit, walk over it, and don't let go of the d pad for at least 16.5 seconds [while making sure not to defeat any enemies]
 .BONUS_COLA_BOTTLE ; 9D = 4 "Cola bottle"
 {
@@ -242,7 +238,6 @@
 }
 
 ; ---------------------------------------------------------------------------
-
 ; Destroy every wall and bomb the exit thrice while making sure not to defeat any enemies (including those that come out of the door)
 .BONUS_DEZENIMAN_SAN ; 9D = 5 "Dezeniman-san"
 {
