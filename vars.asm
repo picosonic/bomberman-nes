@@ -26,15 +26,7 @@ JOYPAD2             = &13
 TILE_CUR            = &14
 TILE_PTR            = &15
 TILE_CNT            = &16
-
-byte_17             = &17
-byte_18             = &18
-byte_19             = &19
-byte_1A             = &1A
-byte_1B             = &1B
-byte_1C             = &1C
-byte_1D             = &1D
-byte_1E             = &1E
+TILE_PARAM          = &17
 
 byte_1F             = &1F ; Cached X position ?
 byte_20             = &20 ; Cached Y position ?

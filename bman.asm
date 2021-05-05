@@ -69,8 +69,7 @@ INCLUDE "vars.asm"
   STA PPU_ADDRESS
 
   LDA TILE_TAB+1,Y
-  CLC
-  ADC #32
+  CLC:ADC #32
   STA PPU_ADDRESS
 
   LDA TILE_MAP+2,X:STA PPU_DATA
@@ -97,8 +96,7 @@ INCLUDE "vars.asm"
   STY PPU_DATA
 
   LDA #8
-  CLC
-  ADC TILE_CUR
+  CLC:ADC TILE_CUR
   STA TILE_CUR
 
   DEC TILE_CNT
@@ -162,8 +160,7 @@ INCLUDE "vars.asm"
 
 .DRAW_SCORE_NUM
   LDA SCORE,X
-  CLC
-  ADC #'0'      ; Number 0...9
+  CLC:ADC #'0'      ; Number 0...9
   STA PPU_DATA
   INX
   CPX #7
@@ -843,8 +840,7 @@ INCLUDE "input.asm"
 
 .SELECT_BONUS_MONSTER
   INY
-  SEC
-  SBC #5
+  SEC:SBC #5
   BCS SELECT_BONUS_MONSTER
 
   DEY
@@ -1166,8 +1162,7 @@ INCLUDE "input.asm"
   LDA byte_526,X
   LSR A
   AND #&3C
-  CLC
-  ADC byte_32
+  CLC:ADC byte_32
   TAY
   LDA byte_C778,Y
   JMP loc_C6DA
@@ -1185,10 +1180,8 @@ INCLUDE "input.asm"
   LSR A
   LSR A
   AND #&1E
-  CLC
-  ADC byte_32
-  CLC
-  ADC #7
+  CLC:ADC byte_32
+  CLC:ADC #7
   TAY
   JMP loc_C6D6
 ; ---------------------------------------------------------------------------
@@ -1281,8 +1274,7 @@ INCLUDE "input.asm"
   LSR A
   LSR A
   AND #7
-  CLC
-  ADC #&20
+  CLC:ADC #&20
   STA ENEMY_FRAME,Y
 
 .loc_C74E
@@ -1398,8 +1390,7 @@ INCLUDE "input.asm"
   STA (STAGE_MAP),Y
 
   LDA #&28
-  CLC
-  ADC EXIT_ENEMY_TYPE
+  CLC:ADC EXIT_ENEMY_TYPE
   JSR DRAW_TILE   ; Add a new tile to TILE_TAB
   JMP loc_C830
 ; ---------------------------------------------------------------------------
@@ -1432,8 +1423,7 @@ INCLUDE "input.asm"
 
 .loc_C838
   LDA byte_526,X
-  CLC
-  ADC #8
+  CLC:ADC #8
   STA byte_526,X
 
   AND #&7F
@@ -1449,13 +1439,11 @@ INCLUDE "input.asm"
   LDA #0
   STA byte_4D6,X:LDA FIRE_X,X
 
-  CLC
-  ADC byte_CA16,Y
+  CLC:ADC byte_CA16,Y
   STA byte_1F
 
   LDA FIRE_Y,X
-  CLC
-  ADC byte_CA11,Y
+  CLC:ADC byte_CA11,Y
   STA byte_20
 
   LDY #&4F
@@ -1471,8 +1459,7 @@ INCLUDE "input.asm"
   STA byte_526,Y
 
   LDA byte_36
-  CLC
-  ADC #SPR_SIZE
+  CLC:ADC #SPR_SIZE
   CMP BONUS_POWER
   BCC loc_C89E
 
@@ -1524,8 +1511,7 @@ INCLUDE "input.asm"
 
   JSR RAND
   AND #3
-  CLC
-  ADC #1
+  CLC:ADC #1
   STA ENEMY_FACE,Y
 
   LDA byte_1F:STA ENEMY_X,Y
@@ -1559,8 +1545,7 @@ INCLUDE "input.asm"
   LDA BONUS_ENEMY_TYPE
   STA ENEMY_TYPE,Y
 
-  SEC
-  SBC #1
+  SEC:SBC #1
   ASL A
   ASL A
   STA ENEMY_FRAME,Y
@@ -1571,8 +1556,7 @@ INCLUDE "input.asm"
 
   JSR RAND
   AND #3
-  CLC
-  ADC #1
+  CLC:ADC #1
   STA ENEMY_FACE,Y
 
   STY TEMP_Y3
@@ -1732,13 +1716,11 @@ INCLUDE "input.asm"
   BMI locret_CA10
 
   LDA byte_20
-  CLC
-  ADC byte_CA11,X
+  CLC:ADC byte_CA11,X
   STA FIRE_Y,Y
 
   LDA byte_1F
-  CLC
-  ADC byte_CA16,X
+  CLC:ADC byte_CA16,X
   STA FIRE_X,Y
 
   LDA TEMP_A2
@@ -1811,10 +1793,8 @@ INCLUDE "input.asm"
 
   ; Calculate number of bricks to add as (STAGE*2) + 50
   LDA #50
-  CLC
-  ADC STAGE
-  CLC
-  ADC STAGE
+  CLC:ADC STAGE
+  CLC:ADC STAGE
   STA byte_1F
 
 .NEXT_BRICK
@@ -1983,7 +1963,7 @@ INCLUDE "input.asm"
   LDX #0
 
 .loop
-  LDA byte_17,X:STA TILE_TAB,X
+  LDA TILE_PARAM,X:STA TILE_TAB,X
 
   INX
   CPX #8
@@ -2013,8 +1993,7 @@ INCLUDE "input.asm"
   STA PPU_ADDRESS
 
   LDA TILE_TAB+1
-  CLC
-  ADC #&20
+  CLC:ADC #&20
   STA PPU_ADDRESS
 
   LDA TILE_MAP+2,X:STA PPU_DATA
@@ -2589,10 +2568,8 @@ INCLUDE "input.asm"
   ASL A
   ASL A
   ASL A
-  CLC
-  ADC BOMBMAN_U
-  SEC
-  SBC #&80
+  CLC:ADC BOMBMAN_U
+  SEC:SBC #&80
   TAY
 
 .DONT_SCROLL
@@ -2602,10 +2579,8 @@ INCLUDE "input.asm"
   ASL A
   ASL A
   ASL A
-  CLC
-  ADC BOMBMAN_U
-  SEC
-  SBC #8
+  CLC:ADC BOMBMAN_U
+  SEC:SBC #8
   SBC H_SCROLL
   STA SPR_X
 
@@ -2614,8 +2589,7 @@ INCLUDE "input.asm"
   ASL A
   ASL A
   ASL A
-  CLC
-  ADC BOMBMAN_V
+  CLC:ADC BOMBMAN_V
   ADC #23
   STA SPR_Y
 
@@ -2633,10 +2607,8 @@ INCLUDE "input.asm"
   ASL A
   ASL A
   ASL A
-  CLC
-  ADC BOMBMAN_U
-  SEC
-  SBC #8
+  CLC:ADC BOMBMAN_U
+  SEC:SBC #8
   STA SPR_X
 
   LDA BOMBMAN_Y
@@ -2644,8 +2616,7 @@ INCLUDE "input.asm"
   ASL A
   ASL A
   ASL A
-  CLC
-  ADC BOMBMAN_V
+  CLC:ADC BOMBMAN_V
   ADC #&17
   STA SPR_Y
 
@@ -2959,11 +2930,10 @@ INCLUDE "input.asm"
 
 ; =============== S U B R O U T I N E =======================================
 
-
 .sub_CFED
+{
   LDA BONUS_AVAILABLE
-  CLC
-  ADC #&2C
+  CLC:ADC #&2C
   STA M_FRAME
 
   LDA EXTRA_BONUS_ITEM_X:STA M_X
@@ -2976,7 +2946,7 @@ INCLUDE "input.asm"
   LDA #0
   BEQ loc_D010
 
-.loc_D006
+.^loc_D006
   LDA M_TYPE
   BEQ THINK_END
 
@@ -2996,8 +2966,7 @@ INCLUDE "input.asm"
   ASL A
   ASL A
   ROL byte_50
-  CLC
-  ADC M_U
+  CLC:ADC M_U
   STA byte_4F
 
   LDA byte_50
@@ -3005,8 +2974,7 @@ INCLUDE "input.asm"
   STA byte_50
 
   LDA byte_4F
-  SEC
-  SBC #8
+  SEC:SBC #8
   STA byte_4F
 
   LDA byte_50
@@ -3014,8 +2982,7 @@ INCLUDE "input.asm"
   STA byte_50
 
   LDA byte_4F
-  SEC
-  SBC H_SCROLL
+  SEC:SBC H_SCROLL
   STA byte_4F
 
   LDA byte_50
@@ -3032,8 +2999,7 @@ INCLUDE "input.asm"
   ASL A
   ASL A
   ASL A
-  CLC
-  ADC M_V
+  CLC:ADC M_V
   ADC #&17
   STA SPR_Y
   LDY M_FRAME
@@ -3067,6 +3033,8 @@ INCLUDE "input.asm"
 
 .locret_D08B
   RTS
+}
+
 ; ---------------------------------------------------------------------------
 
 .loc_D08C
@@ -3084,8 +3052,7 @@ INCLUDE "input.asm"
   ASL A
   ASL A
   ROL byte_50
-  CLC
-  ADC M_U
+  CLC:ADC M_U
   STA byte_4F
 
   LDA byte_50
@@ -3093,8 +3060,7 @@ INCLUDE "input.asm"
   STA byte_50
 
   LDA byte_4F
-  SEC
-  SBC #8
+  SEC:SBC #8
   STA byte_4F
 
   LDA byte_50
@@ -3102,8 +3068,7 @@ INCLUDE "input.asm"
   STA byte_50
 
   LDA byte_4F
-  SEC
-  SBC H_SCROLL
+  SEC:SBC H_SCROLL
   STA byte_4F
 
   LDA byte_50
@@ -3121,14 +3086,12 @@ INCLUDE "input.asm"
   ASL A
   ASL A
   ASL A
-  CLC
-  ADC M_V
+  CLC:ADC M_V
   ADC #&1B
   STA SPR_Y
 
   LDA byte_4B
-  CLC
-  ADC M_FACE
+  CLC:ADC M_FACE
   CMP #&10
   BCC loc_D0E3
 
@@ -3138,8 +3101,7 @@ INCLUDE "input.asm"
   STA TEMP_X
 
   ASL A
-  CLC
-  ADC TEMP_X
+  CLC:ADC TEMP_X
   TAX
   LDY byte_6B
 
@@ -3175,8 +3137,7 @@ INCLUDE "input.asm"
   LDA SPR_X:STA SPR_TAB,Y
 
   INY
-  CLC
-  ADC #8
+  CLC:ADC #8
   STA SPR_X
 
 .loc_D11C
@@ -3259,7 +3220,7 @@ INCLUDE "input.asm"
   EQUB  40 ; 800,000 (max score)
 
 ; =============== S U B R O U T I N E =======================================
-; Cache monster X attributes
+; Cache monster X attributes to zero page
 .ENEMY_SAVE
 {
   STX M_ID
@@ -3281,7 +3242,7 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
-; Restore monster X attributes
+; Restore monster X attributes from zero page
 .ENEMY_LOAD
 {
   LDX M_ID
@@ -3565,8 +3526,7 @@ INCLUDE "input.asm"
   AND #&18
   ASL A
   ASL A
-  CLC
-  ADC #&20
+  CLC:ADC #&20
   STA byte_49
   PLA
 
@@ -3574,8 +3534,7 @@ INCLUDE "input.asm"
   ROL A
   ROL A
   AND #3
-  CLC
-  ADC #1
+  CLC:ADC #1
   STA M_FACE
 
   RTS
@@ -4164,8 +4123,7 @@ INCLUDE "input.asm"
 
   LDA SPR_TAB_INDEX
   INC SPR_TAB_INDEX
-  CLC
-  ADC SPR_TAB_TOGGLE
+  CLC:ADC SPR_TAB_TOGGLE
   CMP #12
   BCC INDEX_UNBOUND
 
@@ -4223,13 +4181,11 @@ INCLUDE "input.asm"
 
   ; Lower half of sprite
   LDA SPR_Y
-  CLC
-  ADC #8
+  CLC:ADC #8
   STA SPR_TAB+4,Y ; Y position + 8 (below)
 
   PLA
-  CLC
-  ADC #16
+  CLC:ADC #16
   STA SPR_TAB+5,Y ; Tile index + 16
 
   LDA SPR_COL
@@ -4241,14 +4197,12 @@ INCLUDE "input.asm"
 
   ; Y = Y + 8
   TYA
-  CLC
-  ADC #8
+  CLC:ADC #8
   TAY
 
   ; SPR_X = SPR_X + 8
   LDA SPR_X
-  CLC
-  ADC #8
+  CLC:ADC #8
   STA SPR_X
 
   RTS
@@ -4281,8 +4235,7 @@ INCLUDE "input.asm"
 
   PHA
   LDA SEED+3
-  CLC
-  ADC #&1D
+  CLC:ADC #&1D
   STA SEED+3
   PLA
 
@@ -4310,15 +4263,13 @@ INCLUDE "input.asm"
 .loc_D6AC
   STX MTAB_PTR
   STY MTAB_PTR+1
-  SEC
-  SBC #1
+  SEC:SBC #1
   ASL A
   STA TEMP_X
 
   ASL A
   ASL A
-  CLC
-  ADC TEMP_X
+  CLC:ADC TEMP_X
   TAY
   LDX #MAX_ENEMY-1
 
@@ -4326,8 +4277,7 @@ INCLUDE "input.asm"
   LDA (MTAB_PTR),Y:STA ENEMY_TYPE,X
   BEQ loc_D703
 
-  SEC
-  SBC #1
+  SEC:SBC #1
   ASL A
   ASL A
   STA ENEMY_FRAME,X
@@ -4339,8 +4289,7 @@ INCLUDE "input.asm"
   JSR RAND
 
   AND #3
-  CLC
-  ADC #1
+  CLC:ADC #1
   STA ENEMY_FACE,X
 
   STY TEMP_Y3
@@ -4438,8 +4387,7 @@ INCLUDE "input.asm"
 
 .loop
   LDA TILE_CUR
-  SEC
-  SBC TILE_PTR
+  SEC:SBC TILE_PTR
   CMP #8
   BEQ loop
 
@@ -4451,7 +4399,7 @@ INCLUDE "input.asm"
   LDX #0
 
 .COPY_TILE
-  LDA byte_17,X:STA TILE_TAB,Y
+  LDA TILE_PARAM,X:STA TILE_TAB,Y
 
   INY
   INX
@@ -4472,9 +4420,9 @@ INCLUDE "input.asm"
   TAY
   ASL A
   ASL A
-  STA byte_1A
+  STA TILE_PARAM+3
 
-  LDA unk_D994,Y:STA byte_1E
+  LDA unk_D994,Y:STA TILE_PARAM+7
 
   LDY #0
   LDA byte_1F
@@ -4485,30 +4433,27 @@ INCLUDE "input.asm"
   SBC #16
 
 .loc_D93A
-  STY byte_17
+  STY TILE_PARAM
   ASL A
   STA byte_21
 
   LDA byte_20
-  CLC
-  ADC #2
+  CLC:ADC #2
   ASL A
   STA byte_22
 
   AND #&FC
   ASL A
-  STA byte_1B
+  STA TILE_PARAM+4
 
   LDA byte_21
   LSR A
   LSR A
-  CLC
-  ADC byte_1B
-  CLC
-  ADC #&C0
-  STA byte_1B
+  CLC:ADC TILE_PARAM+4
+  CLC:ADC #&C0
+  STA TILE_PARAM+4
 
-  LDA #&23:STA byte_1C
+  LDA #&23:STA TILE_PARAM+5
 
   LDA #2
   AND byte_22
@@ -4517,40 +4462,37 @@ INCLUDE "input.asm"
   LDA byte_21
   AND #3
   LSR A
-  CLC
-  ADC byte_23
+  CLC:ADC byte_23
   ASL A
   PHA
   LDA #&FC
-  STA byte_1D
+  STA TILE_PARAM+6
   PLA
   TAX
   BEQ loc_D97C
 
 .loc_D974
-  ASL byte_1E
-  SEC
-  ROL byte_1D
+  ASL TILE_PARAM+7
+  SEC:ROL TILE_PARAM+6
   DEX
   BNE loc_D974
 
 .loc_D97C
-  LDA #1:STA byte_19
+  LDA #1:STA TILE_PARAM+2
   LDA byte_22
   LDX #5
 
 .loc_D984
   ASL A
-  ROL byte_19
+  ROL TILE_PARAM+2
   DEX
   BNE loc_D984
 
-  CLC
-  ADC byte_21
-  STA byte_18
+  CLC:ADC byte_21
+  STA TILE_PARAM+1
   BCC locret_D993
 
-  INC byte_19
+  INC TILE_PARAM+2
 
 .locret_D993
   RTS
@@ -4831,10 +4773,8 @@ INCLUDE "input.asm"
 .loc_DB7E
   LDA PW_BUFF,X ; Load password[X]
   PHA
-  CLC
-  ADC #7
-  CLC
-  ADC SEED
+  CLC:ADC #7
+  CLC:ADC SEED
   AND #&F
   STA PW_BUFF,X ; Save decoded char back to password[X]
   PLA
@@ -4850,8 +4790,7 @@ INCLUDE "input.asm"
   LDA #0
 
 .loc_DB99
-  CLC
-  ADC PW_BUFF,X
+  CLC:ADC PW_BUFF,X
   INX
   DEY
   BNE loc_DB99 ; Loop until Y=0 (4 times)
@@ -4869,19 +4808,16 @@ INCLUDE "input.asm"
 
   LDA PW_BUFF+9 ; Load password[9] (checksum 2)
   ASL A
-  CLC
-  ADC byte_1F
+  CLC:ADC byte_1F
   STA byte_1F
 
   LDA PW_BUFF+14 ; Load password[14] (checksum 3 ?)
   ASL A
-  CLC
-  ADC byte_1F
+  CLC:ADC byte_1F
   LDX #4
 
 .loc_DBC0
-  CLC
-  ADC PW_BUFF+14,X
+  CLC:ADC PW_BUFF+14,X
   DEX
   BNE loc_DBC0
   AND #&F
@@ -5124,8 +5060,7 @@ INCLUDE "input.asm"
 ; Actually add to the BCD score
 .add_to_score
   LDY #0
-  CLC
-  ADC SCORE,X
+  CLC:ADC SCORE,X
 
 ; While > 10 at this position, count how many 10s (into Y)
 .over_ten
@@ -5371,8 +5306,7 @@ INCLUDE "input.asm"
 
 .loc_DEE4
   LDA TOPSCORE,X
-  CLC
-  ADC #'0'
+  CLC:ADC #'0'
   STA PPU_DATA
   INX
   CPX #7
@@ -5702,22 +5636,19 @@ INCLUDE "input.asm"
   ; Add checksum 1*2
   LDA PW_CXSUM1
   ASL A
-  CLC
-  ADC TEMP_X
+  CLC:ADC TEMP_X
   STA TEMP_X
 
   ; Add checksum 2*2
   LDA PW_CXSUM2
   ASL A
-  CLC
-  ADC TEMP_X
+  CLC:ADC TEMP_X
   STA TEMP_X
 
   ; Add checksum 3*2
   LDA PW_CXSUM3
   ASL A
-  CLC
-  ADC TEMP_X
+  CLC:ADC TEMP_X
   STA PW_CXSUM4 ; Save checksum result as checksum 4
 
   LDY #0
@@ -5728,10 +5659,8 @@ INCLUDE "input.asm"
   JSR _get_pass_data_var_addr
   LDA (STAGE_MAP),Y
   AND #&F
-  SEC
-  SBC SEED
-  SEC
-  SBC #7
+  SEC:SBC SEED
+  SEC:SBC #7
   AND #&F
   STA password_buffer,X
   STA SEED
@@ -5747,7 +5676,7 @@ INCLUDE "input.asm"
 .pw_print_loop
   LDA password_buffer,X
   TAY
-  LDA aAofkcpgelbhmjd,Y ; "AOFKCPGELBHMJDNI"
+  LDA PW_TRANSLATE_TABLE,Y ; "AOFKCPGELBHMJDNI"
   STA PPU_DATA
 
   INX:INX
@@ -5768,8 +5697,7 @@ INCLUDE "input.asm"
   JSR _get_pass_data_var_addr
 
   LDA (STAGE_MAP),Y
-  CLC
-  ADC TEMP_X
+  CLC:ADC TEMP_X
   STA TEMP_X
 
   DEC byte_20
@@ -5799,7 +5727,7 @@ INCLUDE "input.asm"
 }
 
 ; Password translate table
-.aAofkcpgelbhmjd
+.PW_TRANSLATE_TABLE
   EQUS "AOFKCPGELBHMJDNI"
 
 INCLUDE "bonuses.asm"
