@@ -1857,47 +1857,65 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
+; Get random coordinates within the stage map to an empty square
 .RAND_COORDS
 {
+  ; Generate next number from PRNG
   JSR RAND
 
-  ROR A
-  ROR A
+  ; Divide by 4
+  ROR A:ROR A
+
+  ; Limit to 0..31
   AND #&1F
+
+  ; 0 is no good (it's the stage border), so try again
   BEQ RAND_COORDS
 
+  ; Store result as temporary X position
   STA TEMP_X
 
-.loc_CADA
+.generate_Y
+  ; Generate next number from PRNG
   JSR RAND
 
-  ROR A
-  ROR A
-  ROR A
+  ; Divide by 8
+  ROR A:ROR A:ROR A
+
+  ; Limit to 0..15
   AND #&F
-  BEQ loc_CADA
 
-  CMP #&C
-  BCS loc_CADA
+  ; 0 is no good (it's the stage border), so try again
+  BEQ generate_Y
 
+  ; If it's greater than the map height, try again
+  CMP #MAP_HEIGHT-1
+  BCS generate_Y
+
+  ; Store result as temporary Y position
   STA TEMP_Y
   TAY
 
+  ; Set up pointer to this X,Y position within the stage map
   LDA MULT_TABY,Y:STA STAGE_MAP
   LDA MULT_TABX,Y:STA STAGE_MAP+1
 
   LDY TEMP_X
   LDA (STAGE_MAP),Y
+
+  ; Start all over again if the map is not empty at this location
   BNE RAND_COORDS
 
-  CPY #3
-  BCS locret_CB05
+  ; Also make sure that this location is not within 3 squares of the top left (where bomberman spawns)
+  ; otherwise bomberman may be trapped
+  CPY #3 ; Check X position
+  BCS done
 
-  LDA TEMP_Y
+  LDA TEMP_Y ; Check Y position
   CMP #3
   BCC RAND_COORDS
 
-.locret_CB05
+.done
   RTS
 }
 
