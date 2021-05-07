@@ -1,16 +1,18 @@
 {
-    "version": "0.1.0",
+    "version": "2.0.0",
     "command": "bash",
-    "isShellCommand": true,
-    "showOutput": "always",
     "echoCommand": true,
-    "suppressTaskName": true,
     "args": [
         "-c"
     ],
     "tasks": [
         {
-            "taskName": "bomberman.nes",
+            "label": "bomberman.nes",
+            "type": "shell",
+            "args": [
+                "-c",
+                "${workspaceFolder}/make.sh \"${workspaceFolder}\""
+            ],
             "problemMatcher": {
                 "owner": "6502",
                 "fileLocation": [
@@ -25,17 +27,23 @@
                     "message": 4
                 }
             },
-            "args": [
-                "${workspaceFolder}/make.sh \"${workspaceFolder}\""
-            ],
-            "isBuildCommand": true
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
-            "taskName": "Run 'bomberman.nes' in Emulator",
-            "isTestCommand": true,
+            "label": "Run 'bomberman.nes' in Emulator",
+            "type": "shell",
             "args": [
+                "-c",
                 "fceux ${workspaceFolder}/bomberman.nes"
-            ]
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
         }
     ]
 }
