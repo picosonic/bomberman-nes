@@ -1921,6 +1921,7 @@ INCLUDE "input.asm"
 
 ; =============== S U B R O U T I N E =======================================
 .sub_CB06
+{
   JSR PPUD
 
   LDA #0:STA byte_20
@@ -1932,12 +1933,12 @@ INCLUDE "input.asm"
   LDY #0
 
 .loc_CB17
-  LDA #0
-  STA byte_1F
+  LDA #0:STA byte_1F
 
 .loc_CB1B
   LDA DEBUG
   BEQ loc_CB24
+
   LDA (OAM_PTR),Y
   JMP loc_CB30
 ; ---------------------------------------------------------------------------
@@ -1946,6 +1947,7 @@ INCLUDE "input.asm"
   LDA (OAM_PTR),Y
   CMP #4
   BEQ loc_CB2E
+
   CMP #5
   BNE loc_CB30
 
@@ -1956,6 +1958,7 @@ INCLUDE "input.asm"
   JSR sub_CB4E
   INY
   BNE loc_CB38
+
   INC OAM_PTR+1
 
 .loc_CB38
@@ -1963,13 +1966,15 @@ INCLUDE "input.asm"
   LDA byte_1F
   AND #&20
   BEQ loc_CB1B
+
   INC byte_20
   LDA byte_20
   CMP #13
   BNE loc_CB17
+
   JSR TIME_AND_LIFE   ; Draw the lines "TIME" and "LEFT XX" in the status bar
   JMP PPU_RESTORE
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 .sub_CB4E
@@ -2039,9 +2044,8 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
-
-
 .STAGE_CLEANUP
+{
   LDX #MAX_BOMB-1
   LDA #NO
 
@@ -2059,10 +2063,8 @@ INCLUDE "input.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Remove all monsters from the stage
-
-.KILL_ENEMY
+.^KILL_ENEMY
   LDA #DISABLE
   LDX #MAX_ENEMY-1
 
@@ -2077,19 +2079,17 @@ INCLUDE "input.asm"
 
 .loc_CBE2
   DEY
-  BMI locret_CBEA
-
+  BMI done
 
 ; =============== S U B R O U T I N E =======================================
 
-
-.sub_CBE5
+.^sub_CBE5
   LDA FIRE_ACTIVE,Y
   BNE loc_CBE2
 
-.locret_CBEA
+.done
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Create pointer to row specified in Y within level map
