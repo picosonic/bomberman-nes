@@ -75,7 +75,7 @@ INCLUDE "vars.asm"
   LDA TILE_MAP+2,X:STA PPU_DATA
   LDA TILE_MAP+3,X:STA PPU_DATA
 
-  LDA #&23 ; '#'
+  LDA #&23
   ORA TILE_TAB,Y
 
   PHA
@@ -170,9 +170,11 @@ INCLUDE "vars.asm"
   LDA #&20:LDX #&46 ; Y=2, X=6
   JSR VRAMADDR
 
+  ; Check for time overflow
   LDA TIMELEFT
   CMP #255
   BNE TIME_OVERFLOW
+
   LDA #0
 
 .TIME_OVERFLOW
@@ -184,6 +186,7 @@ INCLUDE "vars.asm"
   INC FRAME_CNT
   LDA IS_SECOND_PASSED
   BEQ TICK_FPS
+
   INC FPS
   LDA FPS
   CMP #HW_FPS ; Compare frame count with hardware FPS
@@ -379,9 +382,7 @@ INCLUDE "input.asm"
   BNE WRITE2001_2
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Hide sprites
-
 .^SPRD
   LDY #&1C
   LDA #248
@@ -395,10 +396,7 @@ INCLUDE "input.asm"
   STA SPR_TAB+&A0,Y
   STA SPR_TAB+&C0,Y
   STA SPR_TAB+&E0,Y
-  DEY
-  DEY
-  DEY
-  DEY
+  DEY:DEY:DEY:DEY ; Y = Y - 4
   BPL SETATTR
 
   RTS
@@ -521,10 +519,8 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 
 .START
-  LDY #0
-  STY TEMP_ADDR
-  INY
-  STY TEMP_ADDR+1
+  LDY #0:STY TEMP_ADDR
+  INY:STY TEMP_ADDR+1
   DEY
   TYA
   LDX #7
@@ -533,30 +529,33 @@ INCLUDE "input.asm"
   STA (TEMP_ADDR),Y
   INY
   BNE CLEAR_WRAM
+
   INC TEMP_ADDR+1
   DEX
   BNE CLEAR_WRAM
+
   LDX #0
   LDY SOFT_RESET_FLAG
   CPY #&93
   BNE CLEAR_ZP
+
   LDY CLEAR_TOPSCORE1
   BNE CLEAR_ZP
+
   LDY CLEAR_TOPSCORE2
   BNE CLEAR_ZP
+
   LDX #8
 
 .CLEAR_ZP
   STA 0,X
   INX
   BNE CLEAR_ZP
-  LDA #&93
-  STA SOFT_RESET_FLAG
+  LDA #&93:STA SOFT_RESET_FLAG
 
 .RESET_GAME
   JSR PPU_RESET
-  LDA #0
-  STA SPR_TAB_TOGGLE
+  LDA #0:STA SPR_TAB_TOGGLE
   JSR APU_RESET   ; Reset APU
 
   ; Play melody 1
@@ -565,19 +564,23 @@ INCLUDE "input.asm"
 .GAME_MENU
   LDX #&FF:TXS ; Clear stack
 
-  LDA #&F
-  STA APU_MASTERCTRL_REG
+  LDA #&F:STA APU_MASTERCTRL_REG
+
   LDA #0
-  STA BOOM_SOUND
-  STA DEMOPLAY
-  STA APU_DISABLE
-  STA STAGE_STARTED
-  STA DEMO_WAIT_HI
+  STA BOOM_SOUND     ; Stop explosion sound playback
+  STA DEMOPLAY       ; Stop demo mode
+  STA APU_DISABLE    ; Clear sound disabled flag
+  STA STAGE_STARTED  ; Set stage as not started
+  STA DEMO_WAIT_HI   ; Clear demo wait timer
+
+  ; Draw the main menu
   JSR DRAWMENU
   JSR VBLE
 
+  ; Record that we are in the menu
   LDA #YES:STA INMENU
 
+  ; Wait until no buttons pressed on gamepad 1
 .WAIT_RELEASE
   LDA JOYPAD1
   BNE WAIT_RELEASE
@@ -587,51 +590,73 @@ INCLUDE "input.asm"
   STA DEMO_WAIT_HI
 
 .DEMO_WAIT_LOOP
-  JSR NEXTFRAME
+  JSR NEXTFRAME ; Wait for start of next frame
+
   LDA JOYPAD1
-  AND #&10
+  AND #PAD_START
   BNE START_PRESSED   ; Check for START being pressed
+
   LDA JOYPAD1
-  AND #&20 ; ' '
+  AND #PAD_SELECT
   BEQ UPDATE_RAND ; START/SELECT not pressed, so update random number generator seed
+
   LDA CURSOR      ; Move cursor between START/CONTINUE
   EOR #1
   STA CURSOR
+
   JSR WAITUNPRESS ; Wait for nothing to be pressed
   JMP ADVANCE_FRAME
+
 ; ---------------------------------------------------------------------------
 
 .UPDATE_RAND
   JSR RAND        ; Update random number generator state
+
+  ; Tick the demo wait timer
   DEC DEMO_WAIT_LO
   BNE DEMO_WAIT_LOOP
+
   DEC DEMO_WAIT_HI
   BNE DEMO_WAIT_LOOP
+
   INC DEMOPLAY    ; If demo wait time expired, then start the demo
 
 .START_PRESSED
+  ; If in demo mode, start/continue playing demo
   LDA DEMOPLAY
-  BNE loc_C3A3
-  LDA CURSOR
-  BEQ loc_C3A3
-  JSR READ_PASSWORD ; Password entry screen
+  BNE start_gameplay
 
-.loc_C3A3
+  ; If on menu check where the cursor is pointing
+  LDA CURSOR
+  BEQ start_gameplay
+
+  ; Cursor pointing at "CONTINUE" so go to password entry screen
+  JSR READ_PASSWORD
+
+.start_gameplay
+  ; Record that we are no longer showing the menu
   LDA #NO:STA INMENU
 
-  JSR WAITUNPRESS ; Await button release
-  LDA #LIVESPERLEVEL-1
-  STA LIFELEFT
-  LDA DEMOPLAY
-  BNE loc_C3B6
-  LDA CURSOR
-  BNE loc_C40A
+  ; Await button release
+  JSR WAITUNPRESS
 
-.loc_C3B6
-  LDA #1
-  STA STAGE
+  ; Initialise number of lives
+  LDA #LIVESATSTART-1:STA LIFELEFT
+
+  ; If in demo playback don't check where cursor is
   LDA DEMOPLAY
-  BNE loc_C3C7
+  BNE skip_cursor
+
+  ; Not in demo, so check if game started from a CONTINUE password
+  LDA CURSOR
+  BNE initial_setup_done
+
+.skip_cursor
+  LDA #MAP_FIRST_LEVEL:STA STAGE ; Set current stage to default starting stage
+
+  ; If in demo playback don't clear score
+  LDA DEMOPLAY
+  BNE dont_clear_score
 
   LDX #6
   LDA #0
@@ -641,7 +666,7 @@ INCLUDE "input.asm"
   DEX
   BPL CLEAR_SCORE_LOOP
 
-.loc_C3C7
+.dont_clear_score
   ; Default bomb radius
   LDA #SPR_SIZE:STA BONUS_POWER
 
@@ -654,8 +679,9 @@ INCLUDE "input.asm"
   STA BONUS_FIRESUIT
   STA DEBUG
 
+  ; If not in demo playback, don't set up for demo
   LDA DEMOPLAY
-  BEQ loc_C40A
+  BEQ initial_setup_done
 
   ; Enhance capabilites for demo playback
   LDA #MAX_BOMB-1:STA BONUS_BOMBS
@@ -664,7 +690,7 @@ INCLUDE "input.asm"
 
   LDA #0
   STA APU_MASTERCTRL_REG
-  STA SEED
+  STA SEED        ; Set random seed to 0 to give consistent demo level map
   STA SEED+1
   STA SEED+2
   STA SEED+3
@@ -678,16 +704,17 @@ INCLUDE "input.asm"
   LDA DEMO_KEYDATA:STA DEMOKEY_TIMEOUT
   LDA DEMO_KEYDATA+1:STA DEMOKEY_PAD1
 
-.loc_C40A
+.initial_setup_done
+  ; Always disable bomb walk and invulnerability 1 at start of each level
   LDA #NO
   STA BONUS_BOMBWALK
   STA INVUL_UNK1
 
 .START_STAGE
   LDA #NO
-  STA NO_ENEMIES_CELEBRATED
-  STA BONUS_STATUS
-  STA STAGE_STARTED
+  STA NO_ENEMIES_CELEBRATED ; Allow all enemies cleared fanfare
+  STA BONUS_STATUS ; Set as normal (non-bonus) level
+  STA STAGE_STARTED ; Prevent in-game processing
 
   ; Initialise extra bonus criteria
   STA ENEMIES_DEFEATED ; Enemies defeated
@@ -702,7 +729,7 @@ INCLUDE "input.asm"
   STA byte_A6 ; Something pressed on gamepad timer
   STA EXIT_BOMBED_COUNT ; Number of times exit has been bombed
 
-  JSR STAGE_SCREEN
+  JSR STAGE_SCREEN ; Show current level number screen, e.g. "STAGE  1"
 
   ; Play melody 2 to end
   LDA #2:STA APU_MUSIC
@@ -713,18 +740,19 @@ INCLUDE "input.asm"
 
   JSR VBLD
   JSR BUILD_MAP       ; Generate level map
-  JSR SPAWN           ; Spawn enemies
+  JSR SPAWN           ; Spawn game entities (also sets stage started to 1)
   JSR PICK_BONUS_ITEM ; Determine which bonus item is available for this level
   JSR PICTURE_ON      ; Turn on screen and display
 
   ; Set level timer
   LDA #SECONDSPERLEVEL:STA TIMELEFT
 
+  ; Main game loop
 .STAGE_LOOP
   JSR PAUSED         ; Check for START being pressed, if so pause
   JSR SPRD           ; Hide sprites
-  JSR sub_CC36       ; Process button presses
-  JSR BOMB_TICK      ; Bomb timer operations and explosion initiation
+  JSR PROCESS_BUTTONS       ; Process button presses
+  JSR BOMB_TICK      ; Bomb timer operations and explosion init
   JSR DRAW_BOMBERMAN ; Draw bomberman
   JSR THINK          ; Enemy movements
   JSR BOMB_ANIMATE   ; Animate on-screen bombs
@@ -743,7 +771,8 @@ INCLUDE "input.asm"
   JSR sub_C79D ; Drawing explosions?
   JSR sub_C66C ; Explosion hit detection?
 
-  JMP STAGE_LOOP
+  JMP STAGE_LOOP ; Go back to start of main game loop
+
 ; ---------------------------------------------------------------------------
 
 .loc_C481
@@ -836,6 +865,7 @@ INCLUDE "input.asm"
   BNE SELECT_BONUS_MONSTER ; Select the monster type for the bonus level
 
   JMP END_GAME
+
 ; ---------------------------------------------------------------------------
 
 .SELECT_BONUS_MONSTER
@@ -889,7 +919,7 @@ INCLUDE "input.asm"
 
   JSR SPRD        ; Hide sprites
   JSR RESPAWN_BONUS_ENEMY ; Respawn if < 10 enemies
-  JSR sub_CC36    ; Process button presses
+  JSR PROCESS_BUTTONS    ; Process button presses
   JSR BOMB_TICK   ; Bomb timer
   JSR DRAW_BOMBERMAN  ; Draw bomberman
   JSR THINK       ; Enemy AI
@@ -914,21 +944,23 @@ INCLUDE "input.asm"
   STA INVUL_UNK1
 
   JMP START_STAGE
-; ---------------------------------------------------------------------------
 
+; ---------------------------------------------------------------------------
 .END_GAME
+{
   JSR PPU_RESET
   JSR DRAW_GAME_COMPLETED
   JSR BUILD_CONCRETE_WALLS ; Reset level map
 
   LDA #SPR_HALFSIZE
-  STA BOMBMAN_U
-  STA BOMBMAN_V
+  STA BOMBMAN_U ; Reset bomberman X offset to mid point
+  STA BOMBMAN_V ; Reset bomberman Y offset to mid point
 
   LDA #0
-  STA STAGE_STARTED
-  STA BOMBMAN_X
-  LDA #9:STA BOMBMAN_Y
+  STA STAGE_STARTED  ; Prevent in-game processing
+  STA BOMBMAN_X      ; Position bomberman on far left
+
+  LDA #9:STA BOMBMAN_Y ; Position bomberman 9 rows down
 
   ; Play melody 7
   LDA #7:STA APU_MUSIC
@@ -936,51 +968,63 @@ INCLUDE "input.asm"
   JSR SPRE
   JSR VBLE
 
-.loc_C58F
-  JSR NEXTFRAME
+  .bomberman_run_loop
+  {
+    JSR NEXTFRAME ; Wait for start of next frame
 
-  LDA #1:STA SPR_TAB_INDEX
+    LDA #1:STA SPR_TAB_INDEX
 
-  JSR SPRD        ; Hide sprites
-  JSR DRAW_BOMBERMAN  ; Draw bomberman
-  LDA FRAME_CNT
-  ROR A
-  BCS loc_C5A4
-  JSR MOVE_RIGHT ; Move character right
+    JSR SPRD            ; Hide sprites
+    JSR DRAW_BOMBERMAN  ; Draw bomberman
 
-.loc_C5A4
-  LDA BOMBMAN_X
-  CMP #8
-  BNE loc_C58F ; Keep moving until at tile 8 from left
+    ; Limit movement to odd frame numbers
+    LDA FRAME_CNT
+    ROR A
+    BCS skip_movement
 
-.WAIT_END_MELODY
-  JSR NEXTFRAME
-  LDA #1
-  STA SPR_TAB_INDEX
-  JSR SPRD        ; Hide sprites
-  JSR sub_CEA7
-  LDA FRAME_CNT
-  ROR A
-  BCS loc_C5BF
-  JSR MOVE_RIGHT
+    JSR MOVE_RIGHT ; Move character right
 
-.loc_C5BF
-  LDA APU_MUSIC
-  BNE WAIT_END_MELODY
+  .skip_movement
+    LDA BOMBMAN_X
+    CMP #8
+    BNE bomberman_run_loop ; Keep moving until at tile 8 from left, then become "human"
+  }
 
+  .human_run_loop
+  {
+    JSR NEXTFRAME ; Wait for start of next frame
+    LDA #1:STA SPR_TAB_INDEX
+    JSR SPRD        ; Hide sprites
+    JSR DRAW_HUMAN  ; Draw human
+
+    ; Limit movement to odd frame numbers
+    LDA FRAME_CNT
+    ROR A
+    BCS skip_movement
+
+    JSR MOVE_RIGHT
+
+  .skip_movement
+    LDA APU_MUSIC
+    BNE human_run_loop ; Keep moving until melody 7 has finished playing
+  }
+
+  ; Wait for anything to be pressed on gamepad
 .WAIT_BUTTON
   LDA JOYPAD1
   BEQ WAIT_BUTTON
 
-  ; Set current stage to 1
-  LDA #1:STA STAGE
+  ; Set current stage to first level
+  LDA #MAP_FIRST_LEVEL:STA STAGE
 
   JMP START_STAGE
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Spawn game entities (bomberman and enemies)
 .SPAWN
 {
+  ; Position bomberman in top left corner
   LDA #1
   STA BOMBMAN_X
   STA BOMBMAN_Y
@@ -1000,25 +1044,27 @@ INCLUDE "input.asm"
   JSR sub_CB06
   JSR WAITVBL
   JSR PAL_RESET
+
+  ; Set the type of monster to emerge from the door if it's bombed, or time runs out
   LDX STAGE
-  LDA EXIT_ENEMY_TAB-1,X ; This table contains the type of monsters that are placed from the door after the explosion
+  LDA EXIT_ENEMY_TAB-1,X
   STA EXIT_ENEMY_TYPE
 
+  ; Entity spawning complete, record that the stage has now started
   LDA #YES:STA STAGE_STARTED
 
   RTS
 }
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Turn on screen and display
-
 .PICTURE_ON
+{
   JSR SPRD        ; Send to the screen
   JSR VBLE
   JSR PPUE
   JMP SPRE
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Wait for current melody to finish
@@ -1037,15 +1083,13 @@ INCLUDE "input.asm"
   JMP loc_C4C3
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Check for START being pressed, if so pause and wait for START to be released
-
 .PAUSED
-  JSR NEXTFRAME
+  JSR NEXTFRAME ; Wait for start of next frame
   LDA #1
   STA SPR_TAB_INDEX
   LDA JOYPAD1
-  AND #&10
+  AND #PAD_START
   BEQ NOT_PAUSED
   LDA DEMOPLAY
   BNE ABORT_DEMOPLAY
@@ -1060,7 +1104,7 @@ INCLUDE "input.asm"
 .WAIT_START
   ; Wait for START to be pressed to resume
   LDA JOYPAD1
-  AND #&10
+  AND #PAD_START
   BEQ WAIT_START
 
   ; Play sound 6
@@ -1071,7 +1115,8 @@ INCLUDE "input.asm"
   ; Wait for START to be released again
   JSR WAITUNPRESS
 
-  JMP NEXTFRAME
+  JMP NEXTFRAME ; Wait for start of next frame
+
 ; ---------------------------------------------------------------------------
 
 .NOT_PAUSED
@@ -1125,9 +1170,7 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Explosion hit detection
-
 .sub_C66C
   LDX #&4F
 
@@ -2111,6 +2154,7 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
+; Wait for start of next frame (triggered by NMI)
 .NEXTFRAME
 {
   LDA FRAMEDONE
@@ -2123,7 +2167,7 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 .EXIT_ENEMY_TAB
-  EQUB   2,  1,  5,  3,  1,  1,  2,  5,  6,  4 ; This table contains the type of monsters that are placed from the door after the explosion
+  EQUB   2,  1,  5,  3,  1,  1,  2,  5,  6,  4 ; This table contains the type of monsters that emerge from the door after it's bombed
   EQUB   1,  1,  5,  6,  2,  4,  1,  6,  1,  5
   EQUB   6,  5,  1,  5,  6,  8,  2,  1,  5,  7
   EQUB   4,  1,  5,  8,  6,  7,  5,  2,  4,  8
@@ -2131,7 +2175,7 @@ INCLUDE "input.asm"
 
 ; =============== S U B R O U T I N E =======================================
 ; Pressing the buttons
-.sub_CC36
+.PROCESS_BUTTONS
   LDA INVUL_UNK2
   BNE loc_CC4C
 
@@ -2616,31 +2660,28 @@ INCLUDE "input.asm"
   JMP SPR_DRAW
 
 ; =============== S U B R O U T I N E =======================================
-.sub_CEA7
+.DRAW_HUMAN
+{
   LDA SPR_ATTR_TEMP:STA SPR_ATTR
   LDY #3:STY SPR_COL
 
   LDA BOMBMAN_X
-  ASL A
-  ASL A
-  ASL A
-  ASL A
+  ASL A:ASL A:ASL A:ASL A ; A = A * 16
   CLC:ADC BOMBMAN_U
   SEC:SBC #8
   STA SPR_X
 
   LDA BOMBMAN_Y
-  ASL A
-  ASL A
-  ASL A
-  ASL A
+  ASL A:ASL A:ASL A:ASL A ; A = A * 16
   CLC:ADC BOMBMAN_V
-  ADC #&17
+  ADC #23    ; Move down a bit
   STA SPR_Y
 
   LDX BOMBMAN_FRAME
   LDA HUMAN_ANIM,X
+
   JMP SPR_DRAW
+}
 
 ; ---------------------------------------------------------------------------
 .HUMAN_ANIM
@@ -2658,8 +2699,9 @@ INCLUDE "input.asm"
   EQUB 9, 10, 11, 12, 13, 14, 15
 
 ; ---------------------------------------------------------------------------
-; START OF FUNCTION CHUNK FOR sub_CC36
+; START OF FUNCTION CHUNK FOR PROCESS_BUTTONS
 .loc_CEE9
+{
   ; Play sound 4
   LDA #4:STA APU_SOUND
 
@@ -2675,7 +2717,9 @@ INCLUDE "input.asm"
   DEX:BEQ powerup_bombwalk ; 6 Ovape (Ghost)
   DEX:BEQ powerup_firesuit ; 7 Pass (Tiger)
   DEX:BEQ powerup_questionmark ; 8 Pontan (Coin)
+
   RTS
+}
 
 ; ---------------------------------------------------------------------------
 
@@ -4662,8 +4706,10 @@ INCLUDE "input.asm"
 
 .loc_DAC9
   JSR WAITVBL
+
+  ; Check for A button or direction buttons being pressed
   LDA JOYPAD1
-  AND #&8F
+  AND #(PAD_A + PAD_UP + PAD_DOWN + PAD_LEFT + PAD_RIGHT)
   BNE loc_DAF8
 
   DEX
@@ -4685,7 +4731,7 @@ INCLUDE "input.asm"
 
   ; Check for something being pressed on JOYPAD 1
   LDA JOYPAD1
-  AND #&8F
+  AND #(PAD_A + PAD_UP + PAD_DOWN + PAD_LEFT + PAD_RIGHT)
   BNE loc_DAF8 ; Branch if A/Up/Down/Left/Right is pressed
 
   DEX
@@ -4781,12 +4827,12 @@ INCLUDE "input.asm"
   BEQ loc_DB7A ; Branch if we have 20 characters
   JSR WAITUNPRESS ; Wait for button release
   JMP loc_DAB5 ; Jump back to read next character
+
 ; ---------------------------------------------------------------------------
 ; Handler for 20 chars of password being entered
 
 .loc_DB7A
-  LDX #0
-  STX SEED
+  LDX #0:STX SEED
 
 .loc_DB7E
   LDA PW_BUFF,X ; Load password[X]
@@ -5669,8 +5715,7 @@ INCLUDE "input.asm"
   CLC:ADC TEMP_X
   STA PW_CXSUM4 ; Save checksum result as checksum 4
 
-  LDY #0
-  STY SEED
+  LDY #0:STY SEED
   LDX #0
 
 .encode_loop
@@ -5692,8 +5737,7 @@ INCLUDE "input.asm"
   LDX #2 ; Skip first char
 
 .pw_print_loop
-  LDA password_buffer,X
-  TAY
+  LDA password_buffer,X:TAY
   LDA PW_TRANSLATE_TABLE,Y ; "AOFKCPGELBHMJDNI"
   STA PPU_DATA
 
@@ -5736,8 +5780,7 @@ INCLUDE "input.asm"
 
   RTS
 
-; ---------------------------------------------------------------------------
-
+  ; ---------------------------------------------------------------------------
   ; Memory locations for each variable encoded into the password
 ._pass_data_vars
   EQUW   SCORE+6,  BONUS_REMOTE,  STAGE_LO,  SCORE,  PW_CXSUM1,  SCORE+5,  BOMB_PWR,  SCORE+3,  BONUS_FIRESUIT,  PW_CXSUM2
