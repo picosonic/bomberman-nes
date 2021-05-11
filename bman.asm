@@ -1172,12 +1172,18 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 ; Explosion hit detection
 .sub_C66C
-  LDX #&4F
+{
+  LDX #MAX_FIRE-1
 
-.loc_C66E
+.fire_loop
+  ; If fire slot not active, move on to next one
   LDA FIRE_ACTIVE,X
-  BEQ loc_C6CD
+  BEQ skip_fire
+
+  ; Check if top bit set
   BPL loc_C688
+
+  ; Clear top bit
   AND #&7F
   TAY
 
@@ -1186,6 +1192,7 @@ INCLUDE "input.asm"
 
   LDA byte_C75D,Y
   JMP loc_C6DA
+
 ; ---------------------------------------------------------------------------
 
 .loc_C688
@@ -1193,8 +1200,8 @@ INCLUDE "input.asm"
   LDA FIRE_Y,X:STA byte_20
 
   LDA byte_526,X
-  AND #&78
-  BEQ loc_C6CD
+  AND #&78 ; Mask off top bit and bottom three bits
+  BEQ skip_fire
 
   LDA byte_526,X
   BPL loc_C6B2
@@ -1204,7 +1211,7 @@ INCLUDE "input.asm"
 
   LDA byte_526,X
   LSR A
-  AND #&3C
+  AND #&3C ; Mask off top two and bottom two bits
   CLC:ADC byte_32
   TAY
   LDA byte_C778,Y
@@ -1221,15 +1228,15 @@ INCLUDE "input.asm"
 
   LDA byte_526,X
   LSR A:LSR A
-  AND #&1E
+  AND #&1E ; Mask off top three bits and bottom bit
   CLC:ADC byte_32
   CLC:ADC #7
   TAY
   JMP loc_C6D6
-; ---------------------------------------------------------------------------
 
-.loc_C6CD
-  JMP loc_C756
+; ---------------------------------------------------------------------------
+.skip_fire
+  JMP next_fire
 ; ---------------------------------------------------------------------------
 
 .loc_C6D0
@@ -1319,19 +1326,20 @@ INCLUDE "input.asm"
 .loc_C74E
   DEY
   BPL loc_C707
-  BMI loc_C756
+  BMI next_fire
 
 .loc_C753
   JSR DRAW_TILE   ; Add a new tile to TILE_TAB
 
-.loc_C756
+.next_fire
   DEX
-  BMI locret_C75C
-  JMP loc_C66E
+  BMI done
+  JMP fire_loop ; Too far to branch, so jump to next fire slot
 ; ---------------------------------------------------------------------------
 
-.locret_C75C
+.done
   RTS
+}
 
 ; ---------------------------------------------------------------------------
 .byte_C75D
@@ -1348,11 +1356,10 @@ INCLUDE "input.asm"
   EQUB &1A,  0,  0,  0,  0
 
 ; =============== S U B R O U T I N E =======================================
-
 ; Trigger shaking (?)
-
 .sub_C79D
-  LDX #79
+{
+  LDX #MAX_FIRE-1
 
 .loc_C79F
   LDA FIRE_ACTIVE,X
@@ -1485,8 +1492,8 @@ INCLUDE "input.asm"
   CLC:ADC byte_CA11,Y
   STA byte_20
 
-  LDY #&4F
-  JSR sub_CBE5
+  LDY #MAX_FIRE-1
+  JSR FIND_FIRE_SLOT
   BNE loc_C8A6
 
   LDA byte_1F:STA FIRE_X,Y
@@ -1521,14 +1528,14 @@ INCLUDE "input.asm"
 
 .loc_C8A6
   DEX
-  BMI locret_C8AC
+  BMI done
 
   JMP loc_C79F
 ; ---------------------------------------------------------------------------
 
-.locret_C8AC
+.done
   RTS
-
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Loop through all available monster slots and spawn exit enemies in each empty one
@@ -1764,8 +1771,8 @@ INCLUDE "input.asm"
 
   STA TEMP_A2
   TAX
-  LDY #&4F
-  JSR sub_CBE5
+  LDY #MAX_FIRE-1
+  JSR FIND_FIRE_SLOT
   BMI done
 
   LDA byte_20
@@ -2109,7 +2116,6 @@ INCLUDE "input.asm"
   DEX
   BPL CLEAN_EXPLO
 
-
 ; =============== S U B R O U T I N E =======================================
 ; Remove all monsters from the stage
 .^KILL_ENEMY
@@ -2120,20 +2126,22 @@ INCLUDE "input.asm"
   STA ENEMY_TYPE,X
   DEX
   BPL KILL_LOOP
+
   RTS
+}
 
 ; ---------------------------------------------------------------------------
-; START OF FUNCTION CHUNK FOR sub_CBE5
-
-.loc_CBE2
+; START OF FUNCTION CHUNK FOR FIND_FIRE_SLOT
+.next_fire_slot
+{
   DEY
   BMI done
 
 ; =============== S U B R O U T I N E =======================================
 
-.^sub_CBE5
+.^FIND_FIRE_SLOT
   LDA FIRE_ACTIVE,Y
-  BNE loc_CBE2
+  BNE next_fire_slot
 
 .done
   RTS
@@ -2173,7 +2181,7 @@ INCLUDE "input.asm"
 ; ---------------------------------------------------------------------------
 .EXIT_ENEMY_TAB
   EQUB   2,  1,  5,  3,  1,  1,  2,  5,  6,  4 ; This table contains the type of monsters that emerge from the door after it's bombed
-  EQUB   1,  1,  5,  6,  2,  4,  1,  6,  1,  5
+  EQUB   1,  1,  5,  6,  2,  4,  1,  6,  1,  5 ; one for each of the 50 levels
   EQUB   6,  5,  1,  5,  6,  8,  2,  1,  5,  7
   EQUB   4,  1,  5,  8,  6,  7,  5,  2,  4,  8
   EQUB   5,  4,  6,  5,  8,  4,  6,  5,  7,  8
@@ -3068,11 +3076,11 @@ INCLUDE "input.asm"
 
   LDA byte_50
   SBC #0
-  BNE locret_D08B
+  BNE done
 
   LDA byte_4F
   CMP #&F8
-  BCS locret_D08B
+  BCS done
 
   STA SPR_X
   LDA M_Y
@@ -3087,21 +3095,21 @@ INCLUDE "input.asm"
 
   LDA M_FRAME
   CMP #&20
-  BCS locret_D08B
+  BCS done
 
   LDA byte_5C
-  BNE locret_D08B
+  BNE done
 
   LDA INVUL_UNK1
-  BNE locret_D08B
+  BNE done
 
   LDA M_X
   CMP BOMBMAN_X
-  BNE locret_D08B
+  BNE done
 
   LDA M_Y
   CMP BOMBMAN_Y
-  BNE locret_D08B
+  BNE done
 
   ; Play sound 5
   LDA #5:STA APU_SOUND
@@ -3109,7 +3117,7 @@ INCLUDE "input.asm"
   LDA #1:STA byte_5C
   LDA #12:STA BOMBMAN_FRAME
 
-.locret_D08B
+.done
   RTS
 }
 
@@ -3216,12 +3224,12 @@ INCLUDE "input.asm"
   INX
   INY
   DEY
-  BNE locret_D123
+  BNE done
 
 .loc_D121
   LDY #&FC
 
-.locret_D123
+.done
   RTS
 
 ; ---------------------------------------------------------------------------
@@ -3569,7 +3577,6 @@ INCLUDE "input.asm"
   LDA M_FACE
 
   JSR STEP_MONSTER
-
   BEQ locret_D364
 
   CMP #3
@@ -3810,7 +3817,6 @@ INCLUDE "input.asm"
   DEY
 
   JSR ENEMY_COLLISION
-
   BNE loc_D489
 
   LDA #4
@@ -3846,7 +3852,7 @@ INCLUDE "input.asm"
 .loc_D4BD
   LDA byte_51
 
-.^locret_D4BF
+.^enemy_collision_done
   RTS
 }
 
@@ -3857,15 +3863,15 @@ INCLUDE "input.asm"
   LDA (STAGE_MAP),Y
 
   ; Is it empty?
-  BEQ locret_D4BF
+  BEQ enemy_collision_done
 
   ; Is it an exit door?
   CMP #MAP_EXIT
-  BEQ locret_D4BF
+  BEQ enemy_collision_done
 
   ; Is it a bonus item?
   CMP #MAP_BONUS
-  BEQ locret_D4BF
+  BEQ enemy_collision_done
 
   ; Is is a brick wall?
   CMP #MAP_BRICK
@@ -3881,10 +3887,10 @@ INCLUDE "input.asm"
   LDA M_TYPE
 
   CMP #5      ; Enemies 5/6/8 (Doria/Ovape/Pontan) can walk through brick walls
-  BEQ locret_D4BF
+  BEQ enemy_collision_done
 
   CMP #6
-  BEQ locret_D4BF
+  BEQ enemy_collision_done
 
   CMP #8
 
@@ -3895,7 +3901,7 @@ INCLUDE "input.asm"
 ; Take a step with this enemy (gaze direction in A)
 .STEP_MONSTER
 {
-  LDX #0:STX byte_4E
+  LDX #MAP_EMPTY:STX byte_4E
 
   ; Check for looking right
   TAX
@@ -3935,111 +3941,149 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
+; Move enemy downwards
 .STEP_ENEMY_DOWN
 {
+  ; If vertical offset < half sprite, then increment, otherwise move down to next cell
   LDA M_V
   CMP #SPR_HALFSIZE
-  BCS loc_D50E
+  BCS next_cell
 
   INC M_V
 
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D50E
+.next_cell
+  ; See what's on the map one cell below
   LDY M_Y
   INY
 
+  ; Set pointer to potential new cell
   LDA MULT_TABY,Y:STA STAGE_MAP
   LDA MULT_TABX,Y:STA STAGE_MAP+1
 
+  ; Do a collision detect with that new cell
   LDY M_X
   JSR ENEMY_COLLISION
-  BNE loc_D534
 
-  JSR sub_D5BC
+  ; If we can't move to new cell, record what stopped us and finish here
+  BNE enemy_step_done
 
+  ; We can move here, so make sure we are aligned horizontally
+  JSR ADJUST_ENEMY_HPOS
+
+  ; Increment Y offset
   INC M_V
-  LDA M_V
-  CMP #16
-  BNE locret_D533
 
+  ; If offset not overflowed, finish here
+  LDA M_V
+  CMP #SPR_SIZE
+  BNE done
+
+  ; Move into next cell
   LDA #0:STA M_V
   INC M_Y
 
-.locret_D533
+.done
   RTS
 
 ; ---------------------------------------------------------------------------
 
-.^loc_D534
+.^enemy_step_done
+  ; Cache what entity stopped enemy moving
   STA byte_4E
 
   RTS
 }
 
 ; =============== S U B R O U T I N E =======================================
+; Move enemy upwards
 .STEP_ENEMY_UP
 {
+  ; If vertical offset >= half sprite, then decrement, otherwise move up to next cell
   LDA M_V
-  CMP #9
-  BCC loc_D540
+  CMP #SPR_HALFSIZE+1
+  BCC next_cell
 
   DEC M_V
 
   RTS
+
 ; ---------------------------------------------------------------------------
 
-.loc_D540
+.next_cell
+  ; See what's on the map one cell above
   LDY M_Y
   DEY
 
+  ; Set pointer to potential new cell
   LDA MULT_TABY,Y:STA STAGE_MAP
   LDA MULT_TABX,Y:STA STAGE_MAP+1
 
+  ; Do a collision detect with that new cell
   LDY M_X
   JSR ENEMY_COLLISION
-  BNE loc_D534
 
-  JSR sub_D5BC
+  ; If we can't move here, record what stopped us and finish
+  BNE enemy_step_done
+
+  JSR ADJUST_ENEMY_HPOS
+
+  ; Move offset upwards
   DEC M_V
-  BPL locret_D561
 
-  LDA #&F:STA M_V
+  ; If new offset >= 0 then finish here
+  BPL done
+
+  ; Move up one cell and set offset to bottom
+  LDA #SPR_SIZE-1:STA M_V
   DEC M_Y
 
-.locret_D561
+.done
   RTS
 }
 
 ; =============== S U B R O U T I N E =======================================
+; Move enemy left
 .STEP_ENEMY_LEFT
 {
+  ; If horizontal offset >= half sprite, then decrement, otherwise move left to next cell
   LDA M_U
-  CMP #9
-  BCC loc_D56B
+  CMP #SPR_HALFSIZE+1
+  BCC next_cell
 
   DEC M_U
 
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D56B
+.next_cell
+  ; See what's on the map one cell left
   LDY M_Y
 
+  ; Set pointer to potential new cell
   LDA MULT_TABY,Y:STA STAGE_MAP
   LDA MULT_TABX,Y:STA STAGE_MAP+1
 
+  ; Do a collision detect with that new cell
   LDY M_X
   DEY
   JSR ENEMY_COLLISION
-  BNE loc_D534
 
-  JSR sub_D5CB
+  ; If we can't move here, record what stopped us and finish
+  BNE enemy_step_done
+
+  JSR ADJUST_ENEMY_VPOS
+
+  ; Move offset left
   DEC M_U
+
+  ; If new offset >= 0 then finish here
   BPL locret_D58C
 
-  LDA #&F:STA M_U
+  ; Move left one cell and set offset to right
+  LDA #SPR_SIZE-1:STA M_U
   DEC M_X
 
 .locret_D58C
@@ -4047,44 +4091,57 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
+; Move enemy right
 .STEP_ENEMY_RIGHT
 {
+  ; If horizontal offset < half sprite, then increment, otherwise move right to next cell
   LDA M_U
   CMP #SPR_HALFSIZE
-  BCS loc_D596
+  BCS next_cell
 
   INC M_U
 
   RTS
 ; ---------------------------------------------------------------------------
 
-.loc_D596
+.next_cell
+  ; See what's on the map one cell right
   LDY M_Y
 
+  ; Set pointer to potential new cell
   LDA MULT_TABY,Y:STA STAGE_MAP
   LDA MULT_TABX,Y:STA STAGE_MAP+1
 
+  ; Do a collision detect with that new cell
   LDY M_X
   INY
   JSR ENEMY_COLLISION
-  BNE loc_D534
 
-  JSR sub_D5CB
+  ; If we can't move to new cell, record what stopped us and finish here
+  BNE enemy_step_done
+
+  ; We can move here, so make sure we are aligned vertically
+  JSR ADJUST_ENEMY_VPOS
+
+  ; Increment X offset
   INC M_U
-  LDA M_U
-  CMP #16
-  BNE locret_D5BB
 
+  ; If offset not overflowed, finish here
+  LDA M_U
+  CMP #SPR_SIZE
+  BNE done
+
+  ; Move into next cell
   LDA #0:STA M_U
   INC M_X
 
-.locret_D5BB
+.done
   RTS
 }
 
 ; =============== S U B R O U T I N E =======================================
 ; Advance enemy horizontal offset position up to half sprite width
-.sub_D5BC
+.ADJUST_ENEMY_HPOS
 {
   LDA M_U
   CMP #SPR_HALFSIZE
@@ -4109,7 +4166,7 @@ INCLUDE "input.asm"
 
 ; =============== S U B R O U T I N E =======================================
 ; Advance enemy vertical offset position up to half sprite height
-.sub_D5CB
+.ADJUST_ENEMY_VPOS
 {
   LDA M_V
   CMP #SPR_HALFSIZE
@@ -5514,8 +5571,22 @@ INCLUDE "input.asm"
   EQUB  &F, &F, &F, &F  ;    / M3   BLACK BLACK BLACK
 
 .PW_DECODE_TABLE
-  EQUB   5,  0,  9,  4, &D,  7,  2,  6
-  EQUB  &A, &F, &C,  3,  8, &B, &E,  1
+  EQUB  5 ; P
+  EQUB  0 ; A
+  EQUB  9 ; B
+  EQUB  4 ; C
+  EQUB &D ; D
+  EQUB  7 ; E
+  EQUB  2 ; F
+  EQUB  6 ; G
+  EQUB &A ; H
+  EQUB &F ; I
+  EQUB &C ; J
+  EQUB  3 ; K
+  EQUB  8 ; L
+  EQUB &B ; M
+  EQUB &E ; N
+  EQUB  1 ; O
 
 .MAINMENU_HI
   EQUB &B0,&B0,&DF,&C0,&C1,&C1,&C2,&C0,&C1,&C1,&C1,&C2,&C0,&B6,&E9,&B8
