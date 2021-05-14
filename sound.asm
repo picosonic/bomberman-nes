@@ -650,7 +650,7 @@
 ; ---------------------------------------------------------------------------
 
 .S6_PITCH
-  LDA #&20 ; ' '
+  LDA #&20
   STA APU_SOUND_MOD+0
   STA APU_SOUND_MOD+1
   STA APU_SOUND_MOD+2
