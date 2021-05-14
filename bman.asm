@@ -1041,7 +1041,7 @@ INCLUDE "input.asm"
 
   JSR STAGE_CLEANUP
   JSR SPAWN_MONSTERS
-  JSR sub_CB06
+  JSR DRAW_LEVEL_TILES
   JSR WAITVBL
   JSR PAL_RESET
 
@@ -1874,40 +1874,36 @@ INCLUDE "input.asm"
   LDY #0
 
   LDX #&00:JSR STAGE_ROW ; Top wall
+
+  FOR n, 1, (MAP_HEIGHT-3)/2
+    LDX #MAP_WIDTH:JSR STAGE_ROW ; Blank row
+    LDX #MAP_WIDTH*2:JSR STAGE_ROW ; Alternate concrete
+  NEXT
+
   LDX #MAP_WIDTH:JSR STAGE_ROW ; Blank row
-  LDX #MAP_WIDTH*2:JSR STAGE_ROW ; Alternate concrete
-  LDX #MAP_WIDTH:JSR STAGE_ROW ; ...
-  LDX #MAP_WIDTH*2:JSR STAGE_ROW
-  LDX #MAP_WIDTH:JSR STAGE_ROW
-  LDX #MAP_WIDTH*2:JSR STAGE_ROW
-  LDX #MAP_WIDTH:JSR STAGE_ROW
-  LDX #MAP_WIDTH*2:JSR STAGE_ROW
-  LDX #MAP_WIDTH:JSR STAGE_ROW
-  LDX #MAP_WIDTH*2:JSR STAGE_ROW
-  LDX #MAP_WIDTH:JSR STAGE_ROW
   LDX #&00 ; Bottom wall
 
-; =============== S U B R O U T I N E =======================================
-.STAGE_ROW
-{
-  LDA #MAP_WIDTH:STA TEMP_X
+  ; =============== S U B R O U T I N E =======================================
+  .STAGE_ROW
+  {
+    LDA #MAP_WIDTH:STA TEMP_X
 
-.STAGE_CELL
-  LDA STAGE_ROWS,X:STA (STAGE_MAP),Y
+  .STAGE_CELL
+    LDA STAGE_ROWS,X:STA (STAGE_MAP),Y
 
-  INC STAGE_MAP
+    INC STAGE_MAP
 
-  ; Check for page overflow
-  BNE HI_PART
-  INC STAGE_MAP+1
+    ; Check for page overflow
+    BNE HI_PART
+    INC STAGE_MAP+1
 
-.HI_PART
-  INX
-  DEC TEMP_X
-  BNE STAGE_CELL
+  .HI_PART
+    INX
+    DEC TEMP_X
+    BNE STAGE_CELL
 
-  RTS
-}
+    RTS
+  }
 
 }
 
@@ -1975,11 +1971,11 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
-.sub_CB06
+.DRAW_LEVEL_TILES
 {
   JSR PPUD
 
-  LDA #0:STA byte_20
+  LDA #0:STA byte_20 ; Set Y position to 0
 
   ; Set up pointer
   LDA #lo(OAM_CACHE):STA OAM_PTR
@@ -1987,45 +1983,47 @@ INCLUDE "input.asm"
 
   LDY #0
 
-.loc_CB17
-  LDA #0:STA byte_1F
+.loop_y
+  LDA #0:STA byte_1F ; Set X position to 0
 
-.loc_CB1B
+.loop_x
+  ; If debug enabled, show hidden tiles, otherwise hidden tiles become brick wall
   LDA DEBUG
-  BEQ loc_CB24
+  BEQ debug_off
 
   LDA (OAM_PTR),Y
-  JMP loc_CB30
+  JMP show_tile_normally
 ; ---------------------------------------------------------------------------
 
-.loc_CB24
+.debug_off
+  ; If tile is a hidden one, show as brick wall instead
   LDA (OAM_PTR),Y
-  CMP #4
-  BEQ loc_CB2E
+  CMP #MAP_HIDDEN_EXIT
+  BEQ show_tile_as_brick
 
-  CMP #5
-  BNE loc_CB30
+  CMP #MAP_HIDDEN_BONUS
+  BNE show_tile_normally
 
-.loc_CB2E
-  LDA #2
+.show_tile_as_brick
+  LDA #MAP_BRICK
 
-.loc_CB30
+.show_tile_normally
   JSR sub_CB4E
   INY
-  BNE loc_CB38
+  BNE same_page
 
   INC OAM_PTR+1
 
-.loc_CB38
+.same_page
   INC byte_1F
   LDA byte_1F
-  AND #&20
-  BEQ loc_CB1B
+  AND #MAP_WIDTH
+  BEQ loop_x
 
   INC byte_20
   LDA byte_20
-  CMP #13
-  BNE loc_CB17
+  CMP #MAP_HEIGHT
+  BNE loop_y
 
   JSR TIME_AND_LIFE   ; Draw the lines "TIME" and "LEFT XX" in the status bar
   JMP PPU_RESTORE
@@ -2034,6 +2032,7 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 .sub_CB4E
 {
+  ; Cache Y
   STY TEMP_Y
 
   JSR sub_D924
@@ -2049,6 +2048,7 @@ INCLUDE "input.asm"
 
   JSR sub_CB65
 
+  ; Restore Y
   LDY TEMP_Y
 
   RTS
@@ -4080,13 +4080,13 @@ INCLUDE "input.asm"
   DEC M_U
 
   ; If new offset >= 0 then finish here
-  BPL locret_D58C
+  BPL done
 
   ; Move left one cell and set offset to right
   LDA #SPR_SIZE-1:STA M_U
   DEC M_X
 
-.locret_D58C
+.done
   RTS
 }
 
@@ -4605,11 +4605,11 @@ INCLUDE "input.asm"
 
   CLC:ADC byte_21
   STA TILE_PARAM+1
-  BCC locret_D993
+  BCC done
 
   INC TILE_PARAM+2
 
-.locret_D993
+.done
   RTS
 
 ; ---------------------------------------------------------------------------
@@ -4994,16 +4994,18 @@ INCLUDE "input.asm"
   JSR PRINT_XY_ASCIIZ
   JSR PRINT_XY_ASCIIZ
 
-  LDA #&A:STA byte_20
-  LDA #0:STA byte_1F
+  ; Draw a row of 16 bricks
+  LDA #&A:STA byte_20 ; Y position
+  LDA #0:STA byte_1F ; X position
 
 .loop
   LDA #&31
   JSR sub_CB4E
 
+  ; Increment X position
   INC byte_1F
   LDA byte_1F
-  CMP #&10
+  CMP #16
   BNE loop
 
   JSR VBLE
@@ -5238,7 +5240,7 @@ INCLUDE "input.asm"
   JSR VRAMADDR
 
   LDX #&80
-  LDA #&3A ; ':'
+  LDA #':'
 
 .loc_DDD2
   STA PPU_DATA
@@ -5382,8 +5384,8 @@ INCLUDE "input.asm"
   LDA #&20:LDX #0
   JSR VRAMADDR
 
-  LDX #&40 ; '@'
-  LDA #&B0 ; '-'
+  LDX #&40
+  LDA #&B0 ; Blank square
 
 .loc_DEB1
   STA PPU_DATA
@@ -5436,7 +5438,7 @@ INCLUDE "input.asm"
   LDA #&23:LDX #&C0
   JSR VRAMADDR
 
-  LDX #&20 ; ' '
+  LDX #&20
   LDA #0
 
 .loc_DF04
