@@ -1,8 +1,11 @@
 ; Hardware
 HW_FPS = 60
+HW_SCREEN_X = 256
+HW_SCREEN_Y = 240
 
 ; Tiles
 TILE_OFFS = &2000
+TILE_SIZE = 8
 TILE_WIDTH = 32
 TILE_HEIGHT = 30
 
@@ -16,6 +19,7 @@ SPR_PAL_0 = &3F11
 SPR_PAL_1 = &3F15
 SPR_PAL_2 = &3F19
 SPR_PAL_3 = &3F1D
+PAL_SIZE = 16
 
 ; Booleans for flags
 NO = 0

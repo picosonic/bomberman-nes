@@ -5384,25 +5384,25 @@ INCLUDE "input.asm"
   LDA #&20:LDX #0
   JSR VRAMADDR
 
-  LDX #&40
-  LDA #&B0 ; Blank square
+  LDX #(HW_SCREEN_X/TILE_SIZE)*2 ; blank row above game logo
+  LDA #&B0 ; Blank tile
 
-.loc_DEB1
+.blank_loop
   STA PPU_DATA
   DEX
-  BNE loc_DEB1
+  BNE blank_loop
 
   LDX #0
 
-.loc_DEB9
+.logo_top_loop
   LDA MAINMENU_HI,X:STA PPU_DATA
   INX
-  BNE loc_DEB9
+  BNE logo_top_loop
 
-.loc_DEC2
+.logo_bottom_loop
   LDA MAINMENU_LO,X:STA PPU_DATA
   INX
-  BNE loc_DEC2
+  BNE logo_bottom_loop
 
   ; Set screen pointer for next character to write
   LDA #&22:LDX #&AE
@@ -5445,6 +5445,7 @@ INCLUDE "input.asm"
   STA PPU_DATA
   DEX
   BNE loc_DF04
+
   LDX #8
   LDA #'P'
 
@@ -5452,6 +5453,7 @@ INCLUDE "input.asm"
   STA PPU_DATA
   DEX
   BNE loc_DF0E
+
   LDX #&18
   LDA #'U'
 
@@ -5484,7 +5486,7 @@ INCLUDE "input.asm"
   LDA STAGEPAL,X:STA PPU_DATA
 
   INX
-  CPX #&10
+  CPX #PAL_SIZE
   BNE loop
 
   JSR VRAMADDRZ
@@ -5498,19 +5500,20 @@ INCLUDE "input.asm"
   LDY #'0'
   SEC
 
-.loc_DF4B
+  ; Number of hundreds in Y
+.loop_hundreds
   SBC #100
-  BCC loc_DF52
+  BCC DONE_HUNDREDS
 
   INY
-  BNE loc_DF4B
+  BNE loop_hundreds
 
-.loc_DF52
+.DONE_HUNDREDS
   ADC #100
   CPY #'0'
-  BNE loc_DF76
+  BNE three_digits
 
-  LDY #':'
+  LDY #':' ; This is a space
   STY PPU_DATA
 
   ; =============== S U B R O U T I N E =======================================
@@ -5520,15 +5523,15 @@ INCLUDE "input.asm"
     LDY #'0'
     SEC         ; Convert to number 0 to 9
 
-  .DECADES
+  .TENS
     SBC #10     ; Number of tens in Y
-    BCC DONE_DECADES
+    BCC DONE_TENS
 
     INY
-    BNE DECADES     ; Number of tens in Y
+    BNE TENS     ; Number of tens in Y
 
-  .DONE_DECADES
-    ADC #&3A ; ':'
+  .DONE_TENS
+    ADC #':'
     CPY #'0'      ; If the number is single-digit (from 0 to 9) add leading space
     BNE PUTNUMB2
 
@@ -5543,18 +5546,19 @@ INCLUDE "input.asm"
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR DRAW_TIME
 
-.loc_DF76
+.three_digits
   STY PPU_DATA
   LDY #'0'
   SEC
 
-.loc_DF7C
+.TENS2
   SBC #10
-  BCC loc_DF83
-  INY
-  BNE loc_DF7C
+  BCC DONE_TENS2
 
-.loc_DF83
+  INY
+  BNE TENS2
+
+.DONE_TENS2
   ADC #':'
   STY PPU_DATA
   STA PPU_DATA
