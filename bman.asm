@@ -5410,57 +5410,62 @@ INCLUDE "input.asm"
 
   LDX #0
 
-.loc_DED4
+  ; Print top score
+.print_leading_spaces
   LDA TOPSCORE,X
-  BNE loc_DEE4
-  LDA #':'
-  STA PPU_DATA
+  BNE print_digits
+
+  LDA #':':STA PPU_DATA ; Print a space
   INX
   CPX #7
-  BNE loc_DED4
-  BEQ loc_DEF1
+  BNE print_leading_spaces
 
-.loc_DEE4
+  BEQ top_score_done
+
+.print_digits
   LDA TOPSCORE,X
   CLC:ADC #'0'
   STA PPU_DATA
   INX
   CPX #7
-  BNE loc_DEE4
+  BNE print_digits
 
-.loc_DEF1
-  ; Print two "0" characters
+.top_score_done
+  ; Print two trailing "0" characters as scores are multiples of 100
   LDA #'0'
   STA PPU_DATA
   STA PPU_DATA
 
-  ; Set screen pointer for next character to write
-  LDA #&23:LDX #&C0
+  ; Set pointer to PPU attributes nametable
+  LDA #hi(PPU_ATTR_TABLE):LDX #lo(PPU_ATTR_TABLE)
   JSR VRAMADDR
 
+  ; Assign palette for "BOMBERMAN" title logo
   LDX #&20
-  LDA #0
+  LDA #0 ; Palette 0 for whole block
 
-.loc_DF04
+.title_attr_loop
   STA PPU_DATA
   DEX
-  BNE loc_DF04
+  BNE title_attr_loop
 
-  LDX #8
-  LDA #'P'
+  ; Assign palette for bottom of "BOMBERMAN" and ">START  CONTINUE" option text
+  LDX #&08
+  LDA #&50 ; Palette 0 for top half and 1 for bottom half
 
-.loc_DF0E
+.option_attr_loop
   STA PPU_DATA
   DEX
-  BNE loc_DF0E
+  BNE option_attr_loop
 
+  ; Assign palette for trademarks and license text
   LDX #&18
-  LDA #'U'
+  LDA #&55 ; Palette 1 for whole block
 
-.loc_DF18
+.license_attr_loop
   STA PPU_DATA
   DEX
-  BNE loc_DF18
+  BNE license_attr_loop
 
   JSR PPU_RESTORE
   JSR VBLE

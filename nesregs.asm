@@ -6,6 +6,7 @@ PPU_SPR_DATA        = &2004 ; OAM data
 PPU_SCROLL_REG      = &2005 ; For writing both scroll X then scroll Y
 PPU_ADDRESS         = &2006 ; For writing 2-byte PPU VRAM address
 PPU_DATA            = &2007 ; Read/write PPU VRAM (includes address auto-increment)
+PPU_ATTR_TABLE      = &23C0 ; Background palette attribute table for nametable
 
 APU_REG_BASE        = &4000 ; Shortcut used with indexed addressing
 APU_SQUARE1_REG     = &4000 ; Pulse channel 1 base
