@@ -5235,6 +5235,7 @@ INCLUDE "input.asm"
 ; Draw the lines "TIME" and "LEFT XX" in the status bar
 .TIME_AND_LIFE
 {
+  ; Draw status bar background
   ; Set screen pointer for next character to write
   LDA #&20:LDX #0
   JSR VRAMADDR
@@ -5242,24 +5243,26 @@ INCLUDE "input.asm"
   LDX #&80
   LDA #':'
 
-.loc_DDD2
+.space_loop
   STA PPU_DATA
   DEX
-  BNE loc_DDD2
+  BNE space_loop
 
+  ; Draw "time" text (time value is drawn elsewhere)
   ; Set screen pointer for next character to write
   LDA #&20:LDX #&41
   JSR VRAMADDR
 
   LDX #3
 
-.loc_DDE1
+.time_loop
   LDA aEmit,X     ; "EMIT" ("TIME" backwards)
   STA PPU_DATA
   DEX
-  BPL loc_DDE1
-  LDA #':'
-  STA PPU_DATA
+  BPL time_loop
+
+  LDA #':'       ;  These 2 lines are not needed
+  STA PPU_DATA   ;
 
   ; Set screen pointer for next character to write
   LDA #&20:LDX #&52
@@ -5276,13 +5279,13 @@ INCLUDE "input.asm"
 
   LDX #3
 
-.loc_DE07
+.left_loop
   LDA aTfel,X     ; "TFEL" ("LEFT" backwards)
   STA PPU_DATA
   DEX
-  BPL loc_DE07
+  BPL left_loop
 
-  LDA LIFELEFT
+  LDA #LIFELEFT
   JMP PUTNUMBER   ; Print 2-digit number in A
 
 ; ---------------------------------------------------------------------------
