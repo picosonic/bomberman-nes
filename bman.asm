@@ -5264,6 +5264,7 @@ INCLUDE "input.asm"
   LDA #':'       ;  These 2 lines are not needed
   STA PPU_DATA   ;
 
+  ; Draw trailing zeroes of score (as it's always a multiple of 100)
   ; Set screen pointer for next character to write
   LDA #&20:LDX #&52
   JSR VRAMADDR
@@ -5273,6 +5274,7 @@ INCLUDE "input.asm"
   STA PPU_DATA
   STA PPU_DATA
 
+  ; Draw "left" text
   ; Set screen pointer for next character to write
   LDA #&20:LDX #&58
   JSR VRAMADDR
@@ -5285,6 +5287,7 @@ INCLUDE "input.asm"
   DEX
   BPL left_loop
 
+  ; Draw the number of extra lives remaining (with leading spaces)
   LDA #LIFELEFT
   JMP PUTNUMBER   ; Print 2-digit number in A
 
