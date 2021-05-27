@@ -5288,7 +5288,7 @@ INCLUDE "input.asm"
   BPL left_loop
 
   ; Draw the number of extra lives remaining (with leading spaces)
-  LDA #LIFELEFT
+  LDA LIFELEFT
   JMP PUTNUMBER   ; Print 2-digit number in A
 
 ; ---------------------------------------------------------------------------
