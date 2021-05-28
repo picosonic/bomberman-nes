@@ -4739,12 +4739,12 @@ INCLUDE "input.asm"
 
   JSR PPUE
 
-  LDA #6:STA byte_1F
+  LDA #6:STA byte_1F   ; X coordinate for password input
   LDA #':':STA byte_20 ; Set current char to "blank"
 
-  LDY #0
+  LDY #0 ; Set current password length
 
-.loc_DAB5
+.pw_await_keypress
   JSR WAITVBL
 
   ; Set screen position where next character will be written
@@ -4755,18 +4755,20 @@ INCLUDE "input.asm"
   LDA byte_20:STA PPU_DATA
 
   JSR PPU_RESTORE
-  LDX #10
 
-.loc_DAC9
+  LDX #PW_CURSOR_FLASH_SPEED ; Cursor flashing speed in frames (off)
+
+.cursor_off_loop
   JSR WAITVBL
 
   ; Check for A button or direction buttons being pressed
   LDA JOYPAD1
   AND #(PAD_A + PAD_UP + PAD_DOWN + PAD_LEFT + PAD_RIGHT)
-  BNE loc_DAF8
+  BNE pw_keypress
 
   DEX
-  BNE loc_DAC9
+  BNE cursor_off_loop
+
   JSR WAITVBL
 
   ; Set screen position where next character will be written
@@ -4777,88 +4779,96 @@ INCLUDE "input.asm"
 
   JSR PPU_RESTORE
 
-  LDX #10
+  LDX #PW_CURSOR_FLASH_SPEED ; Cursor flashing speed in frames (on)
 
-.loc_DAE9
+.cursor_on_loop
   JSR WAITVBL
 
   ; Check for something being pressed on JOYPAD 1
   LDA JOYPAD1
   AND #(PAD_A + PAD_UP + PAD_DOWN + PAD_LEFT + PAD_RIGHT)
-  BNE loc_DAF8 ; Branch if A/Up/Down/Left/Right is pressed
+  BNE pw_keypress ; Branch if A/Up/Down/Left/Right is pressed
 
   DEX
-  BNE loc_DAE9
+  BNE cursor_on_loop
 
-  JMP loc_DAB5
+  JMP pw_await_keypress
 
 ; ---------------------------------------------------------------------------
 ; Keypress on password screen handler
 
-.loc_DAF8
-  BMI loc_DB43 ; Branch if A button pressed
+.pw_keypress
+  BMI pw_handle_a_button ; Branch if A button pressed (select character)
+
   PHA
-  LDA #&12
-  STA APU_SQUARE1_REG+3
+  LDA #&12:STA APU_SQUARE1_REG+3 ; Make a sound (low tone)
   PLA
-  CMP #1
-  BEQ loc_DB24 ; Branch if Right button pressed
+
+  CMP #PAD_RIGHT
+  BEQ pw_handle_right_button ; Branch if Right button pressed (next char)
+
+  ; Handle Up/Down/Left key presses (previous char)
+
   LDA byte_20
   CMP #':'
-  BNE loc_DB0F ; Branch if current char is "blank"
-  LDA #'Q'
-  STA byte_20
+  BNE pw_char_not_blank ; Branch if current char is not "blank"
 
-.loc_DB0F
+  ; Nothing entered yet for this char, so wrap round
+  LDA #PW_LAST_CHAR+1:STA byte_20 ; Set current char to one more than the last valid char
+
+.pw_char_not_blank
   LDA byte_20
-  CMP #'A'
-  BEQ loc_DB1A ; Branch if current char is "A"
+  CMP #PW_FIRST_CHAR
+  BEQ pw_wrap_to_end ; Branch if current char is "A" to wrap
+
   DEC byte_20 ; Set current char to one less alphabetically
-  JMP loc_DB1E
+  JMP pw_no_wrap_left
 ; ---------------------------------------------------------------------------
 
-.loc_DB1A
-  LDA #'P'
-  STA byte_20 ; Set current char to "P" (wrap around)
+.pw_wrap_to_end
+  LDA #PW_LAST_CHAR:STA byte_20 ; Set current char to "P" (wrap around)
 
-.loc_DB1E
+.pw_no_wrap_left
   JSR WAITUNPRESS ; Wait for button release
-  JMP loc_DAB5 ; Jump back to read next character
+  JMP pw_await_keypress ; Jump back to read next character
+
 ; ---------------------------------------------------------------------------
-; Handler for Right button press on password screen
-.loc_DB24
+; Handler for Right button press on password screen (next char)
+.pw_handle_right_button
   LDA byte_20
   CMP #':' ; Branch if current char is not "blank"
-  BNE loc_DB2E
-  LDA #'@'
-  STA byte_20 ; Set current char to one before "A"
+  BNE pw_char_not_blank2
 
-.loc_DB2E
+  ; Nothing entered yet for this char, so wrap round
+  LDA #PW_FIRST_CHAR-1:STA byte_20 ; Set current char to one before "A"
+
+.pw_char_not_blank2
   LDA byte_20
-  CMP #'P'
-  BEQ loc_DB39 ; Branch if current char is "P"
+  CMP #PW_LAST_CHAR
+  BEQ pw_wrap_to_start ; Branch if current char is "P" (last available char)
+
   INC byte_20 ; Set current char to one more alphabetically
-  JMP loc_DB3D
+  JMP pw_no_wrap_right
 ; ---------------------------------------------------------------------------
 
-.loc_DB39
-  LDA #'A'
-  STA byte_20 ; Set current char to "A" (wrap around)
+.pw_wrap_to_start
+  LDA #PW_FIRST_CHAR:STA byte_20 ; Set current char to "A" (wrap around)
 
-.loc_DB3D
+.pw_no_wrap_right
   JSR WAITUNPRESS ; Wait for button release
 
-.loc_DB40
-  JMP loc_DAB5 ; Jump back to read next character
+.pw_read_next
+  JMP pw_await_keypress ; Jump back to read next character
+
 ; ---------------------------------------------------------------------------
 ; Handler for A button press on password screen
+.pw_handle_a_button
+  LDA #&11:STA APU_SQUARE1_REG+3 ; Make a sound (high tone)
 
-.loc_DB43
-  LDA #&11
-  STA APU_SQUARE1_REG+3
   LDA byte_20
   CMP #':'
-  BEQ loc_DB40 ; Branch if current char is "blank"
+  BEQ pw_read_next ; Branch if current char is "blank"
+
   AND #&F
   TAX             ; X = current char & 0x0F
   LDA PW_DECODE_TABLE,X ; Use lookup for current char
@@ -4869,55 +4879,68 @@ INCLUDE "input.asm"
   LDA #&22:LDX byte_1F
   JSR VRAMADDR
 
-  LDA byte_20
-  STA PPU_DATA
+  ; Draw current char to screen
+  LDA byte_20:STA PPU_DATA
+
   JSR PPU_RESTORE
-  LDA #':' ; Set current char to "blank"
-  STA byte_20
+
+  ; Reset current char to "blank"
+  LDA #':':STA byte_20
+
+  ; Advance X position
   INC byte_1F
+
+  ; Increase length of password counter
   INY
-  CPY #MAX_PW_CHARS
-  BEQ loc_DB7A ; Branch if we have 20 characters
+
+  CPY #PW_MAX_CHARS
+  BEQ validate_password ; Branch if we have 20 characters
+
   JSR WAITUNPRESS ; Wait for button release
-  JMP loc_DAB5 ; Jump back to read next character
+  JMP pw_await_keypress ; Jump back to read next character
 
 ; ---------------------------------------------------------------------------
 ; Handler for 20 chars of password being entered
 
-.loc_DB7A
-  LDX #0:STX SEED
+.validate_password
+  LDX #0:STX SEED ; Clear PRNG seed[0], as this is used during decode
 
-.loc_DB7E
+.pw_decode_loop
   LDA PW_BUFF,X ; Load password[X]
+
   PHA
   CLC:ADC #7
   CLC:ADC SEED
-  AND #&F
+  AND #&F       ; Clear upper nibble
   STA PW_BUFF,X ; Save decoded char back to password[X]
   PLA
+
   STA SEED
   INX
-  CPX #MAX_PW_CHARS
-  BNE loc_DB7E ; Loop for 20 characters
+  CPX #PW_MAX_CHARS
+  BNE pw_decode_loop ; Loop for 20 characters
 
   LDX #0
 
-.loc_DB95
+.pw_cxsums_validation_loop
   LDY #4
   LDA #0
 
-.loc_DB99
+.pw_cxsum_calc_loop
   CLC:ADC PW_BUFF,X
   INX
   DEY
-  BNE loc_DB99 ; Loop until Y=0 (4 times)
+  BNE pw_cxsum_calc_loop ; Loop until Y=0 (4 times)
+
   AND #&F
   CMP PW_BUFF,X
-  BNE loc_DBCC ; Branch if password[X] != A
+  BNE start_over ; Branch if password[X] != A
 
   INX
   CPX #&F
-  BNE loc_DB95 ; Branch if X != $F
+  BNE pw_cxsums_validation_loop ; Branch if X != $F
+
+  ; Validate final checksum
 
   LDA PW_BUFF+4 ; Load password[4] (checksum 1)
   ASL A
@@ -4928,29 +4951,33 @@ INCLUDE "input.asm"
   CLC:ADC byte_1F
   STA byte_1F
 
-  LDA PW_BUFF+14 ; Load password[14] (checksum 3 ?)
+  LDA PW_BUFF+14 ; Load password[14] (checksum 3)
   ASL A
   CLC:ADC byte_1F
+
   LDX #4
 
-.loc_DBC0
+.pw_final_cxsum_calc_loop
   CLC:ADC PW_BUFF+14,X
   DEX
-  BNE loc_DBC0
-  AND #&F
-  CMP PW_BUFF+19
-  BEQ loc_DBCF ; Branch if password[19] (checksum 4) = A
+  BNE pw_final_cxsum_calc_loop
 
-.loc_DBCC
-  JMP READ_PASSWORD ; Read password all over again
+  ; Compare generated final checksum with last char of password
+  AND #&F
+  CMP PW_BUFF+(PW_MAX_CHARS-1)
+  BEQ valid_password ; Branch if password[19] (checksum 4) = A
+
+.start_over
+  JMP READ_PASSWORD ; Read password all over again (as this one is not valid)
+
 ; ---------------------------------------------------------------------------
 ; Valid password has been entered
 
-.loc_DBCF
+.valid_password
   LDX #0
   LDY #0
 
-.loc_DBD3
+.extract_password_data_loop
   JSR _get_pass_data_var_addr
   LDA PW_BUFF,Y
   STY TEMP_Y
@@ -4960,14 +4987,14 @@ INCLUDE "input.asm"
 
   LDY TEMP_Y
   INY
-  CPY #MAX_PW_CHARS
-  BNE loc_DBD3
+  CPY #PW_MAX_CHARS
+  BNE extract_password_data_loop
 
-  ; Determine bomb radius
+  ; Determine bomb radius (move lower nibble to upper one)
   LDA BOMB_PWR:ASL A:ASL A:ASL A:ASL A
   STA BONUS_POWER
 
-  ; Determine stage number
+  ; Determine stage number (Combine hi and lo nibble BCD values)
   LDA STAGE_HI:ASL A:ASL A:ASL A:ASL A:ORA STAGE_LO
   STA STAGE
 
@@ -4981,8 +5008,9 @@ INCLUDE "input.asm"
   JSR VBLD
   JSR SETSTAGEPAL
 
+  ; Set sprite palette
   LDA #6
-  JSR sub_DD04
+  JSR SETSPR3PAL
 
   ; Print the 7 game completed lines of text
   LDY #0
@@ -5067,64 +5095,79 @@ INCLUDE "input.asm"
   EQUS "ENTER:SECRET:CODE", 0
 
 ; =============== S U B R O U T I N E =======================================
-.sub_DD04
+; Set sprite 3 palette to entry given in A
+.SETSPR3PAL
 {
   PHA
   JSR WAITVBL
 
-  ; Point to palette RAM
+  ; Point to sprite palette 3 RAM
   LDA #hi(SPR_PAL_3-1):LDX #lo(SPR_PAL_3-1)
   JSR VRAMADDR
 
   PLA
 
-  ASL A:ASL A
+  ; Point to correct palette entry
+  ASL A:ASL A ; A = A * 4
   TAX
+
+  ; Copy 4 bytes to palette RAM
   LDY #4
 
-.loc_DD15
-  LDA byte_DD22,X
+.loop
+  LDA game_over_palette,X
   STA PPU_DATA
   INX
   DEY
-  BNE loc_DD15
+  BNE loop
+
   JMP VRAMADDRZ
 
 ; ---------------------------------------------------------------------------
-.byte_DD22
+.game_over_palette
   EQUB  &F,  0,  0,  0    ; 0
   EQUB  &F,  0,  0,  0    ; 1
   EQUB  &F,  0,  0,  0    ; 2
   EQUB  &F,  0,  0,  0    ; 3
   EQUB  &F,  0,  0,  0    ; 4
   EQUB  &F,  0,  0,  0    ; 5
-  EQUB  &F, &15, &36, &21 ; 6
+
+  EQUB  &F, &15, &36, &21 ; 6 - Only this one seems to be used
+  ;         Pink Sand Blue
 }
 
 ; =============== S U B R O U T I N E =======================================
 .GAME_OVER_SCREEN
+{
   JSR PPUD
   JSR VBLD
+
+  ; Change palette
   JSR SETSTAGEPAL
 
   ; Set screen pointer for next character to write
   LDA #&21:LDX #&EA
   JSR VRAMADDR
 
+  ; Print "GAME OVER"
   LDX #8
 
-.loc_DD50
+.loop
   LDA aRevoEmag,X ; "REVO:EMAG" ("GAME OVER" backwards)
   STA PPU_DATA
   DEX
-  BPL loc_DD50
+  BPL loop
+
+  ; Generate and print password
   JSR GENERATE_PASSWORD
+
   JSR VBLE
   JMP PPUE
 
 ; ---------------------------------------------------------------------------
 .aRevoEmag
   EQUS "REVO:EMAG"
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Add score (with * 100,000)
@@ -5802,7 +5845,7 @@ INCLUDE "input.asm"
   AND #&F
   STA password_buffer,X
   STA SEED
-  CPX #MAX_PW_CHARS*2
+  CPX #PW_MAX_CHARS*2
   BNE encode_loop
 
   ; Set screen position to write next character to
@@ -5817,7 +5860,7 @@ INCLUDE "input.asm"
   STA PPU_DATA
 
   INX:INX
-  CPX #(MAX_PW_CHARS+1)*2
+  CPX #(PW_MAX_CHARS+1)*2
   BNE pw_print_loop
 
   RTS
