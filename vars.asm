@@ -174,7 +174,7 @@ DEMOKEY_TIMEOUT     = &AE ; Current DEMO key timeout
 DEMOKEY_PAD1        = &AF ; Current DEMO pad state
 
 byte_B0             = &B0
-NO_ENEMIES_CELEBRATED = &B1
+NO_ENEMIES_CELEBRATED = &B1 ; Boolean
 
 APU_DISABLE         = &B2
 APU_CHAN            = &B3

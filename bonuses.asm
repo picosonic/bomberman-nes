@@ -2,7 +2,7 @@
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR CHECK_BONUSES
 
-.locret_E398
+.BONUS_DONE
   RTS
 
 ; =============== S U B R O U T I N E =======================================
@@ -24,24 +24,24 @@
 
 .no_fanfare
   LDA BONUS_STATUS
-  BEQ loc_E3E7 ; If bonus not achieved yet, check the bonus criteria
+  BEQ check_top_left ; If bonus not achieved yet, check the bonus criteria
 
-  CMP #2
-  BEQ locret_E398
+  CMP #BONUS_COLLECTED
+  BEQ BONUS_DONE
 
   ; Limit to every other frame
   LDA FRAME_CNT
   AND #1
-  BNE loc_E3BD
+  BNE no_bonus_timeout
 
   ; Reduce timer which the bonus is on screen for
   DEC BONUS_TIMER
-  BNE loc_E3BD
+  BNE no_bonus_timeout
 
   ; Bonus timer has elapsed, so remove the bonus from the screen
   LDA #BONUS_COLLECTED:STA BONUS_STATUS
 
-.loc_E3BD
+.no_bonus_timeout
   JSR sub_CFED
   LDA EXTRA_BONUS_ITEM_X
   CMP BOMBMAN_X
@@ -62,6 +62,7 @@
   ;   else it's * 100,000
   CMP #100
   BCC low_score
+
   JSR SCORE_100K ; add high score
   JMP mark_bonus_collected
 
@@ -78,57 +79,78 @@
 }
 
 ; ---------------------------------------------------------------------------
-.loc_E3E7
+.check_top_left
 {
+  ; Check for being on left edge
   LDA BOMBMAN_X
   CMP #1
-  BNE loc_E401
+  BNE check_top_right
+
+  ; Check for being on top edge
   LDA BOMBMAN_Y
   CMP #1
-  BNE loc_E3F8
+  BNE check_bottom_left
+
+  ; We're at the top left
   INC VISITS_TOP_LEFT
-  JMP loc_E416
+
+  JMP check_bonus_criteria
 }
 
 ; ---------------------------------------------------------------------------
-.loc_E3F8
+.check_bottom_left
 {
-  CMP #&B
-  BNE loc_E401
+  ; Check got being on bottom edge
+  CMP #MAP_HEIGHT-2
+  BNE check_top_right
+
+  ; We're at the bottom left
   INC VISITS_BOTTOM_LEFT
-  JMP loc_E416
+
+  JMP check_bonus_criteria
 }
 
 ; ---------------------------------------------------------------------------
-.loc_E401
+.check_top_right
 {
-  CMP #&1D
-  BNE loc_E416
+  ; Check for being on the right edge
+  CMP #MAP_WIDTH-3
+  BNE check_bonus_criteria
+
+  ; Check for being on the top edge
   LDA BOMBMAN_Y
   CMP #1
-  BNE loc_E410
+  BNE check_bottom_right
+
   INC VISITS_TOP_RIGHT
-  JMP loc_E416
+
+  JMP check_bonus_criteria
 }
 
 ; ---------------------------------------------------------------------------
-.loc_E410
+.check_bottom_right
 {
-  CMP #&B
-  BNE loc_E416
-  INC VISITS_BOTTOM_RIGHT
+  ; Check got being on bottom edge
+  CMP #MAP_HEIGHT-2
+  BNE check_bonus_criteria
 
-.^loc_E416
+  INC VISITS_BOTTOM_RIGHT
+}
+
+.check_bonus_criteria
+{
+  ; Check for keeping to edge of level
   LDA BOMBMAN_X
-  CMP #1
-  BEQ loc_E434
-  CMP #&1D
-  BEQ loc_E434
+  CMP #1           ; Left edge
+  BEQ no_visit_reset
+  CMP #MAP_WIDTH-3 ; Right edge (double padded)
+  BEQ no_visit_reset
+
   LDA BOMBMAN_Y
-  CMP #1
-  BEQ loc_E434
-  CMP #&B
-  BEQ loc_E434
+  CMP #1            ; Top edge
+  BEQ no_visit_reset
+  CMP #MAP_HEIGHT-2 ; Bottom edge
+  BEQ no_visit_reset
 
   ; Reset corner visit counters
   LDA #0
@@ -137,7 +159,7 @@
   STA VISITS_BOTTOM_LEFT
   STA VISITS_BOTTOM_RIGHT
 
-.loc_E434
+.no_visit_reset
   LDX BONUS_AVAILABLE
   BEQ BONUS_TARGET            ; 0 "Bonus target"
   DEX:BEQ BONUS_GODDESS_MASK  ; 1 "Goddess mask"
@@ -158,8 +180,10 @@
 
   LDA EXIT_DWELL_TIME
   BEQ BONUS_CHECKED ; Skip if not over exit door
+}
 
-.^PLACE_BONUS
+.PLACE_BONUS
+{
   LDA BONUS_STATUS
   BNE BONUS_CHECKED ; Skip if bonus already achieved
 
@@ -172,10 +196,10 @@
   ; Remember where we placed the bonus item
   LDA TEMP_X:STA EXTRA_BONUS_ITEM_X
   LDA TEMP_Y:STA EXTRA_BONUS_ITEM_Y
-
-.^BONUS_CHECKED
-  RTS
 }
+
+.BONUS_CHECKED
+  RTS
 
 ; ---------------------------------------------------------------------------
 ; Defeat every enemy and circle the outer ring of the level
