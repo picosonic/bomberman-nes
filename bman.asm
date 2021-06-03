@@ -708,7 +708,7 @@ INCLUDE "input.asm"
   ; Always disable bomb walk and invulnerability 1 at start of each level
   LDA #NO
   STA BONUS_BOMBWALK
-  STA INVUL_UNK1
+  STA INVULNERABLE_TIMER
 
 .START_STAGE
   LDA #NO
@@ -726,7 +726,7 @@ INCLUDE "input.asm"
   STA VISITS_BOTTOM_RIGHT ; Visits to bottom right square
   STA BRICKS_BLOWN_UP ; Number of bricks blown up
   STA CHAIN_REACTIONS ; Number of chain reactions
-  STA byte_A6 ; Something pressed on gamepad timer
+  STA KEY_TIMER ; Something pressed on gamepad timer
   STA EXIT_BOMBED_COUNT ; Number of times exit has been bombed
 
   JSR STAGE_SCREEN ; Show current level number screen, e.g. "STAGE  1"
@@ -784,7 +784,7 @@ INCLUDE "input.asm"
   STA BONUS_BOMBWALK
   STA BONUS_REMOTE
   STA BONUS_FIRESUIT
-  STA INVUL_UNK1
+  STA INVULNERABLE_TIMER
 
   ; Play melody 8 to the end
   LDA #8:STA APU_MUSIC
@@ -905,9 +905,9 @@ INCLUDE "input.asm"
   ; Play melody 6
   LDA #6:STA APU_MUSIC
 
-  LDA #1
-  STA INVUL_UNK1
-  STA INVUL_UNK2
+  LDA #YES
+  STA INVULNERABLE_TIMER
+  STA INVULNERABLE
 
   ; Allow 30 seconds for bonus level
   LDA #SECONDSPERBONUSLEVEL:STA TIMELEFT
@@ -940,8 +940,8 @@ INCLUDE "input.asm"
   JSR WAITTUNE
 
   LDA #NO
-  STA INVUL_UNK2
-  STA INVUL_UNK1
+  STA INVULNERABLE
+  STA INVULNERABLE_TIMER
 
   JMP START_STAGE
 
@@ -1259,7 +1259,7 @@ INCLUDE "input.asm"
   LDA BONUS_FIRESUIT
   BNE loc_C705
 
-  LDA INVUL_UNK1
+  LDA INVULNERABLE_TIMER
   BNE loc_C705
 
   LDA BOMBMAN_X
@@ -2191,20 +2191,26 @@ INCLUDE "input.asm"
 ; Pressing the buttons
 .PROCESS_BUTTONS
 {
-  LDA INVUL_UNK2
+  ; Skip if we have INVULNERABLE
+  LDA INVULNERABLE
   BNE loc_CC4C
 
-  LDA INVUL_UNK1
+  ; Skip if we don't have INVULNERABLE_TIMER
+  LDA INVULNERABLE_TIMER
   BEQ loc_CC4C
 
+  ; Limit check to once every 8 frames
   LDA FRAME_CNT
   AND #7
   BNE loc_CC4C
 
-  DEC INVUL_UNK1
+  ; Reduce INVULNERABLE_TIMER timer
+  DEC INVULNERABLE_TIMER
   BNE loc_CC4C
 
-  ; Play melody 3
+  ; INVULNERABLE_TIMER has now expired and is now 0
+
+  ; Play melody 3 (normal stage melody)
   LDA #3:STA APU_MUSIC
 
 .loc_CC4C
@@ -2247,7 +2253,7 @@ INCLUDE "input.asm"
 
   LDA (STAGE_MAP),Y
   CMP #MAP_EXIT
-  BEQ loc_CC95
+  BEQ over_exit
 
   CMP #MAP_BONUS
   BNE loc_CCA4
@@ -2262,11 +2268,11 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 
-.loc_CC95
+.over_exit
 {
   INC EXIT_DWELL_TIME
 
-  LDA #0:STA byte_A6
+  LDA #0:STA KEY_TIMER
 
   LDA ENEMIES_LEFT
   BNE loc_CCA4
@@ -2291,7 +2297,7 @@ INCLUDE "input.asm"
   JSR GET_INPUT   ; Return to A to set the buttons P1 | P2
   BNE CASE_RIGHT
 
-  STA byte_A6 ; Nothing pressed, so reset key timer
+  STA KEY_TIMER ; Nothing pressed, so reset key timer
   STA LAST_INPUT
 
 .CASE_RIGHT
@@ -2424,7 +2430,7 @@ INCLUDE "input.asm"
 .done
   LDA #4
   LDY #7
-  JMP loc_CE2E
+  JMP bomberman_movement_animation
 }
 
 ; =============== S U B R O U T I N E =======================================
@@ -2459,7 +2465,7 @@ INCLUDE "input.asm"
 .done
   LDA #8
   LDY #&B
-  JMP loc_CE2E
+  JMP bomberman_movement_animation
 }
 
 ; =============== S U B R O U T I N E =======================================
@@ -2534,7 +2540,7 @@ INCLUDE "input.asm"
   STA SPR_ATTR_TEMP
   LDA #0
   LDY #3
-  JMP loc_CE2E
+  JMP bomberman_movement_animation
 }
 
 ; ---------------------------------------------------------------------------
@@ -2585,20 +2591,20 @@ INCLUDE "input.asm"
 }
 
 ; ---------------------------------------------------------------------------
-; START OF FUNCTION CHUNK FOR MOVE_DOWN
-.loc_CE2E
+; Bomberman animation frame advance
+.bomberman_movement_animation
 {
-  ; Limit to once per 4 frames
+  ; Limit to once per 4 frames @ 60Hz
   PHA
   LDA FRAME_CNT
   AND #3
   CMP #2
   BNE loc_CE59
 
-  LDA FRAME_CNT
+  LDA FRAME_CNT ; Not required
   PLA
 
-  INC byte_A6 ; Count 
+  INC KEY_TIMER ; Count 
 
   INC BOMBMAN_FRAME
   CMP BOMBMAN_FRAME
@@ -2861,7 +2867,7 @@ INCLUDE "input.asm"
 .powerup_questionmark
 {
   ; Enable invulnerability timer (~34 seconds @ 60Hz)
-  LDA #&FF:STA INVUL_UNK1
+  LDA #&FF:STA INVULNERABLE_TIMER
 
   ; Play special powerup collected melody
   LDA #5:STA APU_MUSIC
@@ -3101,7 +3107,7 @@ INCLUDE "input.asm"
   LDA byte_5C
   BNE done
 
-  LDA INVUL_UNK1
+  LDA INVULNERABLE_TIMER
   BNE done
 
   LDA M_X

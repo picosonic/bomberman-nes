@@ -173,7 +173,7 @@
 
 ; ---------------------------------------------------------------------------
 ; Reveal the exit and walk over it without defeating any enemies
-.BONUS_TARGET ; 9D = 0 "Bonus target"
+.BONUS_TARGET ; 0 "Bonus target"
 {
   LDA ENEMIES_DEFEATED
   BNE BONUS_CHECKED ; Skip if any enemies killed
@@ -203,7 +203,7 @@
 
 ; ---------------------------------------------------------------------------
 ; Defeat every enemy and circle the outer ring of the level
-.BONUS_GODDESS_MASK ; 9D = 1 "Goddess mask"
+.BONUS_GODDESS_MASK ; 1 "Goddess mask"
 {
   LDA ENEMIES_LEFT
   BNE BONUS_CHECKED ; Skip if any enemies left
@@ -225,7 +225,7 @@
 
 ; ---------------------------------------------------------------------------
 ; Kill every enemy without blowing up any walls
-.BONUS_NAKAMOTO_SAN ; 9D = 2 "Nakamoto-san"
+.BONUS_NAKAMOTO_SAN ; 2 "Nakamoto-san"
 {
   LDA ENEMIES_LEFT
   BNE BONUS_CHECKED ; Skip if any enemies left
@@ -238,7 +238,7 @@
 
 ; ---------------------------------------------------------------------------
 ; Create 248 or more chain reactions with your bombs (one chain reaction = one bomb detonating another)
-.BONUS_FAMICOM ; 9D = 3 "Famicom"
+.BONUS_FAMICOM ; 3 "Famicom"
 {
   LDA CHAIN_REACTIONS
   CMP #248
@@ -249,12 +249,12 @@
 
 ; ---------------------------------------------------------------------------
 ; Reveal the exit, walk over it, and don't let go of the d pad for at least 16.5 seconds [while making sure not to defeat any enemies]
-.BONUS_COLA_BOTTLE ; 9D = 4 "Cola bottle"
+.BONUS_COLA_BOTTLE ; 4 "Cola bottle"
 {
   LDA EXIT_DWELL_TIME
-  BEQ BONUS_CHECKED ; Skip if 9F = 0
+  BEQ BONUS_CHECKED ; Skip if exit dwell time is 0
 
-  LDA byte_A6
+  LDA KEY_TIMER
   CMP #248
   BCS PLACE_BONUS ; Place bonus if A6 >= 248
 
@@ -263,7 +263,7 @@
 
 ; ---------------------------------------------------------------------------
 ; Destroy every wall and bomb the exit thrice while making sure not to defeat any enemies (including those that come out of the door)
-.BONUS_DEZENIMAN_SAN ; 9D = 5 "Dezeniman-san"
+.BONUS_DEZENIMAN_SAN ; 5 "Dezeniman-san"
 {
   LDA ENEMIES_DEFEATED
   BNE BONUS_CHECKED ; Skip if any enemies have been killed

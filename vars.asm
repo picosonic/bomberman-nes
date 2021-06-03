@@ -133,9 +133,9 @@ BONUS_REMOTE        = &77
 BONUS_BOMBWALK      = &78
 BONUS_FIRESUIT      = &79
 
-INVUL_UNK1          = &7A
+INVULNERABLE_TIMER  = &7A ; Invulnerability to monsters for a short time
 LAST_INPUT          = &7B
-INVUL_UNK2          = &7D
+INVULNERABLE        = &7D ; Invulnerable to monsters for this stage (Boolean)
 BONUS_ENEMY_TYPE    = &7E
 
 ; Password is stored here (20 bytes) .. $92
@@ -144,25 +144,25 @@ PW_BUFF             = &7F
 ; Time in seconds left to play
 TIMELEFT            = &93
 
-DEBUG               = &94
-PW_CXSUM4           = &95
+DEBUG               = &94 ; Shows location of bonus and exit tiles
+PW_CXSUM4           = &95 ; Checksum for whole password
 MTAB_PTR            = &97 ; Pointer to enemy table
-PW_CXSUM1           = &99
-PW_CXSUM2           = &9A
-PW_CXSUM3           = &9B
+PW_CXSUM1           = &99 ; Checksum for characters 1..4 of password
+PW_CXSUM2           = &9A ; Checksum for characters 6..9 of password
+PW_CXSUM3           = &9B ; Checksum for characters 11..14 of password
 
 ; Extra bonus item criteria
 ENEMIES_LEFT        = &9C
 BONUS_AVAILABLE     = &9D
 ENEMIES_DEFEATED    = &9E
-EXIT_DWELL_TIME     = &9F
+EXIT_DWELL_TIME     = &9F ; How long we are over exit tile for
 VISITS_TOP_LEFT     = &A0
 VISITS_TOP_RIGHT    = &A1
 VISITS_BOTTOM_LEFT  = &A2
 VISITS_BOTTOM_RIGHT = &A3
 BRICKS_BLOWN_UP     = &A4
 CHAIN_REACTIONS     = &A5
-byte_A6             = &A6
+KEY_TIMER           = &A6 ; How long at least one key is pressed for
 EXIT_BOMBED_COUNT   = &A7
 BONUS_STATUS        = &A8 ; 0 = Criteria not met / 1 = Achieved / 2 = Collected
 BONUS_TIMER         = &A9 ; Time which the bonus is on screen for
