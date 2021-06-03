@@ -1029,6 +1029,7 @@ INCLUDE "input.asm"
   STA BOMBMAN_X
   STA BOMBMAN_Y
 
+  ; Position in middle of cell
   LDA #SPR_HALFSIZE
   STA BOMBMAN_U
   STA BOMBMAN_V
