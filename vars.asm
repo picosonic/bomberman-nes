@@ -100,7 +100,7 @@ DEMOPLAY            = &59
 
 TEMP_Y3             = &5A
 EXIT_ENEMY_TYPE     = &5B
-byte_5C             = &5C ; Boolean
+KILLED              = &5C ; Boolean
 byte_5D             = &5D ; Boolean
 byte_5E             = &5E ; Boolean
 

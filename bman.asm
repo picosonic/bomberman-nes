@@ -833,6 +833,7 @@ INCLUDE "input.asm"
   BEQ NEXT_STAGE
 
 .loc_C4C3
+  ; Note : Not in demo mode at this point
   ; Stop melody playing
   LDA #DISABLE:STA APU_MUSIC
 
@@ -917,14 +918,14 @@ INCLUDE "input.asm"
   LDA TIMELEFT
   BEQ BONUS_STAGE_END ; Check for running out of time
 
-  JSR SPRD        ; Hide sprites
+  JSR SPRD                ; Hide sprites
   JSR RESPAWN_BONUS_ENEMY ; Respawn if < 10 enemies
-  JSR PROCESS_BUTTONS    ; Process button presses
-  JSR BOMB_TICK   ; Bomb timer
-  JSR DRAW_BOMBERMAN  ; Draw bomberman
-  JSR THINK       ; Enemy AI
-  JSR BOMB_ANIMATE    ; Animate on-screen bombs
-  JSR BONUS_STAGE_TIMER ; Tick level time remaining
+  JSR PROCESS_BUTTONS     ; Process button presses
+  JSR BOMB_TICK           ; Bomb timer
+  JSR DRAW_BOMBERMAN      ; Draw bomberman
+  JSR THINK               ; Enemy AI
+  JSR BOMB_ANIMATE        ; Animate on-screen bombs
+  JSR BONUS_STAGE_TIMER   ; Tick level time remaining
 
   ; Limit following functions to every other frame
   LDA FRAME_CNT:AND #1:BNE BONUS_STAGE_LOOP
@@ -1037,7 +1038,7 @@ INCLUDE "input.asm"
   LDA #0
   STA BOMBMAN_FRAME
   STA byte_5D
-  STA byte_5C
+  STA KILLED
   STA byte_5E
 
   JSR STAGE_CLEANUP
@@ -1253,8 +1254,9 @@ INCLUDE "input.asm"
   BEQ loc_C753
 
   JSR DRAW_TILE   ; Add a new tile to TILE_TAB
-  LDA byte_5C
-  BNE loc_C705
+
+  LDA KILLED
+  BNE loc_C705 ; Doesn't matter about fire if we're dead
 
   LDA BONUS_FIRESUIT
   BNE loc_C705
@@ -1270,10 +1272,11 @@ INCLUDE "input.asm"
   CMP byte_20
   BNE loc_C705
 
-  ; Collision between this enemy and bomberman, play sound 5
+  ; Collision between this fire and bomberman, play sound 5
   LDA #5:STA APU_SOUND
 
-  LDA #1:STA byte_5C
+  ; Set as killed by fire
+  LDA #1:STA KILLED
 
   LDA #12:STA BOMBMAN_FRAME
 
@@ -2193,30 +2196,32 @@ INCLUDE "input.asm"
 {
   ; Skip if we have INVULNERABLE
   LDA INVULNERABLE
-  BNE loc_CC4C
+  BNE skip_invulnerable_timeout
 
   ; Skip if we don't have INVULNERABLE_TIMER
   LDA INVULNERABLE_TIMER
-  BEQ loc_CC4C
+  BEQ skip_invulnerable_timeout
 
   ; Limit check to once every 8 frames
   LDA FRAME_CNT
   AND #7
-  BNE loc_CC4C
+  BNE skip_invulnerable_timeout
 
   ; Reduce INVULNERABLE_TIMER timer
   DEC INVULNERABLE_TIMER
-  BNE loc_CC4C
+  BNE skip_invulnerable_timeout
 
   ; INVULNERABLE_TIMER has now expired and is now 0
 
   ; Play melody 3 (normal stage melody)
   LDA #3:STA APU_MUSIC
 
-.loc_CC4C
-  LDA byte_5C
-  BEQ loc_CC63
+.skip_invulnerable_timeout
+  ; If not dead, allow movement
+  LDA KILLED
+  BEQ PROCESS_BOMBERMAN_MOVEMENTS
 
+  ; Death animation
   LDA FRAME_CNT
   AND #&F
   BNE done
@@ -2234,7 +2239,7 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 
-.loc_CC63
+.PROCESS_BOMBERMAN_MOVEMENTS
 {
   LDA BOMBMAN_U
   CMP #SPR_HALFSIZE
@@ -3104,24 +3109,33 @@ INCLUDE "input.asm"
   CMP #&20
   BCS done
 
-  LDA byte_5C
+  ; No need to do collision detection if we're already dead
+  LDA KILLED
   BNE done
 
+  ; Check for invulnerability
   LDA INVULNERABLE_TIMER
   BNE done
 
+  ; Compare monster X with our X
   LDA M_X
   CMP BOMBMAN_X
   BNE done
 
+  ; Compare monster Y with our Y
   LDA M_Y
   CMP BOMBMAN_Y
   BNE done
 
+  ; At this point, we don't have invulnerability and have collided with a monster
+
   ; Play sound 5
   LDA #5:STA APU_SOUND
 
-  LDA #1:STA byte_5C
+  ; Mark as killed by monster
+  LDA #1:STA KILLED
+
+  ; Start death animation
   LDA #12:STA BOMBMAN_FRAME
 
 .done
@@ -3748,7 +3762,7 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 .TURN_HORIZONTALLY
 {
-  LDA byte_5C
+  LDA KILLED
   BNE NO_VTURN
 
   LDA M_Y
@@ -3772,7 +3786,7 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 .TURN_VERTICALLY
 {
-  LDA byte_5C
+  LDA KILLED
   BNE NO_VTURN
 
   LDA M_X
