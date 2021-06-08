@@ -24,6 +24,7 @@ INCLUDE "vars.asm"
 .WAIT_VBLANK2
   LDA PPU_STATUS
   BPL WAIT_VBLANK2
+
   JMP START
 
 ; ---------------------------------------------------------------------------
@@ -749,6 +750,7 @@ INCLUDE "input.asm"
 
   ; Main game loop
 .STAGE_LOOP
+{
   JSR PAUSED         ; Check for START being pressed, if so pause
   JSR SPRD           ; Hide sprites
   JSR PROCESS_BUTTONS       ; Process button presses
@@ -759,26 +761,32 @@ INCLUDE "input.asm"
   JSR STAGE_TIMER    ; Tick the stage timer
   JSR CHECK_BONUSES  ; Check bonus criteria
 
-  LDA byte_5D
-  BNE loc_C481
+  ; If we've been killed, loose a life
+  LDA KILLED
+  BNE LOOSE_LIFE
 
-  LDA byte_5E
-  BNE loc_C4BF
+  ; If we're over the exit door and no enemies left, advance to next stage
+  LDA NO_ENEMIES_LEFT
+  BNE LEVEL_DONE
 
-  ; Limit next function calls to 1 frame out of 4
+  ; Limit next function calls to 1 frame out of 4 to slow down explosions
   LDA FRAME_CNT:AND #3:BNE STAGE_LOOP
 
-  JSR sub_C79D ; Drawing explosions?
-  JSR sub_C66C ; Explosion hit detection?
+  JSR DRAW_EXPLOSIONS ; Draw explosions for bombs which are exploding
+  JSR EXPLOSION_HIT_DETECTION ; Do collision detection with explosion flames
 
   JMP STAGE_LOOP ; Go back to start of main game loop
+}
 
 ; ---------------------------------------------------------------------------
 
-.loc_C481
+.LOOSE_LIFE
+{
+  ; If in demo mode, end the demo
   LDA DEMOPLAY
-  BNE loc_C4C3
+  BNE END_DEMO
 
+  ; Strip bomberman of bonus items
   LDA #NO
   STA BONUS_NOCLIP
   STA BONUS_BOMBWALK
@@ -793,11 +801,16 @@ INCLUDE "input.asm"
   ; Loose a life
   DEC LIFELEFT
 
+  ; If we're out of lives, then it's game over
   BMI GAME_OVER
+
   JMP START_STAGE
+}
+
 ; ---------------------------------------------------------------------------
 
 .GAME_OVER
+{
   LDA #NO:STA STAGE_STARTED
 
   ; Write "GAME OVER"
@@ -826,30 +839,41 @@ INCLUDE "input.asm"
   BEQ WAIT_PRESS
 
   JMP GAME_MENU
+}
+
 ; ---------------------------------------------------------------------------
 
-.loc_C4BF
+.LEVEL_DONE
+{
   LDA DEMOPLAY
   BEQ NEXT_STAGE
 
-.loc_C4C3
-  ; Note : Not in demo mode at this point
+.^END_DEMO
+  ; Note : In demo mode at this point
   ; Stop melody playing
   LDA #DISABLE:STA APU_MUSIC
 
-  INC byte_B0
-  LDA byte_B0
+  ; Every 4th end to the demo, reset game
+  INC DEMO_ENDED
+  LDA DEMO_ENDED
   AND #3
-  BEQ loc_C4D2
+  BEQ DO_RESET
 
+  ; Jump back to the game menu
   JMP GAME_MENU
+}
+
 ; ---------------------------------------------------------------------------
 
-.loc_C4D2
+.DO_RESET
+{
   JMP RESET_GAME
+}
+
 ; ---------------------------------------------------------------------------
 
 .NEXT_STAGE
+{
   ; Play melody 10 to the end
   LDA #10:STA APU_MUSIC
   JSR WAITTUNE
@@ -866,10 +890,12 @@ INCLUDE "input.asm"
   BNE SELECT_BONUS_MONSTER ; Select the monster type for the bonus level
 
   JMP END_GAME
+}
 
 ; ---------------------------------------------------------------------------
 
 .SELECT_BONUS_MONSTER
+{
   INY
   SEC:SBC #5
   BCS SELECT_BONUS_MONSTER
@@ -887,9 +913,12 @@ INCLUDE "input.asm"
   BEQ START_BONUS_STAGE
 
   JMP START_STAGE
+}
+
 ; ---------------------------------------------------------------------------
 
 .START_BONUS_STAGE
+{
   LDA #NO:STA STAGE_STARTED
   JSR BONUS_STAGE_SCREEN
 
@@ -930,12 +959,15 @@ INCLUDE "input.asm"
   ; Limit following functions to every other frame
   LDA FRAME_CNT:AND #1:BNE BONUS_STAGE_LOOP
 
-  JSR sub_C79D ; Draw explosions?
-  JSR sub_C66C ; Explosion hit detection?
+  JSR DRAW_EXPLOSIONS ; Draw explosions for bombs which are exploding
+  JSR EXPLOSION_HIT_DETECTION ; Do collision detection with explosion flames
+
   JMP BONUS_STAGE_LOOP
+}
 ; ---------------------------------------------------------------------------
 
 .BONUS_STAGE_END
+{
   ; Play melody 10 to the end
   LDA #10:STA APU_MUSIC
   JSR WAITTUNE
@@ -945,6 +977,7 @@ INCLUDE "input.asm"
   STA INVULNERABLE_TIMER
 
   JMP START_STAGE
+}
 
 ; ---------------------------------------------------------------------------
 .END_GAME
@@ -1037,9 +1070,9 @@ INCLUDE "input.asm"
 
   LDA #0
   STA BOMBMAN_FRAME
-  STA byte_5D
   STA KILLED
-  STA byte_5E
+  STA DYING
+  STA NO_ENEMIES_LEFT
 
   JSR STAGE_CLEANUP
   JSR SPAWN_MONSTERS
@@ -1082,7 +1115,7 @@ INCLUDE "input.asm"
 ; START OF FUNCTION CHUNK FOR PAUSED
 
 .ABORT_DEMOPLAY
-  JMP loc_C4C3
+  JMP END_DEMO
 
 ; =============== S U B R O U T I N E =======================================
 ; Check for START being pressed, if so pause and wait for START to be released
@@ -1172,8 +1205,8 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
-; Explosion hit detection
-.sub_C66C
+; Do collision detection with explosion flames
+.EXPLOSION_HIT_DETECTION
 {
   LDX #MAX_FIRE-1
 
@@ -1255,7 +1288,7 @@ INCLUDE "input.asm"
 
   JSR DRAW_TILE   ; Add a new tile to TILE_TAB
 
-  LDA KILLED
+  LDA DYING
   BNE loc_C705 ; Doesn't matter about fire if we're dead
 
   LDA BONUS_FIRESUIT
@@ -1275,8 +1308,8 @@ INCLUDE "input.asm"
   ; Collision between this fire and bomberman, play sound 5
   LDA #5:STA APU_SOUND
 
-  ; Set as killed by fire
-  LDA #1:STA KILLED
+  ; Set as DYING by fire
+  LDA #1:STA DYING
 
   LDA #12:STA BOMBMAN_FRAME
 
@@ -1360,8 +1393,8 @@ INCLUDE "input.asm"
   EQUB &1A,  0,  0,  0,  0
 
 ; =============== S U B R O U T I N E =======================================
-; Trigger shaking (?)
-.sub_C79D
+; Draw explosions
+.DRAW_EXPLOSIONS
 {
   LDX #MAX_FIRE-1
 
@@ -2218,7 +2251,7 @@ INCLUDE "input.asm"
 
 .skip_invulnerable_timeout
   ; If not dead, allow movement
-  LDA KILLED
+  LDA DYING
   BEQ PROCESS_BOMBERMAN_MOVEMENTS
 
   ; Death animation
@@ -2231,7 +2264,7 @@ INCLUDE "input.asm"
   CMP #20
   BNE done
 
-  LDA #1:STA byte_5D
+  LDA #1:STA KILLED
 
 .done
   RTS
@@ -2282,7 +2315,7 @@ INCLUDE "input.asm"
   LDA ENEMIES_LEFT
   BNE loc_CCA4
 
-  LDA #1:STA byte_5E
+  LDA #1:STA NO_ENEMIES_LEFT
 
 .^sub_done
   RTS
@@ -3110,7 +3143,7 @@ INCLUDE "input.asm"
   BCS done
 
   ; No need to do collision detection if we're already dead
-  LDA KILLED
+  LDA DYING
   BNE done
 
   ; Check for invulnerability
@@ -3132,8 +3165,8 @@ INCLUDE "input.asm"
   ; Play sound 5
   LDA #5:STA APU_SOUND
 
-  ; Mark as killed by monster
-  LDA #1:STA KILLED
+  ; Mark as DYING by monster
+  LDA #1:STA DYING
 
   ; Start death animation
   LDA #12:STA BOMBMAN_FRAME
@@ -3762,7 +3795,7 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 .TURN_HORIZONTALLY
 {
-  LDA KILLED
+  LDA DYING
   BNE NO_VTURN
 
   LDA M_Y
@@ -3786,7 +3819,7 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 .TURN_VERTICALLY
 {
-  LDA KILLED
+  LDA DYING
   BNE NO_VTURN
 
   LDA M_X

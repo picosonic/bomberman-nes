@@ -100,15 +100,15 @@ DEMOPLAY            = &59
 
 TEMP_Y3             = &5A
 EXIT_ENEMY_TYPE     = &5B
-KILLED              = &5C ; Boolean
-byte_5D             = &5D ; Boolean
-byte_5E             = &5E ; Boolean
+DYING               = &5C ; Boolean, in the process of dying
+KILLED              = &5D ; Boolean, have we lost a life on this level
+NO_ENEMIES_LEFT     = &5E ; Boolean, when no enemies remain
 
-; Title screen cursor, either 0 or 1
-CURSOR              = &5F
+; Title screen cursor
+CURSOR              = &5F ; Boolean
 
-; Boolean to indicate level has been started
-STAGE_STARTED       = &60
+; Indicate if level has been started
+STAGE_STARTED       = &60 ; Boolean
 
 ; 7 bytes BCD
 SCORE               = &61
@@ -173,7 +173,7 @@ DEMOKEY_DATA        = &AC ; Pointer to DEMO timeout/pad data
 DEMOKEY_TIMEOUT     = &AE ; Current DEMO key timeout
 DEMOKEY_PAD1        = &AF ; Current DEMO pad state
 
-byte_B0             = &B0
+DEMO_ENDED          = &B0 ; Count of times the demo has ended
 NO_ENEMIES_CELEBRATED = &B1 ; Boolean
 
 APU_DISABLE         = &B2
