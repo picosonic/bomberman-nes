@@ -208,10 +208,10 @@ INCLUDE "vars.asm"
   LDA DEMOPLAY ; Check if we're in DEMO mode
   BNE SET_SCROLL_REG ; Skip if we are
 
-  LDA #&E:STA APU_DELTA_REG ; Disable IRQ/loop, set frequncy to 14 (=72 ~ 24858 Hz)
+  LDA #&E:STA APU_DMC_FREQ_REG ; Disable IRQ/loop, set frequncy to 14 (=72 ~ 24858 Hz)
   LDA #DISABLE:STA BOOM_SOUND ; Stop explosion sound effect from playing
-  LDA #lo((BOOMPCM-ROMSTART) / 64):STA APU_DELTA_REG+2 ; PCM sample address
-  LDA #&FF:STA APU_DELTA_REG+3 ; PCM sample length (4081 bytes)
+  LDA #lo((BOOMPCM-ROMSTART) / 64):STA APU_DMC_START_REG ; PCM sample address
+  LDA #&FF:STA APU_DMC_LEN_REG ; PCM sample length (4081 bytes)
   LDA #&F:STA APU_MASTERCTRL_REG ; Disable DMC
   LDA #&1F:STA APU_MASTERCTRL_REG ; Enable DMC
 
