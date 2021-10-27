@@ -480,8 +480,8 @@
 ; Jump table for initialisation of sound effect
 .MOD_SOUND_TAB
   EQUW APU_RESET-1 ; 0 Reset APU
-  EQUW S1_START-1  ; 1 Bomberman footsteps 1
-  EQUW S2_START-1  ; 2 Bomberman footsteps 2
+  EQUW S1_START-1  ; 1 Bomberman footsteps 1 (horizontal)
+  EQUW S2_START-1  ; 2 Bomberman footsteps 2 (vertical)
   EQUW S3_START-1  ; 3 Place a bomb
   EQUW S4_START-1  ; 4 Bonus collected
   EQUW S5_START-1  ; 5 Collision between enemy and bomberman
@@ -499,25 +499,27 @@
 
 ; ---------------------------------------------------------------------------
 
+; 1/2 = Bomberman footsteps
 .S1_START
 {
-  LDA #4
-  BNE loc_E6CF ; Always branch to skip S2_START
+  LDA #4 ; Noise period = 64 (NTSC)
+  BNE SETNOISEPERIOD ; Skip S2_START noise period
 
 .^S2_START
-  LDA #&C
+  LDA #&C ; Noise period = 762 (NTSC)
 
-.loc_E6CF
+.SETNOISEPERIOD
   STA APU_NOISE_REG+2
-  LDA #0:STA APU_PATTERN
-  STA APU_NOISE_REG
-  LDA #&10:STA APU_NOISE_REG+3
+
+  LDA #0:STA APU_PATTERN:STA APU_NOISE_REG
+  LDA #&10:STA APU_NOISE_REG+3 ; Noise length = 12
 
   RTS
 }
 
 ; ---------------------------------------------------------------------------
 
+; 3 = Place a bomb
 .S3_START
 {
   LDA #&10:STA APU_SOUND_MOD+1
@@ -551,6 +553,7 @@
 
 ; ---------------------------------------------------------------------------
 
+; 4 = Bonus collected
 .S4_START
 {
   LDA #&FF:STA APU_SOUND_MOD+1
@@ -593,6 +596,7 @@
   EQUB &65,&87,&B4,&F0
 }
 
+; 5 = Collision between enemy and bomberman
 .S5_START
 {
   LDA #&30:STA APU_SOUND_MOD+1

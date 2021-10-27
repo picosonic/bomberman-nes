@@ -1131,7 +1131,7 @@ INCLUDE "input.asm"
   LDA #1
   STA APU_DISABLE
 
-  ; Play sound 6
+  ; Play sound 6 (Pause/Unpause)
   LDA #6:STA APU_SOUND
 
   JSR WAITUNPRESS ; Wait for button to be released
@@ -1142,7 +1142,7 @@ INCLUDE "input.asm"
   AND #PAD_START
   BEQ WAIT_START
 
-  ; Play sound 6
+  ; Play sound 6 (Pause/Unpause)
   LDA #6:STA APU_SOUND
 
   LDA #NO:STA APU_DISABLE
@@ -2657,27 +2657,28 @@ INCLUDE "input.asm"
 .loc_CE45
 {
   CPY BOMBMAN_FRAME
-  BCC loc_CE4A
+  BCC PLAY_FOOTSTEP_SOUND
 
   RTS
 }
 
 ; ---------------------------------------------------------------------------
 
-.loc_CE4A
+.PLAY_FOOTSTEP_SOUND
 {
   STA BOMBMAN_FRAME
-  CMP #4
-  BCC loc_CE54
+  CMP #4 ; If frame < 4, it's horizontal
+  BCC HORIZ_FOOTSTEP
 
-  LDA #2
-  BNE loc_CE56
+  LDA #2 ; Vertical movement
+  BNE PLAY_SOUND
 
-.loc_CE54
-  LDA #1
+.HORIZ_FOOTSTEP
+  LDA #1 ; Horizontal movement
 
-.loc_CE56
-  STA APU_SOUND   ; Play sound 1 or 2 depending on bomberman animation frame
+.PLAY_SOUND
+  STA APU_SOUND ; Play footstep sound 1 or 2 depending on bomberman animation frame
+
   RTS
 }
 
