@@ -239,7 +239,7 @@ APU_SOUND_MOD       = &E1
 APU_SDELAY          = &E4
 
 ; Lower memory ($0100-$07FF).
-password_buffer    = &0180
+password_buffer     = &0180
 stage_buffer        = &0200
 
 ; Bomb vars (up to 10 bombs)
