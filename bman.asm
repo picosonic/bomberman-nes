@@ -5967,6 +5967,7 @@ INCLUDE "input.asm"
 INCLUDE "bonuses.asm"
 INCLUDE "sound.asm"
 
+; Timeout and gamepad state value pairs for DEMO {TIMEOUT, PAD1_STATE} ...
 .DEMO_KEYDATA
   EQUB &3D,  1,  3,&81,  3,&80,&1B,  4,  6,&84,&1B,  4,  2,  5,&34,  1,  8,&41,&13,  1
   EQUB   1,  0,  6,  1,  1,  0, &F,  1,  1,  0,  3,  1,  1,  0,&11,  1,  6,&81,&1B,  1
