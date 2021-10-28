@@ -1289,21 +1289,21 @@ INCLUDE "input.asm"
   JSR DRAW_TILE   ; Add a new tile to TILE_TAB
 
   LDA DYING
-  BNE loc_C705 ; Doesn't matter about fire if we're dead
+  BNE NO_FIRE_DAMAGE ; Doesn't matter about fire if we're dead
 
   LDA BONUS_FIRESUIT
-  BNE loc_C705
+  BNE NO_FIRE_DAMAGE ; Firesuit stops us getting hurt by flames
 
   LDA INVULNERABLE_TIMER
-  BNE loc_C705
+  BNE NO_FIRE_DAMAGE ; Whilst invulnerable, fire doesn't hurt
 
   LDA BOMBMAN_X
   CMP byte_1F
-  BNE loc_C705
+  BNE NO_FIRE_DAMAGE ; This flame not at bomberman X position, so no collision
 
   LDA BOMBMAN_Y
   CMP byte_20
-  BNE loc_C705
+  BNE NO_FIRE_DAMAGE ; This flame not at bomberman Y position, so no collision
 
   ; Collision between this fire and bomberman, play sound 5
   LDA #5:STA APU_SOUND
@@ -1313,7 +1313,7 @@ INCLUDE "input.asm"
 
   LDA #12:STA BOMBMAN_FRAME
 
-.loc_C705
+.NO_FIRE_DAMAGE
   LDY #MAX_ENEMY-1
 
 .loc_C707
