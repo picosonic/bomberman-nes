@@ -1225,7 +1225,7 @@ INCLUDE "input.asm"
   LDA FIRE_X,X:STA byte_1F
   LDA FIRE_Y,X:STA byte_20
 
-  LDA byte_C75D,Y
+  LDA WALL_EXPLOSION_FRAMES,Y
   JMP loc_C6DA
 
 ; ---------------------------------------------------------------------------
@@ -1379,18 +1379,30 @@ INCLUDE "input.asm"
 }
 
 ; ---------------------------------------------------------------------------
-.byte_C75D
-  EQUB &27,  3,  4,  5,  6,  7,  0
+.WALL_EXPLOSION_FRAMES
+  EQUB 39,  3,  4,  5,  6,  7,  0 ; Exploding brickwork
 .byte_C764
-  EQUB   0, &B, &C, &D, &E, &D, &C, &B
-  EQUB   0, &F,&10,&11,&12,&13,&14,&15
-  EQUB &16,&13,&14,&11
+  EQUB   0, &B, &C, &D, &E, &D, &C, &B, 0 ; Explosion centre
+
+  EQUB &0F,&10 ; Explosion (h/v) 1
+  EQUB &11,&12 ; Explosion (h/v) 2
+  EQUB &13,&14 ; Explosion (h/v) 3
+  EQUB &15,&16 ; Explosion (h/v) 4
+  EQUB &13,&14 ; Explosion (h/v) 3
+  EQUB &11
 .byte_C778
-  EQUB &12, &F,&10,  0,  0,&17,&18,&19
-  EQUB &1A,&1B,&1C,&1D,&1E,&1F,&20,&21
-  EQUB &22,&23,&24,&25,&26,&1F,&20,&21
-  EQUB &22,&1B,&1C,&1D,&1E,&17,&18,&19
-  EQUB &1A,  0,  0,  0,  0
+  EQUB     &12 ; Explosion (h/v) 2
+  EQUB &F,&10  ; Explosion (h/v) 1
+  EQUB  0,  0  ; Empty space
+
+  EQUB &17,&18,&19,&1A ; Explosion edge (r/t/l/b) 1
+  EQUB &1B,&1C,&1D,&1E ; Explosion edge (r/t/l/b) 2
+  EQUB &1F,&20,&21,&22 ; Explosion edge (r/t/l/b) 3
+  EQUB &23,&24,&25,&26 ; Explosion edge (r/t/l/b) 4
+  EQUB &1F,&20,&21,&22 ; Explosion edge (r/t/l/b) 3
+  EQUB &1B,&1C,&1D,&1E ; Explosion edge (r/t/l/b) 2
+  EQUB &17,&18,&19,&1A ; Explosion edge (r/t/l/b) 1
+  EQUB   0,  0,  0,  0 ; Empty space
 
 ; =============== S U B R O U T I N E =======================================
 ; Draw explosions
@@ -4723,56 +4735,56 @@ INCLUDE "input.asm"
 
 ; Table for the 4 tile ids used to make a sprite
 .TILE_MAP
-  EQUB &5F,&5F,&5F,&5F ; Empty space
-  EQUB &64,&65,&66,&67 ; Concrete block
-  EQUB &68,&69,&6A,&6B ; Brick wall
-  EQUB &6C,&6D,&6E,&6F ; Brick wall 2
-  EQUB &70,&71,&72,&73 ; Brick wall 3
-  EQUB &74,&75,&76,&77 ; Brick wall 4
-  EQUB &78,&79,&7A,&7B ; Brick wall 5
-  EQUB &7C,&7D,&7E,&7F ; Brick wall 6
-  EQUB &80,&81,&82,&83 ; Bomb 1
-  EQUB &84,&85,&86,&87 ; Bomb 2
-  EQUB &88,&89,&8A,&8B ; Bomb 3
-  EQUB &8C,&8D,&8E,&8F ; Explosion centre 1
-  EQUB &90,&91,&92,&93 ; Explosion centre 2
-  EQUB &94,&95,&96,&97 ; Explosion centre 3
-  EQUB &98,&99,&9A,&9B ; Explosion centre 4
-  EQUB &20,&20,&21,&21 ; Explosion horizontal 1
-  EQUB &22,&23,&22,&23 ; Explosion vertical 1
-  EQUB &24,&24,&25,&25 ; Explosion horizontal 2
-  EQUB &26,&27,&26,&27 ; Explosion vertical 2
-  EQUB &28,&28,&29,&29 ; Explosion horizontal 3
-  EQUB &2A,&2B,&2A,&2B ; Explosion vertical 3
-  EQUB &2C,&2C,&2D,&2D ; Explosion horizontal 4
-  EQUB &2E,&2F,&2E,&2F ; Explosion vertical 4
-  EQUB &20,&9D,&21,&9F ; Explosion horizontal right edge 1
-  EQUB &9C,&9D,&22,&23 ; Explosion vertical top edge 1
-  EQUB &9C,&20,&9E,&21 ; Explosion horizontal left edge 1
-  EQUB &22,&23,&9E,&9F ; Explosion vertical bottom edge 1
-  EQUB &24,&A1,&25,&A3 ; Explosion horizontal right edge 2
-  EQUB &A0,&A1,&26,&27 ; Explosion vertical top edge 2
-  EQUB &A0,&24,&A2,&25 ; Explosion horizontal left edge 2
-  EQUB &26,&27,&A2,&A3 ; Explosion vertical bottom edge 2
-  EQUB &28,&A5,&29,&A7 ; Explosion horizontal right edge 3
-  EQUB &A4,&A5,&2A,&2B ; Explosion vertical top edge 3
-  EQUB &A4,&28,&A6,&29 ; Explosion horizontal left edge 3
-  EQUB &2A,&2B,&A6,&A7 ; Explosion vertical bottom edge 3
-  EQUB &2C,&A9,&2D,&AB ; Explosion horizontal right edge 4
-  EQUB &A8,&A9,&2E,&2F ; Explosion vertical top edge 4
-  EQUB &A8,&2C,&AA,&2D ; Explosion horizontal left edge 4
-  EQUB &2E,&2F,&AA,&AB ; Explosion vertical bottom edge 4
-  EQUB &68,&69,&6A,&6B ; Brick wall
-  EQUB &3C,&3D,&3E,&3F ; Exit door
-  EQUB   0,  1,&10,&11 ; Bonus item bomb (increase bombs)
-  EQUB   2,  3,&12,&13 ; Bonus item flame (increase explosion radius)
-  EQUB   4,  5,&14,&15 ; Bonus item skates (4x speed mode)
-  EQUB   6,  7,&16,&17 ; Bonus item walk through walls (no clip walls)
-  EQUB   8,  9,&18,&19 ; Bonus item remote (detonator)
-  EQUB  &A, &B,&1A,&1B ; Bonus item bomb walk (no clip bombs)
-  EQUB  &C, &D,&1C,&1D ; Bonus item fire suit (explosions don't hurt)
-  EQUB  &E, &F,&1E,&1F ; Bonus item question mark (invulnerability 1)
-  EQUB &68,&69,&6A,&6B ; Brick wall
+  EQUB &5F,&5F,&5F,&5F ;  0 Empty space
+  EQUB &64,&65,&66,&67 ;  1 Concrete block
+  EQUB &68,&69,&6A,&6B ;  2 Brick wall
+  EQUB &6C,&6D,&6E,&6F ;  3 Brick wall 2
+  EQUB &70,&71,&72,&73 ;  4 Brick wall 3
+  EQUB &74,&75,&76,&77 ;  5 Brick wall 4
+  EQUB &78,&79,&7A,&7B ;  6 Brick wall 5
+  EQUB &7C,&7D,&7E,&7F ;  7 Brick wall 6
+  EQUB &80,&81,&82,&83 ;  8 Bomb 1
+  EQUB &84,&85,&86,&87 ;  9 Bomb 2
+  EQUB &88,&89,&8A,&8B ; 10 Bomb 3
+  EQUB &8C,&8D,&8E,&8F ; 11 Explosion centre 1
+  EQUB &90,&91,&92,&93 ; 12 Explosion centre 2
+  EQUB &94,&95,&96,&97 ; 13 Explosion centre 3
+  EQUB &98,&99,&9A,&9B ; 14 Explosion centre 4
+  EQUB &20,&20,&21,&21 ; 15 Explosion horizontal 1
+  EQUB &22,&23,&22,&23 ; 16 Explosion vertical 1
+  EQUB &24,&24,&25,&25 ; 17 Explosion horizontal 2
+  EQUB &26,&27,&26,&27 ; 18 Explosion vertical 2
+  EQUB &28,&28,&29,&29 ; 19 Explosion horizontal 3
+  EQUB &2A,&2B,&2A,&2B ; 20 Explosion vertical 3
+  EQUB &2C,&2C,&2D,&2D ; 21 Explosion horizontal 4
+  EQUB &2E,&2F,&2E,&2F ; 22 Explosion vertical 4
+  EQUB &20,&9D,&21,&9F ; 23 Explosion horizontal right edge 1
+  EQUB &9C,&9D,&22,&23 ; 24 Explosion vertical top edge 1
+  EQUB &9C,&20,&9E,&21 ; 25 Explosion horizontal left edge 1
+  EQUB &22,&23,&9E,&9F ; 26 Explosion vertical bottom edge 1
+  EQUB &24,&A1,&25,&A3 ; 27 Explosion horizontal right edge 2
+  EQUB &A0,&A1,&26,&27 ; 28 Explosion vertical top edge 2
+  EQUB &A0,&24,&A2,&25 ; 29 Explosion horizontal left edge 2
+  EQUB &26,&27,&A2,&A3 ; 30 Explosion vertical bottom edge 2
+  EQUB &28,&A5,&29,&A7 ; 31 Explosion horizontal right edge 3
+  EQUB &A4,&A5,&2A,&2B ; 32 Explosion vertical top edge 3
+  EQUB &A4,&28,&A6,&29 ; 33 Explosion horizontal left edge 3
+  EQUB &2A,&2B,&A6,&A7 ; 34 Explosion vertical bottom edge 3
+  EQUB &2C,&A9,&2D,&AB ; 35 Explosion horizontal right edge 4
+  EQUB &A8,&A9,&2E,&2F ; 36 Explosion vertical top edge 4
+  EQUB &A8,&2C,&AA,&2D ; 37 Explosion horizontal left edge 4
+  EQUB &2E,&2F,&AA,&AB ; 38 Explosion vertical bottom edge 4
+  EQUB &68,&69,&6A,&6B ; 39 Brick wall
+  EQUB &3C,&3D,&3E,&3F ; 40 Exit door
+  EQUB   0,  1,&10,&11 ; 41 Bonus item bomb (increase bombs)
+  EQUB   2,  3,&12,&13 ; 42 Bonus item flame (increase explosion radius)
+  EQUB   4,  5,&14,&15 ; 43 Bonus item skates (4x speed mode)
+  EQUB   6,  7,&16,&17 ; 44 Bonus item walk through walls (no clip walls)
+  EQUB   8,  9,&18,&19 ; 45 Bonus item remote (detonator)
+  EQUB  &A, &B,&1A,&1B ; 46 Bonus item bomb walk (no clip bombs)
+  EQUB  &C, &D,&1C,&1D ; 47 Bonus item fire suit (explosions don't hurt)
+  EQUB  &E, &F,&1E,&1F ; 48 Bonus item question mark (invulnerability 1)
+  EQUB &68,&69,&6A,&6B ; 49 Brick wall
 
 ; =============== S U B R O U T I N E =======================================
 ; Password entry screen
