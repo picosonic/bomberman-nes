@@ -140,7 +140,7 @@
   LDA (APU_PTR),Y:STA APU_TEMP
   INC APU_CNT,X
 
-  ; Check for top bit being setm if so process as a control byte
+  ; Check for top bit being set, if so process as a control byte
   LDA APU_TEMP
   BMI CONTROL_BYTE
 
@@ -274,10 +274,10 @@
   EQUW MELODY_RESTART_CHANNEL-1
   EQUW MELODY_SETUP_PAUSE-1
   EQUW MELODY_DO_PAUSE-1
-  EQUW loc_E61B-1
-  EQUW loc_E62D-1
-  EQUW loc_E634-1
-  EQUW loc_E63B-1
+  EQUW MELODY_EFFECT_FB-1
+  EQUW MELODY_EFFECT_FA-1
+  EQUW MELODY_EFFECT_F9-1
+  EQUW MELODY_EFFECT_F8-1
 
 ; ---------------------------------------------------------------------------
 ; Melody effect &FF - stop melody playing
@@ -337,7 +337,7 @@
 
 ; ---------------------------------------------------------------------------
 ; Melody effect &FB
-.loc_E61B
+.MELODY_EFFECT_FB
 {
   ; If CD[X]=0 then
   ;   CD[X]=1
@@ -359,7 +359,7 @@
 
 ; ---------------------------------------------------------------------------
 ; Melody effect &FA
-.loc_E62D
+.MELODY_EFFECT_FA
 {
   ; CD[X]=&FF
   LDA #&FF:STA byte_CD,X
@@ -369,7 +369,7 @@
 
 ; ---------------------------------------------------------------------------
 ; Melody effect &F9
-.loc_E634
+.MELODY_EFFECT_F9
 {
   LDA #&FF:STA byte_D0,X
 
@@ -378,7 +378,7 @@
 
 ; ---------------------------------------------------------------------------
 ; Melody effect &F8
-.loc_E63B
+.MELODY_EFFECT_F8
 {
   LDA #0:STA byte_D0,X
 

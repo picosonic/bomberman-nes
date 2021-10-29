@@ -176,50 +176,24 @@ DEMOKEY_PAD1        = &AF ; Current DEMO pad state
 DEMO_ENDED          = &B0 ; Count of times the demo has ended
 NO_ENEMIES_CELEBRATED = &B1 ; Boolean
 
-APU_DISABLE         = &B2
-APU_CHAN            = &B3
+; Audio related
+APU_DISABLE         = &B2 ; Boolean to keep track of music being disabled when paused
+APU_CHAN            = &B3 ; Current audio channel
 APU_TEMP            = &B4
-APU_MUSIC           = &B5
-
-; ?? for each of the 3 channels
-byte_B6             = &B6
-
-; ?? for each of the 3 channels
-byte_B9             = &B9
-
-; Pointer to current melody/channel data
-APU_CHANDAT         = &BC
-
-unk_BD              = &BD ; Not used
-unk_C0              = &C0 ; Not used
-
-APU_PTR             = &C2
-
-; Counters for each of the 3 channels through their respective melody data
-APU_CNT             = &C4
-
-; Melody data counter when in sustain for each of the 3 channels
-APU_PAUSE_PTR       = &C7
-
-; Sustain countdown for each of the 3 channels
-APU_PAUSE_TIMER     = &CA
-
-; ?? for each of the 3 channels
-byte_CD     = &CD
-
-; ?? (FF or 00) for each of the 3 channels
-byte_D0             = &D0
-
-; Cache for seventh and eighth bytes from melody table
-APU_FLAGS           = &D3
-
+APU_MUSIC           = &B5 ; Currently selected melody (top bit set once initialised)
+byte_B6             = &B6 ; ?? for each of the 3 channels
+byte_B9             = &B9 ; ?? for each of the 3 channels
+APU_CHANDAT         = &BC ; 6 bytes of current melody/channel data
+APU_PTR             = &C2 ; Pointer to position in current melody data
+APU_CNT             = &C4 ; Counters for each of the 3 channels through their respective melody data
+APU_PAUSE_PTR       = &C7 ; Melody data counter when in sustain for each of the 3 channels
+APU_PAUSE_TIMER     = &CA ; Sustain countdown for each of the 3 channels
+byte_CD             = &CD ; ?? for each of the 3 channels
+byte_D0             = &D0 ; ?? (FF or 00) for each of the 3 channels
+APU_FLAGS           = &D3 ; Cache for seventh and eighth bytes from melody table
 byte_D5             = &D5
-
-; ?? for each of the 3 channels
-byte_D6             = &D6
-
-; Hard coded to 08 for each of the 2 pulse channels to disable sweep
-APU_SWEEP           = &D9
+byte_D6             = &D6 ; ?? for each of the 3 channels
+APU_SWEEP           = &D9 ; Hard coded to 08 for both of the pulse channels to disable sweep
 
 SPR_TAB_TOGGLE      = &DB
 
