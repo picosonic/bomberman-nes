@@ -1219,11 +1219,11 @@ INCLUDE "input.asm"
   BPL loc_C688
 
   ; Clear top bit
-  AND #&7F
+  AND #%01111111
   TAY
 
-  LDA FIRE_X,X:STA byte_1F
-  LDA FIRE_Y,X:STA byte_20
+  LDA FIRE_X,X:STA CACHE_X
+  LDA FIRE_Y,X:STA CACHE_Y
 
   LDA WALL_EXPLOSION_FRAMES,Y
   JMP loc_C6DA
@@ -1231,11 +1231,11 @@ INCLUDE "input.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_C688
-  LDA FIRE_X,X:STA byte_1F
-  LDA FIRE_Y,X:STA byte_20
+  LDA FIRE_X,X:STA CACHE_X
+  LDA FIRE_Y,X:STA CACHE_Y
 
   LDA byte_526,X
-  AND #&78 ; Mask off top bit and bottom three bits
+  AND #%01111000 ; Mask off top bit and bottom three bits
   BEQ skip_fire
 
   LDA byte_526,X
@@ -1246,7 +1246,7 @@ INCLUDE "input.asm"
 
   LDA byte_526,X
   LSR A
-  AND #&3C ; Mask off top two and bottom two bits
+  AND #%00111100 ; Mask off top two and bottom two bits
   CLC:ADC byte_32
   TAY
   LDA byte_C778,Y
@@ -1263,7 +1263,7 @@ INCLUDE "input.asm"
 
   LDA byte_526,X
   LSR A:LSR A
-  AND #&1E ; Mask off top three bits and bottom bit
+  AND #%00011110 ; Mask off top three bits and bottom bit
   CLC:ADC byte_32
   CLC:ADC #7
   TAY
@@ -1298,11 +1298,11 @@ INCLUDE "input.asm"
   BNE NO_FIRE_DAMAGE ; Whilst invulnerable, fire doesn't hurt
 
   LDA BOMBMAN_X
-  CMP byte_1F
+  CMP CACHE_X
   BNE NO_FIRE_DAMAGE ; This flame not at bomberman X position, so no collision
 
   LDA BOMBMAN_Y
-  CMP byte_20
+  CMP CACHE_Y
   BNE NO_FIRE_DAMAGE ; This flame not at bomberman Y position, so no collision
 
   ; Collision between this fire and bomberman, play sound 5
@@ -1324,11 +1324,11 @@ INCLUDE "input.asm"
   BCS loc_C74E
 
   LDA ENEMY_X,Y
-  CMP byte_1F
+  CMP CACHE_X
   BNE loc_C74E
 
   LDA ENEMY_Y,Y
-  CMP byte_20
+  CMP CACHE_Y
   BNE loc_C74E
 
   INC ENEMIES_DEFEATED
@@ -1420,9 +1420,9 @@ INCLUDE "input.asm"
 
 .loc_C7A7
   PHA
-  LDY FIRE_Y,X:STY byte_20
+  LDY FIRE_Y,X:STY CACHE_Y
   JSR FIX_STAGE_PTR   ; Set pointer to level data
-  LDY FIRE_X,X:STY byte_1F
+  LDY FIRE_X,X:STY CACHE_X
   PLA
 
   BPL loc_C7CB
@@ -1458,7 +1458,7 @@ INCLUDE "input.asm"
 
   LDA byte_4D6,X
   ORA #&10
-  LDY byte_1F
+  LDY CACHE_X
   STA (STAGE_MAP),Y
 
   JMP loc_C830
@@ -1468,7 +1468,7 @@ INCLUDE "input.asm"
   CPY #MAP_HIDDEN_EXIT ; Was this the hidden exit door?
   BNE loc_C800
 
-  LDY byte_1F
+  LDY CACHE_X
   LDA #MAP_EXIT ; Place exit door here
   STA (STAGE_MAP),Y
 
@@ -1480,7 +1480,7 @@ INCLUDE "input.asm"
 .loc_C800
   CPY #MAP_HIDDEN_BONUS ; Was this a hidden bonus?
   BNE loc_C815
-  LDY byte_1F
+  LDY CACHE_X
   LDA #MAP_BONUS ; Place bonus here
   STA (STAGE_MAP),Y
 
@@ -1497,7 +1497,7 @@ INCLUDE "input.asm"
   CPY #MAP_BONUS ; Was this a bonus item?
   BNE loc_C830
 
-  LDY byte_1F
+  LDY CACHE_X
   LDA #MAP_EMPTY ; Remove from map
   STA (STAGE_MAP),Y
 
@@ -1535,18 +1535,18 @@ INCLUDE "input.asm"
   STA byte_4D6,X:LDA FIRE_X,X
 
   CLC:ADC byte_CA16,Y
-  STA byte_1F
+  STA CACHE_X
 
   LDA FIRE_Y,X
   CLC:ADC byte_CA11,Y
-  STA byte_20
+  STA CACHE_Y
 
   LDY #MAX_FIRE-1
   JSR FIND_FIRE_SLOT
   BNE loc_C8A6
 
-  LDA byte_1F:STA FIRE_X,Y
-  LDA byte_20:STA FIRE_Y,Y
+  LDA CACHE_X:STA FIRE_X,Y
+  LDA CACHE_Y:STA FIRE_Y,Y
   LDA #1:STA FIRE_ACTIVE,Y
 
   LDA byte_36
@@ -1611,8 +1611,8 @@ INCLUDE "input.asm"
   CLC:ADC #1
   STA ENEMY_FACE,Y
 
-  LDA byte_1F:STA ENEMY_X,Y
-  LDA byte_20:STA ENEMY_Y,Y
+  LDA CACHE_X:STA ENEMY_X,Y
+  LDA CACHE_Y:STA ENEMY_Y,Y
 
   LDA #0
   STA byte_5DA,Y
@@ -1691,8 +1691,8 @@ INCLUDE "input.asm"
   LDA MULT_TABY,Y:STA STAGE_MAP
   LDA MULT_TABX,Y:STA STAGE_MAP+1
 
-  STY byte_20
-  LDY BOMB_X,X:STY byte_1F
+  STY CACHE_Y
+  LDY BOMB_X,X:STY CACHE_X
 
   LDA #0
   JSR sub_C9B6
@@ -1731,8 +1731,8 @@ INCLUDE "input.asm"
   LDA MULT_TABX,Y:STA STAGE_MAP+1
 
   ; Check for this bomb still on map
-  STY byte_20
-  LDY BOMB_X,X:STY byte_1F
+  STY CACHE_Y
+  LDY BOMB_X,X:STY CACHE_X
   LDA (STAGE_MAP),Y
   CMP #MAP_BOMB
   BNE _not_bomb
@@ -1824,11 +1824,11 @@ INCLUDE "input.asm"
   JSR FIND_FIRE_SLOT
   BMI done
 
-  LDA byte_20
+  LDA CACHE_Y
   CLC:ADC byte_CA11,X
   STA FIRE_Y,Y
 
-  LDA byte_1F
+  LDA CACHE_X
   CLC:ADC byte_CA16,X
   STA FIRE_X,Y
 
@@ -1858,8 +1858,8 @@ INCLUDE "input.asm"
   ; Skip inactive bombs
   LDA BOMB_ACTIVE,X:BEQ BOMB_ANIM_NEXT
 
-  LDA BOMB_X,X:STA byte_1F
-  LDA BOMB_Y,X:STA byte_20
+  LDA BOMB_X,X:STA CACHE_X
+  LDA BOMB_Y,X:STA CACHE_Y
 
   LDA BOMB_TIME_ELAPSED,X
   AND #&F     ; Animation delay
@@ -1899,14 +1899,14 @@ INCLUDE "input.asm"
   LDA #50
   CLC:ADC STAGE
   CLC:ADC STAGE
-  STA byte_1F
+  STA CACHE_X
 
 .NEXT_BRICK
   ; Randomly place a brick
   JSR RAND_COORDS:LDA #MAP_BRICK:STA (STAGE_MAP),Y
 
   ; Loop if more bricks to place
-  DEC byte_1F:BNE NEXT_BRICK
+  DEC CACHE_X:BNE NEXT_BRICK
 
   RTS
 }
@@ -2024,7 +2024,7 @@ INCLUDE "input.asm"
 {
   JSR PPUD
 
-  LDA #0:STA byte_20 ; Set Y position to 0
+  LDA #0:STA CACHE_Y ; Set Y position to 0
 
   ; Set up pointer
   LDA #lo(OAM_CACHE):STA OAM_PTR
@@ -2033,7 +2033,7 @@ INCLUDE "input.asm"
   LDY #0
 
 .loop_y
-  LDA #0:STA byte_1F ; Set X position to 0
+  LDA #0:STA CACHE_X ; Set X position to 0
 
 .loop_x
   ; If debug enabled, show hidden tiles, otherwise hidden tiles become brick wall
@@ -2064,13 +2064,13 @@ INCLUDE "input.asm"
   INC OAM_PTR+1
 
 .same_page
-  INC byte_1F
-  LDA byte_1F
+  INC CACHE_X
+  LDA CACHE_X
   AND #MAP_WIDTH
   BEQ loop_x
 
-  INC byte_20
-  LDA byte_20
+  INC CACHE_Y
+  LDA CACHE_Y
   CMP #MAP_HEIGHT
   BNE loop_y
 
@@ -2294,12 +2294,12 @@ INCLUDE "input.asm"
   CMP #SPR_HALFSIZE
   BNE loc_CCA4
 
-  LDY BOMBMAN_Y:STY byte_20
+  LDY BOMBMAN_Y:STY CACHE_Y
 
   LDA MULT_TABY,Y:STA STAGE_MAP
   LDA MULT_TABX,Y:STA STAGE_MAP+1
 
-  LDY BOMBMAN_X:STY byte_1F
+  LDY BOMBMAN_X:STY CACHE_X
 
   LDA (STAGE_MAP),Y
   CMP #MAP_EXIT
@@ -4608,7 +4608,7 @@ INCLUDE "input.asm"
   LDA unk_D994,Y:STA TILE_PARAM+7
 
   LDY #0
-  LDA byte_1F
+  LDA CACHE_X
   CMP #16
   BCC loc_D93A
 
@@ -4620,7 +4620,7 @@ INCLUDE "input.asm"
   ASL A
   STA byte_21
 
-  LDA byte_20
+  LDA CACHE_Y
   CLC:ADC #2
   ASL A
   STA byte_22
@@ -4806,8 +4806,8 @@ INCLUDE "input.asm"
 
   JSR PPUE
 
-  LDA #6:STA byte_1F   ; X coordinate for password input
-  LDA #':':STA byte_20 ; Set current char to "blank"
+  LDA #6:STA CACHE_X   ; X coordinate for password input
+  LDA #':':STA CACHE_Y ; Set current char to "blank"
 
   LDY #0 ; Set current password length
 
@@ -4815,11 +4815,11 @@ INCLUDE "input.asm"
   JSR WAITVBL
 
   ; Set screen position where next character will be written
-  LDA #&22:LDX byte_1F
+  LDA #&22:LDX CACHE_X
   JSR VRAMADDR
 
   ; Write current character
-  LDA byte_20:STA PPU_DATA
+  LDA CACHE_Y:STA PPU_DATA
 
   JSR PPU_RESTORE
 
@@ -4839,7 +4839,7 @@ INCLUDE "input.asm"
   JSR WAITVBL
 
   ; Set screen position where next character will be written
-  LDA #&22:LDX byte_1F
+  LDA #&22:LDX CACHE_X
   JSR VRAMADDR
 
   LDA #SOLIDWHITE:STA PPU_DATA
@@ -4876,24 +4876,24 @@ INCLUDE "input.asm"
 
   ; Handle Up/Down/Left key presses (previous char)
 
-  LDA byte_20
+  LDA CACHE_Y
   CMP #':'
   BNE pw_char_not_blank ; Branch if current char is not "blank"
 
   ; Nothing entered yet for this char, so wrap round
-  LDA #PW_LAST_CHAR+1:STA byte_20 ; Set current char to one more than the last valid char
+  LDA #PW_LAST_CHAR+1:STA CACHE_Y ; Set current char to one more than the last valid char
 
 .pw_char_not_blank
-  LDA byte_20
+  LDA CACHE_Y
   CMP #PW_FIRST_CHAR
   BEQ pw_wrap_to_end ; Branch if current char is "A" to wrap
 
-  DEC byte_20 ; Set current char to one less alphabetically
+  DEC CACHE_Y ; Set current char to one less alphabetically
   JMP pw_no_wrap_left
 ; ---------------------------------------------------------------------------
 
 .pw_wrap_to_end
-  LDA #PW_LAST_CHAR:STA byte_20 ; Set current char to "P" (wrap around)
+  LDA #PW_LAST_CHAR:STA CACHE_Y ; Set current char to "P" (wrap around)
 
 .pw_no_wrap_left
   JSR WAITUNPRESS ; Wait for button release
@@ -4902,24 +4902,24 @@ INCLUDE "input.asm"
 ; ---------------------------------------------------------------------------
 ; Handler for Right button press on password screen (next char)
 .pw_handle_right_button
-  LDA byte_20
+  LDA CACHE_Y
   CMP #':' ; Branch if current char is not "blank"
   BNE pw_char_not_blank2
 
   ; Nothing entered yet for this char, so wrap round
-  LDA #PW_FIRST_CHAR-1:STA byte_20 ; Set current char to one before "A"
+  LDA #PW_FIRST_CHAR-1:STA CACHE_Y ; Set current char to one before "A"
 
 .pw_char_not_blank2
-  LDA byte_20
+  LDA CACHE_Y
   CMP #PW_LAST_CHAR
   BEQ pw_wrap_to_start ; Branch if current char is "P" (last available char)
 
-  INC byte_20 ; Set current char to one more alphabetically
+  INC CACHE_Y ; Set current char to one more alphabetically
   JMP pw_no_wrap_right
 ; ---------------------------------------------------------------------------
 
 .pw_wrap_to_start
-  LDA #PW_FIRST_CHAR:STA byte_20 ; Set current char to "A" (wrap around)
+  LDA #PW_FIRST_CHAR:STA CACHE_Y ; Set current char to "A" (wrap around)
 
 .pw_no_wrap_right
   JSR WAITUNPRESS ; Wait for button release
@@ -4932,7 +4932,7 @@ INCLUDE "input.asm"
 .pw_handle_a_button
   LDA #&11:STA APU_SQUARE1_REG+3 ; Make a sound (high tone)
 
-  LDA byte_20
+  LDA CACHE_Y
   CMP #':'
   BEQ pw_read_next ; Branch if current char is "blank"
 
@@ -4943,19 +4943,19 @@ INCLUDE "input.asm"
   JSR WAITVBL
 
   ; Set screen position for next character to be written
-  LDA #&22:LDX byte_1F
+  LDA #&22:LDX CACHE_X
   JSR VRAMADDR
 
   ; Draw current char to screen
-  LDA byte_20:STA PPU_DATA
+  LDA CACHE_Y:STA PPU_DATA
 
   JSR PPU_RESTORE
 
   ; Reset current char to "blank"
-  LDA #':':STA byte_20
+  LDA #':':STA CACHE_Y
 
   ; Advance X position
-  INC byte_1F
+  INC CACHE_X
 
   ; Increase length of password counter
   INY
@@ -5011,16 +5011,16 @@ INCLUDE "input.asm"
 
   LDA PW_BUFF+4 ; Load password[4] (checksum 1)
   ASL A
-  STA byte_1F
+  STA CACHE_X
 
   LDA PW_BUFF+9 ; Load password[9] (checksum 2)
   ASL A
-  CLC:ADC byte_1F
-  STA byte_1F
+  CLC:ADC CACHE_X
+  STA CACHE_X
 
   LDA PW_BUFF+14 ; Load password[14] (checksum 3)
   ASL A
-  CLC:ADC byte_1F
+  CLC:ADC CACHE_X
 
   LDX #4
 
@@ -5090,16 +5090,16 @@ INCLUDE "input.asm"
   JSR PRINT_XY_ASCIIZ
 
   ; Draw a row of 16 bricks
-  LDA #&A:STA byte_20 ; Y position
-  LDA #0:STA byte_1F ; X position
+  LDA #&A:STA CACHE_Y ; Y position
+  LDA #0:STA CACHE_X ; X position
 
 .loop
   LDA #&31
   JSR sub_CB4E
 
   ; Increment X position
-  INC byte_1F
-  LDA byte_1F
+  INC CACHE_X
+  LDA CACHE_X
   CMP #16
   BNE loop
 
@@ -5869,7 +5869,7 @@ INCLUDE "input.asm"
   LDY #0
   LDX #0
   LDA #3
-  STA byte_1F
+  STA CACHE_X
 
 .loop
   JSR calc_cxsum
@@ -5877,7 +5877,7 @@ INCLUDE "input.asm"
 
   LDA TEMP_X:STA (STAGE_MAP),Y
 
-  DEC byte_1F
+  DEC CACHE_X
   BNE loop
 
   JSR calc_cxsum
@@ -5937,7 +5937,7 @@ INCLUDE "input.asm"
 ; Calculate a checksum from 4 data bytes
 .calc_cxsum
 {
-  LDA #4:STA byte_20
+  LDA #4:STA CACHE_Y
   LDA #0:STA TEMP_X
 
 .loop
@@ -5947,7 +5947,7 @@ INCLUDE "input.asm"
   CLC:ADC TEMP_X
   STA TEMP_X
 
-  DEC byte_20
+  DEC CACHE_Y
   BNE loop
 
   RTS

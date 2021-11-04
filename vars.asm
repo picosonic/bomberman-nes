@@ -28,8 +28,8 @@ TILE_PTR            = &15
 TILE_CNT            = &16
 TILE_PARAM          = &17
 
-byte_1F             = &1F ; Cached X position ?
-byte_20             = &20 ; Cached Y position ?
+CACHE_X             = &1F ; Cached X position
+CACHE_Y             = &20 ; Cached Y position
 byte_21             = &21
 byte_22             = &22
 byte_23             = &23
