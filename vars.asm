@@ -1,6 +1,8 @@
 ; Game variables
 
+; ---------------------------------------------------------------------------
 ; Zero Page ($0000-$00FF).
+; ---------------------------------------------------------------------------
 
 ; 7 bytes BCD
 TOPSCORE            = &01
@@ -39,11 +41,12 @@ TEMP_Y              = &25
 
 OAM_PTR             = &26 ; Pointer to cache of OAM data
 
-BOMBMAN_X           = &28
-BOMBMAN_U           = &29
-BOMBMAN_Y           = &2A
-BOMBMAN_V           = &2B
-BOMBMAN_FRAME       = &2C
+; Bomberman related
+BOMBMAN_X           = &28 ; Grid X position
+BOMBMAN_U           = &29 ; Offset X
+BOMBMAN_Y           = &2A ; Grid Y position
+BOMBMAN_V           = &2B ; Offset Y
+BOMBMAN_FRAME       = &2C ; Current animation frame
 
 SPR_ATTR_TEMP       = &2D
 byte_2E             = &2E ; Bomb/fire related
@@ -68,13 +71,14 @@ SPR_ID              = &3E
 SPR_SAVEDX          = &3F
 SPR_SAVEDY          = &40
 
+; Cache for enemy attributes
 M_TYPE              = &41
 M_X                 = &42
 M_U                 = &43
 M_Y                 = &44
 M_V                 = &45
 M_FRAME             = &46
-byte_47             = &47
+M_AI_TIMER          = &47
 byte_48             = &48
 byte_49             = &49
 M_FACE              = &4A
@@ -89,7 +93,7 @@ byte_51             = &51
 byte_52             = &52
 byte_53             = &53
 
-; PRNG seed
+; PRNG seed (4 bytes)
 SEED                = &54
 
 ; Current level (1..50)
@@ -105,13 +109,13 @@ KILLED              = &5D ; Boolean, have we lost a life on this level
 NO_ENEMIES_LEFT     = &5E ; Boolean, when no enemies remain
 
 ; Title screen cursor
-CURSOR              = &5F ; Boolean
+CURSOR              = &5F ; Boolean, START or CONTINUE menu option
 
 ; Indicate if level has been started
 STAGE_STARTED       = &60 ; Boolean
 
 ; 7 bytes BCD
-SCORE               = &61
+SCORE               = &61 ; &61..&67
 
 LIFELEFT            = &68
 FPS                 = &69
@@ -122,19 +126,20 @@ byte_6B             = &6B
 DEMO_WAIT_HI        = &70
 DEMO_WAIT_LO        = &71
 
-; Are we on title screen 0 or 1
-INMENU              = &72
+; Are we on title screen
+INMENU              = &72 ; Boolean
 
-BONUS_POWER         = &73
-BONUS_BOMBS         = &74
-BONUS_SPEED         = &75
-BONUS_NOCLIP        = &76
-BONUS_REMOTE        = &77
-BONUS_BOMBWALK      = &78
-BONUS_FIRESUIT      = &79
+; Bonus item status
+BONUS_POWER         = &73 ; Explosion radius in tiles (multiples of 0x10)
+BONUS_BOMBS         = &74 ; 0 .. 9, number of extra bombs
+BONUS_SPEED         = &75 ; Boolean, normal or fast travel
+BONUS_NOCLIP        = &76 ; Boolean, walk through brick walls
+BONUS_REMOTE        = &77 ; Boolean, remote detonator
+BONUS_BOMBWALK      = &78 ; Boolean, can walk through bombs
+BONUS_FIRESUIT      = &79 ; Boolean, invulnerable to explosions
 
 INVULNERABLE_TIMER  = &7A ; Invulnerability to monsters for a short time
-LAST_INPUT          = &7B
+LAST_INPUT          = &7B ; Last input bitmask from gamepad
 INVULNERABLE        = &7D ; Invulnerable to monsters for this stage (Boolean)
 BONUS_ENEMY_TYPE    = &7E
 
@@ -198,12 +203,12 @@ APU_SWEEP           = &D9 ; Hard coded to 08 for both of the pulse channels to d
 SPR_TAB_TOGGLE      = &DB
 
 ; Used for BONUS_POWER calculations with resume codes
-BOMB_PWR             = &DC
+BOMB_PWR            = &DC
 
 ; Used for low byte of STAGE in resume codes
-STAGE_LO             = &DD
+STAGE_LO            = &DD
 ; Used for high byte of STAGE in resume codes
-STAGE_HI             = &DE
+STAGE_HI            = &DE
 
 APU_SOUND           = &DF
 APU_PATTERN         = &E0
@@ -212,37 +217,42 @@ APU_CHAN_DIS        = &E1
 APU_SOUND_MOD       = &E1
 APU_SDELAY          = &E4
 
+; ---------------------------------------------------------------------------
 ; Lower memory ($0100-$07FF).
+; ---------------------------------------------------------------------------
 password_buffer     = &0180
 stage_buffer        = &0200
 
 ; Bomb vars (up to 10 bombs)
-BOMB_ACTIVE         = &03A0
-BOMB_X              = &03AA
-BOMB_Y              = &03B4
-BOMB_TIME_LEFT      = &03BE
-BOMB_UNUSED         = &03C8
-BOMB_TIME_ELAPSED   = &03D2
+BOMB_ACTIVE         = &03A0 ; Boolean
+BOMB_X              = &03AA ; Grid X position
+BOMB_Y              = &03B4 ; Grid Y position
+BOMB_TIME_LEFT      = &03BE ; No. frames until explosion (starts at 160 ~ 2.66s @ 60Hz)
+BOMB_UNUSED         = &03C8 ; Set to 0, but never read
+BOMB_TIME_ELAPSED   = &03D2 ; No. frames since placement, used for animation (every 16 frames)
 
 ; Fire vars (up to 80 flames)
-FIRE_ACTIVE         = &03E6
-FIRE_X              = &0436
-FIRE_Y              = &0486
+FIRE_ACTIVE         = &03E6 ; 0 = inactive, >0 = no. frames flame has been active
+FIRE_X              = &0436 ; Grid X position
+FIRE_Y              = &0486 ; Grid Y position
 byte_4D6            = &04D6
 byte_526            = &0526
 
-ENEMY_TYPE          = &0576
-ENEMY_X             = &0580
-ENEMY_U             = &058A
-ENEMY_Y             = &0594
-ENEMY_V             = &059E
-ENEMY_FRAME         = &05A8
-byte_5B2            = &05B2
+; Enemy vars (up to 10 enemies)
+ENEMY_TYPE          = &0576 ; Type of enemy (8 types)
+ENEMY_X             = &0580 ; Grid X position
+ENEMY_U             = &058A ; Offset X
+ENEMY_Y             = &0594 ; Grid Y position
+ENEMY_V             = &059E ; Offset Y
+ENEMY_FRAME         = &05A8 ; Current animation frame
+ENEMY_AI_TIMER      = &05B2 ; No. frames until next AI call (half second apart)
 byte_5BC            = &05BC
 byte_5C6            = &05C6
 ENEMY_FACE          = &05D0
 byte_5DA            = &05DA
 byte_5E4            = &05E4
+
+; ?? 18 bytes unaccounted for
 
 TILE_TAB            = &0600
 

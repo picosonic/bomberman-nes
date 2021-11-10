@@ -1620,7 +1620,7 @@ INCLUDE "input.asm"
   STA byte_5E4,Y
 
   LDA #&1E
-  STA byte_5B2,Y
+  STA ENEMY_AI_TIMER,Y
 
 .skip_enemy
   DEY
@@ -1668,7 +1668,7 @@ INCLUDE "input.asm"
   STA byte_5E4,Y
 
   LDA #&1E
-  STA byte_5B2,Y
+  STA ENEMY_AI_TIMER,Y
 
 .NEXT_BMONSTR
   DEY
@@ -2358,19 +2358,19 @@ INCLUDE "input.asm"
 
 .CASE_LEFT
   TXA
-  AND #PAD_LEFT      ; Left
+  AND #PAD_LEFT       ; Left
   BEQ CASE_UP
   JSR MOVE_LEFT
 
 .CASE_UP
   TXA
-  AND #PAD_UP      ; Up
+  AND #PAD_UP         ; Up
   BEQ CASE_DOWN
   JSR MOVE_UP
 
 .CASE_DOWN
   TXA
-  AND #PAD_DOWN      ; Down
+  AND #PAD_DOWN       ; Down
   BEQ CASE_ACTION
   JSR MOVE_DOWN
 
@@ -3047,10 +3047,10 @@ INCLUDE "input.asm"
   INC ENEMIES_LEFT
 
 .loc_CFC5
-  LDY byte_5B2,X
+  LDY ENEMY_AI_TIMER,X
   BEQ loc_CFCF
 
-  DEC byte_5B2,X
+  DEC ENEMY_AI_TIMER,X
   BNE THINK_NEXT
 
 .loc_CFCF
@@ -3378,7 +3378,7 @@ INCLUDE "input.asm"
   LDA ENEMY_Y,X:STA M_Y
   LDA ENEMY_V,X:STA M_V
   LDA ENEMY_FRAME,X:STA M_FRAME
-  LDA byte_5B2,X:STA byte_47
+  LDA ENEMY_AI_TIMER,X:STA M_AI_TIMER
   LDA byte_5BC,X:STA byte_48
   LDA byte_5C6,X:STA byte_49
   LDA ENEMY_FACE,X:STA M_FACE
@@ -3400,7 +3400,7 @@ INCLUDE "input.asm"
   LDA M_Y:STA ENEMY_Y,X
   LDA M_V:STA ENEMY_V,X
   LDA M_FRAME:STA ENEMY_FRAME,X
-  LDA byte_47:STA byte_5B2,X
+  LDA M_AI_TIMER:STA ENEMY_AI_TIMER,X
   LDA byte_48:STA byte_5BC,X
   LDA byte_49:STA byte_5C6,X
   LDA M_FACE:STA ENEMY_FACE,X
@@ -4490,7 +4490,7 @@ INCLUDE "input.asm"
   LDA TEMP_Y:STA ENEMY_Y,X
 
   LDA #0
-  STA byte_5B2,X
+  STA ENEMY_AI_TIMER,X
   STA byte_5DA,X
   STA byte_5C6,X
   STA byte_5E4,X
