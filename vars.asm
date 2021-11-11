@@ -57,10 +57,10 @@ TEMP_A2             = &31
 
 byte_32             = &32
 FRAME_CNT           = &33
-STAGE_MAP           = &34
+STAGE_MAP           = &34 ; Pointer
 byte_36             = &36
 
-BOOM_SOUND          = &38
+BOOM_SOUND          = &38 ; Boolean, is BOOM PCM playing
 
 SPR_TAB_INDEX       = &39
 SPR_X               = &3A
@@ -93,14 +93,11 @@ byte_51             = &51
 byte_52             = &52
 byte_53             = &53
 
-; PRNG seed (4 bytes)
-SEED                = &54
+SEED                = &54 ; PRNG seed (4 bytes)
 
-; Current level (1..50)
-STAGE               = &58
+STAGE               = &58 ; Current level (1..50)
 
-; Boolean for DEMO being played
-DEMOPLAY            = &59
+DEMOPLAY            = &59 ; Boolean, DEMO being played
 
 TEMP_Y3             = &5A
 EXIT_ENEMY_TYPE     = &5B
@@ -111,8 +108,7 @@ NO_ENEMIES_LEFT     = &5E ; Boolean, when no enemies remain
 ; Title screen cursor
 CURSOR              = &5F ; Boolean, START or CONTINUE menu option
 
-; Indicate if level has been started
-STAGE_STARTED       = &60 ; Boolean
+STAGE_STARTED       = &60 ; Boolean, level has been started
 
 ; 7 bytes BCD
 SCORE               = &61 ; &61..&67
@@ -126,8 +122,7 @@ byte_6B             = &6B
 DEMO_WAIT_HI        = &70
 DEMO_WAIT_LO        = &71
 
-; Are we on title screen
-INMENU              = &72 ; Boolean
+INMENU              = &72 ; Boolean, are we on title screen
 
 ; Bonus item status
 BONUS_POWER         = &73 ; Explosion radius in tiles (multiples of 0x10)
