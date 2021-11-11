@@ -3432,7 +3432,7 @@ INCLUDE "input.asm"
 .THINK_A
 {
   DEC byte_49
-  BNE locret_D2A2
+  BNE think_done
 
   LDA #0:STA M_TYPE
 
@@ -3444,14 +3444,14 @@ INCLUDE "input.asm"
 .THINK_9
 {
   DEC byte_49
-  BNE locret_D2A2
+  BNE think_done
 
   LDA #10
   STA byte_49
   INC M_FRAME
   LDA M_FRAME
   CMP #44
-  BNE locret_D2A2
+  BNE think_done
 
   LDA byte_4B
   CLC:ADC M_FACE
@@ -3485,7 +3485,7 @@ INCLUDE "input.asm"
   LDA #11:STA M_TYPE
   LDA #100:STA byte_49
 
-.^locret_D2A2
+.^think_done
   RTS
 }
 
@@ -3505,7 +3505,7 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 
-.locret_D2B4
+.done_think_4
   RTS
 
 ; ---------------------------------------------------------------------------
@@ -3520,14 +3520,14 @@ INCLUDE "input.asm"
 
   LDA FRAME_CNT
   AND #3
-  BNE locret_D2B4
+  BNE done_think_4
 
   JMP loc_D310
 }
 
 ; ---------------------------------------------------------------------------
 
-.locret_D2C8
+.done_think_2
   RTS
 
 ; ---------------------------------------------------------------------------
@@ -3541,7 +3541,7 @@ INCLUDE "input.asm"
 
   LDA FRAME_CNT
   AND #3
-  BEQ locret_D2C8
+  BEQ done_think_2
 
   DEC byte_4C
   LDA byte_4C
@@ -3556,7 +3556,7 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 
-.locret_D2E7
+.done_think_1
   RTS
 
 ; ---------------------------------------------------------------------------
@@ -3570,7 +3570,7 @@ INCLUDE "input.asm"
 
   LDA FRAME_CNT
   AND #3
-  BEQ locret_D2E7
+  BEQ done_think_1
 
   DEC byte_4C
   LDA byte_4C
@@ -3646,7 +3646,7 @@ INCLUDE "input.asm"
   LDA M_FACE
 
   JSR STEP_MONSTER
-  BEQ locret_D364
+  BEQ done
 
   CMP #3
   BCC loc_D360
@@ -3663,7 +3663,7 @@ INCLUDE "input.asm"
 .loc_D360
   LDA #0:STA byte_49
 
-.locret_D364
+.done
   RTS
 ; ---------------------------------------------------------------------------
 
@@ -3777,7 +3777,7 @@ INCLUDE "input.asm"
 .loc_D3EE
   LDA M_FACE
   JSR STEP_MONSTER
-  BEQ locret_D405
+  BEQ done
 
   CMP #3
   BCS loc_D406
@@ -3785,12 +3785,12 @@ INCLUDE "input.asm"
   INC M_FACE
   LDA M_FACE
   CMP #5
-  BNE locret_D405
+  BNE done
 
   LDA #1
   STA M_FACE
 
-.locret_D405
+.done
   RTS
 ; ---------------------------------------------------------------------------
 
