@@ -1646,10 +1646,12 @@ INCLUDE "input.asm"
   ASL A:ASL A
   STA ENEMY_FRAME,Y
 
+  ; Position X and Y offsets in centre of sprite cell
   LDA #SPR_HALFSIZE
   STA ENEMY_U,Y
   STA ENEMY_V,Y
 
+  ; Set enemy face to a random number between 1 and 4
   JSR RAND
   AND #3
   CLC:ADC #1
@@ -4433,22 +4435,24 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 .SPAWN_MONSTERS
 {
+  ; Set pointer into monster tab based on the current level
   LDA STAGE
   CMP #(MAP_LEVELS/2)+1
-  BCC loc_D6A8
+  BCC early_levels
 
   SBC #(MAP_LEVELS/2)
-  LDX #2
-  LDY #&D8
-  BNE loc_D6AC
+  LDX #lo(MONSTER_TAB2)
+  LDY #hi(MONSTER_TAB2)
+  BNE save_pointer
 
-.loc_D6A8
+.early_levels
   LDX #lo(MONSTER_TAB)
   LDY #hi(MONSTER_TAB)
 
-.loc_D6AC
+.save_pointer
   STX MTAB_PTR
   STY MTAB_PTR+1
+
   SEC:SBC #1
   ASL A
   STA TEMP_X
@@ -4458,33 +4462,36 @@ INCLUDE "input.asm"
   TAY
   LDX #MAX_ENEMY-1
 
-.loc_D6BE
+.enemy_loop
   LDA (MTAB_PTR),Y:STA ENEMY_TYPE,X
-  BEQ loc_D703
+  BEQ next_enemy
 
   SEC:SBC #1
   ASL A:ASL A
   STA ENEMY_FRAME,X
 
+  ; Position X and Y offsets in centre of sprite cell
   LDA #SPR_HALFSIZE
   STA ENEMY_U,X
   STA ENEMY_V,X
 
+  ; Set enemy face to a random number between 1 and 4
   JSR RAND
-
   AND #3
   CLC:ADC #1
   STA ENEMY_FACE,X
 
+  ; Cache Y
   STY TEMP_Y3
 
-.loc_D6E2
+  ; Find an X coordinate >= 5
+.newxcoord
   JSR RAND_COORDS
-
   LDA TEMP_X
   CMP #5
-  BCC loc_D6E2
+  BCC newxcoord
 
+  ; Save the new X coordinate
   STA ENEMY_X,X
 
   LDA TEMP_Y:STA ENEMY_Y,X
@@ -4495,19 +4502,20 @@ INCLUDE "input.asm"
   STA byte_5C6,X
   STA byte_5E4,X
 
+  ; Restore Y
   LDY TEMP_Y3
 
-.loc_D703
+.next_enemy
   INY
   DEX
-  BPL loc_D6BE
+  BPL enemy_loop
 
   RTS
 }
 
 ; ---------------------------------------------------------------------------
 ; Table of monster types for every one of the 50 levels
-; On each stage, there is up to 10 monsters
+; On each stage, there is up to 10 monsters @ D708
 .MONSTER_TAB
   EQUB    1, 1, 1, 1, 1, 1, 0, 0, 0, 0
   EQUB    1, 1, 1, 2, 2, 2, 0, 0, 0, 0
@@ -4534,6 +4542,7 @@ INCLUDE "input.asm"
   EQUB    3, 3, 4, 4, 5, 5, 6, 6, 7, 0
   EQUB    3, 4, 5, 6, 6, 5, 6, 6, 7, 0
   EQUB    2, 2, 3, 4, 5, 5, 6, 6, 7, 0
+.MONSTER_TAB2
   EQUB    1, 2, 3, 4, 5, 5, 6, 6, 7, 0
   EQUB    1, 2, 6, 6, 6, 5, 6, 6, 7, 0
   EQUB    2, 3, 3, 3, 4, 4, 4, 6, 7, 0
