@@ -1121,8 +1121,7 @@ INCLUDE "input.asm"
 ; Check for START being pressed, if so pause and wait for START to be released
 .PAUSED
   JSR NEXTFRAME ; Wait for start of next frame
-  LDA #1
-  STA SPR_TAB_INDEX
+  LDA #1:STA SPR_TAB_INDEX
   LDA JOYPAD1
   AND #PAD_START
   BEQ NOT_PAUSED
@@ -3804,8 +3803,9 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 .byte_D412
-  EQUB   0,  3,  4,  1,  2,  1,  4,  4,  2,  1,  3,  2,  4
-  EQUB   3,  1,  0,  1,  2,  4,  8
+  EQUB   0,  3,  4,  1,  2
+  EQUB   1,  4,  4,  2,  1,  3,  2,  4,  3,  1
+  EQUB   0,  1,  2,  4,  8
 
 ; =============== S U B R O U T I N E =======================================
 .TURN_HORIZONTALLY
@@ -4515,7 +4515,7 @@ INCLUDE "input.asm"
 
 ; ---------------------------------------------------------------------------
 ; Table of monster types for every one of the 50 levels
-; On each stage, there is up to 10 monsters @ D708
+; On each stage, there is up to 10 monsters
 .MONSTER_TAB
   EQUB    1, 1, 1, 1, 1, 1, 0, 0, 0, 0
   EQUB    1, 1, 1, 2, 2, 2, 0, 0, 0, 0
