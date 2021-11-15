@@ -21,8 +21,9 @@ APU_DMC_START_REG   = &4012 ; DMC start of waveform at address &C000 + &40*&xx
 APU_DMC_LEN_REG     = &4013 ; DMC length of waveform is &10*&xx + 1 bytes (128*&xx + 8 samples)
 APU_MASTERCTRL_REG  = &4015 ; Enable/disable APU channels
 
-; I/O
+; OAM
 PPU_SPR_DMA         = &4014 ; OAM DMA
 
+; I/O
 JOYPAD_PORT1        = &4016
 JOYPAD_PORT2        = &4017
