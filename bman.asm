@@ -1530,14 +1530,14 @@ INCLUDE "input.asm"
   BEQ loc_C835
 
   TAY
-  LDA #0
-  STA byte_4D6,X:LDA FIRE_X,X
-
-  CLC:ADC byte_CA16,Y
+  LDA #0:STA byte_4D6,X
+  
+  LDA FIRE_X,X
+  CLC:ADC FIRE_X_OFFSET,Y
   STA CACHE_X
 
   LDA FIRE_Y,X
-  CLC:ADC byte_CA11,Y
+  CLC:ADC FIRE_Y_OFFSET,Y
   STA CACHE_Y
 
   LDY #MAX_FIRE-1
@@ -1792,11 +1792,11 @@ INCLUDE "input.asm"
   LDA byte_C9DE,Y ; Load from lookup table
   STA byte_2E
 
-  LDA #1:JSR sub_C9E3
-  LDA #2:JSR sub_C9E3
-  LDA #3:JSR sub_C9E3
-  LDA #4:JSR sub_C9E3
-  LDA #0:JSR sub_C9E3
+  LDA #MAP_RIGHT:JSR sub_C9E3
+  LDA #MAP_UP:JSR sub_C9E3
+  LDA #MAP_LEFT:JSR sub_C9E3
+  LDA #MAP_DOWN:JSR sub_C9E3
+  LDA #MAP_HERE:JSR sub_C9E3
 
   ; Restore X and Y regs
   LDX TEMP_X2
@@ -1826,11 +1826,11 @@ INCLUDE "input.asm"
   BMI done
 
   LDA CACHE_Y
-  CLC:ADC byte_CA11,X
+  CLC:ADC FIRE_Y_OFFSET,X
   STA FIRE_Y,Y
 
   LDA CACHE_X
-  CLC:ADC byte_CA16,X
+  CLC:ADC FIRE_X_OFFSET,X
   STA FIRE_X,Y
 
   LDA TEMP_A2
@@ -1844,10 +1844,10 @@ INCLUDE "input.asm"
 }
 
 ; ---------------------------------------------------------------------------
-.byte_CA11
-  EQUB   0,  0,&FF,  0,  1
-.byte_CA16
-  EQUB   0,  1,  0,&FF,  0
+.FIRE_Y_OFFSET
+  EQUB   0,  0,&FF,  0,  1 ; Y offsets (centre/right/up/left/down)
+.FIRE_X_OFFSET
+  EQUB   0,  1,  0,&FF,  0 ; X offsets (centre/right/up/left/down)
 
 ; =============== S U B R O U T I N E =======================================
 ; Draw animation of the bombs
