@@ -45,7 +45,7 @@ INCLUDE "vars.asm"
   LDA #25     ; Draw a small one at the top right of the screen
   STA SPR_TAB ; Apparently used for debugging (forgot to remove)
 
-  LDA #&EC:STA SPR_TAB+1
+  LDA #SCORE_1:STA SPR_TAB+1
   LDA #0:STA SPR_TAB+2
   LDA #248:STA SPR_TAB+3
 
@@ -3247,16 +3247,19 @@ INCLUDE "input.asm"
   LDA #&10
 
 .loc_D0E3
+  ; Multiply A by 3, then store in X to be used for indexing score sprite lookup table
   STA TEMP_X
-
   ASL A
   CLC:ADC TEMP_X
   TAX
+
   LDY byte_6B
 
-  JSR sub_D0FA
-  JSR sub_D0FA
-  JSR sub_D0FA
+  ; Draw up to 3 mini tiles to represent the score
+  JSR DRAW_SCORE_TILE
+  JSR DRAW_SCORE_TILE
+  JSR DRAW_SCORE_TILE
+
   STY byte_6B
 
 .loc_D0F7
@@ -3267,9 +3270,9 @@ INCLUDE "input.asm"
 
 
 ; =============== S U B R O U T I N E =======================================
-.sub_D0FA
+.DRAW_SCORE_TILE
 {
-  LDA loc_D121,X
+  LDA SCORE_TILES,X
   BEQ loc_D11C
 
   PHA
@@ -3295,29 +3298,31 @@ INCLUDE "input.asm"
   DEY
   BNE done
 
-.loc_D121
+.SCORE_TILES ; Label is here to skip over 0th entry
   LDY #&FC
 
 .done
   RTS
 
 ; ---------------------------------------------------------------------------
-  EQUB &EC,&46,  0 ; 1
-  EQUB &ED,&46,  0 ; 2
-  EQUB &EE,&46,  0 ; 3
-  EQUB &EF,&46,  0 ; 4
-  EQUB &FC,&46,  0 ; 5
-  EQUB &FD,&46,  0 ; 6
-  EQUB &FE,&46,  0 ; 7
-  EQUB &FF,&46,  0 ; 8
-  EQUB &EC,&46,&46 ; 9
-  EQUB &ED,&46,&46 ; 10
-  EQUB &EE,&46,&46 ; 11
-  EQUB &EF,&46,&46 ; 12
-  EQUB &FC,&46,&46 ; 13
-  EQUB &FD,&46,&46 ; 14
-  EQUB &FE,&46,&46 ; 15
-  EQUB &FF,&46,&46 ; 16
+  ; Score tiles
+  EQUB SCORE_1,SCORE_00,  0 ; 1 - 100
+  EQUB SCORE_2,SCORE_00,  0 ; 2 - 200
+  EQUB SCORE_4,SCORE_00,  0 ; 3 - 400
+  EQUB SCORE_8,SCORE_00,  0 ; 4 - 800
+  EQUB SCORE_10,SCORE_00,  0 ; 5 - 1,000
+  EQUB SCORE_20,SCORE_00,  0 ; 6 - 2,000
+  EQUB SCORE_40,SCORE_00,  0 ; 7 - 4,000
+  EQUB SCORE_80,SCORE_00,  0 ; 8 - 8,000
+
+  EQUB SCORE_1,SCORE_00,SCORE_00 ; 9 - 10,000
+  EQUB SCORE_2,SCORE_00,SCORE_00 ; 10 - 20,000
+  EQUB SCORE_4,SCORE_00,SCORE_00 ; 11 - 40,000
+  EQUB SCORE_8,SCORE_00,SCORE_00 ; 12 - 80,000
+  EQUB SCORE_10,SCORE_00,SCORE_00 ; 13 - 100,000
+  EQUB SCORE_20,SCORE_00,SCORE_00 ; 14 - 200,000
+  EQUB SCORE_40,SCORE_00,SCORE_00 ; 15 - 400,000
+  EQUB SCORE_80,SCORE_00,SCORE_00 ; 16 - 800,000
 }
 
 .MONSTER_TILE
@@ -4611,10 +4616,11 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 .sub_D924
 {
-  TAY
+  TAY ; Cache sprite number
   ASL A:ASL A ; A = A * 4
   STA TILE_PARAM+3
 
+  ; Get palette for this sprite
   LDA TILE_PALETTE,Y:STA TILE_PARAM+7
 
   ; If X position >=16 (on right of map), shift Y down by 4 and subtract 16 from X
