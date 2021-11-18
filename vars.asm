@@ -28,7 +28,7 @@ JOYPAD2             = &13
 TILE_CUR            = &14
 TILE_PTR            = &15
 TILE_CNT            = &16
-TILE_PARAM          = &17
+TILE_PARAM          = &17 ; 4 bytes OAM, plus 4 more (?)
 
 CACHE_X             = &1F ; Cached X position
 CACHE_Y             = &20 ; Cached Y position

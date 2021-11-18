@@ -2087,6 +2087,7 @@ INCLUDE "input.asm"
 
   JSR sub_D924
 
+  ; Copy 8 bytes from TILE_PARAM to TILE_TAB
   LDX #0
 
 .loop
@@ -4611,20 +4612,21 @@ INCLUDE "input.asm"
 .sub_D924
 {
   TAY
-  ASL A:ASL A
+  ASL A:ASL A ; A = A * 4
   STA TILE_PARAM+3
 
-  LDA unk_D994,Y:STA TILE_PARAM+7
+  LDA TILE_PALETTE,Y:STA TILE_PARAM+7
 
+  ; If X position >=16 (on right of map), shift Y down by 4 and subtract 16 from X
   LDY #0
   LDA CACHE_X
   CMP #16
-  BCC loc_D93A
+  BCC left_of_screen
 
   LDY #4
   SBC #16
 
-.loc_D93A
+.left_of_screen
   STY TILE_PARAM
   ASL A
   STA byte_21
@@ -4655,10 +4657,11 @@ INCLUDE "input.asm"
   LSR A
   CLC:ADC byte_23
   ASL A
+
   PHA
-  LDA #&FC
-  STA TILE_PARAM+6
+  LDA #&FC:STA TILE_PARAM+6
   PLA
+
   TAX
   BEQ loc_D97C
 
@@ -4689,57 +4692,67 @@ INCLUDE "input.asm"
   RTS
 
 ; ---------------------------------------------------------------------------
-.unk_D994
-  EQUB   0
-  EQUB   0
-  EQUB   0
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   0
-  EQUB   0
-  EQUB   0
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   1
-  EQUB   3
-  EQUB   2
-  EQUB   2
-  EQUB   2
-  EQUB   2
-  EQUB   2
-  EQUB   2
-  EQUB   2
-  EQUB   2
-  EQUB   3
+.TILE_PALETTE
+  EQUB   0 ; 0 Empty space
+  EQUB   0 ; 1 Concrete block
+
+  ; Palettes for brick walls
+  EQUB   0 ; 2
+  EQUB   1 ; 3
+  EQUB   1 ; 4
+  EQUB   1 ; 5
+  EQUB   1 ; 6
+  EQUB   1 ; 7
+
+  ; Palettes for bombs
+  EQUB   0 ; 8
+  EQUB   0 ; 9
+  EQUB   0 ; 10
+
+  ; Palletes for explosions
+  EQUB   1 ; 11
+  EQUB   1 ; 12
+  EQUB   1 ; 13
+  EQUB   1 ; 14
+  EQUB   1 ; 15
+  EQUB   1 ; 16
+  EQUB   1 ; 17
+  EQUB   1 ; 18
+  EQUB   1 ; 19
+  EQUB   1 ; 20
+  EQUB   1 ; 21
+  EQUB   1 ; 22
+  EQUB   1 ; 23
+  EQUB   1 ; 24
+  EQUB   1 ; 25
+  EQUB   1 ; 26
+  EQUB   1 ; 27
+  EQUB   1 ; 28
+  EQUB   1 ; 29
+  EQUB   1 ; 30
+  EQUB   1 ; 31
+  EQUB   1 ; 32
+  EQUB   1 ; 33
+  EQUB   1 ; 34
+  EQUB   1 ; 35
+  EQUB   1 ; 36
+  EQUB   1 ; 37
+  EQUB   1 ; 38
+
+  EQUB   1 ; 39 Brick wall
+  EQUB   3 ; 40 Exit door
+
+  ; Palette for exit enemy types
+  EQUB   2 ; 41 - 1 Valcom (Balloon)
+  EQUB   2 ; 42 - 2 O'Neal (Onion)
+  EQUB   2 ; 43 - 3 Dahl (Barrel)
+  EQUB   2 ; 44 - 4 Minvo (Happy face)
+  EQUB   2 ; 45 - 5 Doria (Blob)
+  EQUB   2 ; 46 - 6 Ovape (Ghost)
+  EQUB   2 ; 47 - 7 Pass (Tiger)
+  EQUB   2 ; 48 - 8 Pontan (Coin)
+
+  EQUB   3 ; 49
 }
 
 ; Table for the 4 tile ids used to make a sprite
