@@ -42,12 +42,12 @@ INCLUDE "vars.asm"
   LDA STAGE_STARTED ; Check for level started
   BEQ SEND_SPRITES
 
-  LDA #25     ; Draw a small one at the top right of the screen
+  LDA #25     ; Draw a small one at the top right of the screen - OAM - Y position
   STA SPR_TAB ; Apparently used for debugging (forgot to remove)
 
-  LDA #SCORE_1:STA SPR_TAB+1
-  LDA #0:STA SPR_TAB+2
-  LDA #248:STA SPR_TAB+3
+  LDA #SCORE_1:STA SPR_TAB+1 ; OAM - Tile id
+  LDA #0:STA SPR_TAB+2 ; OAM - attributes
+  LDA #248:STA SPR_TAB+3 ; OAM - X position
 
 .SEND_SPRITES
   LDA #7:STA PPU_SPR_DMA
@@ -3272,30 +3272,30 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 .DRAW_SCORE_TILE
 {
+  ; If next tile to draw is null, skip it
   LDA SCORE_TILES,X
-  BEQ loc_D11C
+  BEQ no_draw
 
   PHA
-  LDA SPR_Y:STA SPR_TAB,Y
+  LDA SPR_Y:STA SPR_TAB,Y ; OAM - sprite Y position
   INY
   PLA
 
-  STA SPR_TAB,Y
+  STA SPR_TAB,Y ; OAM - tile index number
 
   INY
-  LDA #1:STA SPR_TAB,Y
+  LDA #%00000001:STA SPR_TAB,Y ; OAM - attributes
 
   INY
-  LDA SPR_X:STA SPR_TAB,Y
+  LDA SPR_X:STA SPR_TAB,Y ; OAM - sprite X position
 
   INY
   CLC:ADC #8
   STA SPR_X
 
-.loc_D11C
+.no_draw
   INX
-  INY
-  DEY
+  INY:DEY
   BNE done
 
 .SCORE_TILES ; Label is here to skip over 0th entry

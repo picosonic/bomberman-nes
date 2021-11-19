@@ -251,4 +251,4 @@ byte_5E4            = &05E4
 
 TILE_TAB            = &0600
 
-SPR_TAB             = &0700
+SPR_TAB             = &0700 ; Sprites to draw (in OAM format)
