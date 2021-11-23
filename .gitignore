@@ -5,4 +5,5 @@ bomberman.nes
 # Other files
 *.cdl
 *.ram.nl
+*.dbg
 nes_header.bin
