@@ -1819,7 +1819,8 @@ INCLUDE "input.asm"
   CMP byte_2E
   BEQ BOMB_TICK_END
 
-  STA TEMP_A2
+  STA TEMP_A2 ; Cache A
+
   TAX
   LDY #MAX_FIRE-1
   JSR FIND_FIRE_SLOT
@@ -1833,7 +1834,8 @@ INCLUDE "input.asm"
   CLC:ADC FIRE_X_OFFSET,X
   STA FIRE_X,Y
 
-  LDA TEMP_A2
+  LDA TEMP_A2 ; Restore A
+
   STA byte_4D6,Y
   STA byte_526,Y
 
@@ -3451,8 +3453,8 @@ INCLUDE "input.asm"
   DEC byte_49
   BNE think_done
 
-  LDA #10
-  STA byte_49
+  LDA #10:STA byte_49
+
   INC M_FRAME
   LDA M_FRAME
   CMP #44
