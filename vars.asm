@@ -86,7 +86,7 @@ byte_4B             = &4B
 byte_4C             = &4C
 M_ID                = &4D
 
-byte_4E             = &4E
+ENEMY_HIT           = &4E ; Tile which stopped enemy movement
 byte_4F             = &4F
 byte_50             = &50
 byte_51             = &51

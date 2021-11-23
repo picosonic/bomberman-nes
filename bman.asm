@@ -1179,7 +1179,7 @@ INCLUDE "input.asm"
   JSR KILL_ENEMY  ; Remove all enemies from the level
 
   ; Spawn 10 x enemy type 8 (PONTAN)
-  LDA #8:STA BONUS_ENEMY_TYPE
+  LDA #ENEMY_PONTAN:STA BONUS_ENEMY_TYPE
   JMP RESPAWN_BONUS_ENEMY
 ; ---------------------------------------------------------------------------
 
@@ -2170,7 +2170,7 @@ INCLUDE "input.asm"
 ; =============== S U B R O U T I N E =======================================
 ; Remove all monsters from the stage
 .^KILL_ENEMY
-  LDA #DISABLE
+  LDA #ENEMY_NONE
   LDX #MAX_ENEMY-1
 
 .KILL_LOOP
@@ -2278,7 +2278,7 @@ INCLUDE "input.asm"
   CMP #20
   BNE done
 
-  LDA #1:STA KILLED
+  LDA #YES:STA KILLED
 
 .done
   RTS
@@ -3651,8 +3651,9 @@ INCLUDE "input.asm"
   LDA M_FACE
 
   JSR STEP_MONSTER
-  BEQ done
+  BEQ done ; No collision
 
+  ; Something was hit
   CMP #3
   BCC loc_D360
 
@@ -3782,8 +3783,9 @@ INCLUDE "input.asm"
 .loc_D3EE
   LDA M_FACE
   JSR STEP_MONSTER
-  BEQ done
+  BEQ done ; No collision
 
+  ; Something was hit
   CMP #3
   BCS loc_D406
 
@@ -3961,13 +3963,13 @@ INCLUDE "input.asm"
 {
   LDA M_TYPE
 
-  CMP #5      ; Enemies 5/6/8 (Doria/Ovape/Pontan) can walk through brick walls
+  CMP #ENEMY_DORIA      ; Enemies 5/6/8 (Doria/Ovape/Pontan) can walk through brick walls
   BEQ enemy_collision_done
 
-  CMP #6
+  CMP #ENEMY_OVAPE
   BEQ enemy_collision_done
 
-  CMP #8
+  CMP #ENEMY_PONTAN
 
   RTS
 }
@@ -3976,7 +3978,7 @@ INCLUDE "input.asm"
 ; Take a step with this enemy (gaze direction in A)
 .STEP_MONSTER
 {
-  LDX #MAP_EMPTY:STX byte_4E
+  LDX #MAP_EMPTY:STX ENEMY_HIT
 
   ; Check for looking right
   TAX
@@ -4010,7 +4012,7 @@ INCLUDE "input.asm"
   JSR STEP_ENEMY_DOWN
 
 .done
-  LDA byte_4E
+  LDA ENEMY_HIT
 
   RTS
 }
@@ -4067,7 +4069,7 @@ INCLUDE "input.asm"
 
 .^enemy_step_done
   ; Cache what entity stopped enemy moving
-  STA byte_4E
+  STA ENEMY_HIT
 
   RTS
 }
@@ -5586,7 +5588,7 @@ INCLUDE "input.asm"
 
   ; Assign palette for "BOMBERMAN" title logo
   LDX #&20
-  LDA #0 ; Palette 0 for whole block
+  LDA #%00000000 ; Palette 0 for whole block
 
 .title_attr_loop
   STA PPU_DATA
@@ -5595,7 +5597,7 @@ INCLUDE "input.asm"
 
   ; Assign palette for bottom of "BOMBERMAN" and ">START  CONTINUE" option text
   LDX #&08
-  LDA #&50 ; Palette 0 for top half and 1 for bottom half
+  LDA #%01010000 ; Palette 0 for top half and 1 for bottom half
 
 .option_attr_loop
   STA PPU_DATA
@@ -5604,7 +5606,7 @@ INCLUDE "input.asm"
 
   ; Assign palette for trademarks and license text
   LDX #&18
-  LDA #&55 ; Palette 1 for whole block
+  LDA #%01010101 ; Palette 1 for whole block
 
 .license_attr_loop
   STA PPU_DATA
