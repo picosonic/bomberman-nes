@@ -38,7 +38,7 @@ then
   rm bomberman.nes >/dev/null 2>&1
   beebasm -v -i bman.asm
   cat nes_header.bin bomberman bomber.chr > bomberman.nes
-
-  md5sum bomberman.nes
-  echo "97ddb647""898b0106""5f395eb6""4c3d131f""  Bomberman (USA)"
 fi
+
+md5sum bomberman.nes
+echo "97ddb647""898b0106""5f395eb6""4c3d131f""  Bomberman (USA)"
