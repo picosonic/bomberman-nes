@@ -178,10 +178,8 @@
   CMP #0
   BEQ ABORT_WRITE
 
-  TXA
-  ASL A
-  ASL A
-  TAY
+  TXA:ASL A:ASL A:TAY ; Y = X * 4
+
   LDA byte_CD,X
   BEQ loc_E59D
   BPL loc_E593
