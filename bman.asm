@@ -1224,7 +1224,7 @@ INCLUDE "input.asm"
   LDA FIRE_X,X:STA CACHE_X
   LDA FIRE_Y,X:STA CACHE_Y
 
-  LDA WALL_EXPLOSION_FRAMES,Y
+  LDA EXPLOSION_FRAMES,Y
   JMP loc_C6DA
 
 ; ---------------------------------------------------------------------------
@@ -1237,6 +1237,7 @@ INCLUDE "input.asm"
   AND #%01111000 ; Mask off top bit and bottom three bits
   BEQ skip_fire
 
+  ; Check if top bit set
   LDA byte_526,X
   BPL loc_C6B2
 
@@ -1248,7 +1249,7 @@ INCLUDE "input.asm"
   AND #%00111100 ; Mask off top two and bottom two bits
   CLC:ADC byte_32
   TAY
-  LDA byte_C778,Y
+  LDA EXPLOSION_FRAMES+27,Y
   JMP loc_C6DA
 ; ---------------------------------------------------------------------------
 
@@ -1279,7 +1280,7 @@ INCLUDE "input.asm"
 
 .loc_C6D6
   TAY
-  LDA byte_C764,Y
+  LDA EXPLOSION_FRAMES+7,Y
 
 .loc_C6DA
   AND #&FF
@@ -1375,23 +1376,19 @@ INCLUDE "input.asm"
 
 .done
   RTS
-}
 
 ; ---------------------------------------------------------------------------
-.WALL_EXPLOSION_FRAMES
+.EXPLOSION_FRAMES
   EQUB 39,  3,  4,  5,  6,  7,  0 ; Exploding brickwork
-.byte_C764
-  EQUB   0, &B, &C, &D, &E, &D, &C, &B, 0 ; Explosion centre
+  EQUB  0, &B, &C, &D, &E, &D, &C, &B, 0 ; Explosion centre
 
   EQUB &0F,&10 ; Explosion (h/v) 1
   EQUB &11,&12 ; Explosion (h/v) 2
   EQUB &13,&14 ; Explosion (h/v) 3
   EQUB &15,&16 ; Explosion (h/v) 4
   EQUB &13,&14 ; Explosion (h/v) 3
-  EQUB &11
-.byte_C778
-  EQUB     &12 ; Explosion (h/v) 2
-  EQUB &F,&10  ; Explosion (h/v) 1
+  EQUB &11,&12 ; Explosion (h/v) 2
+  EQUB &0F,&10 ; Explosion (h/v) 1
   EQUB  0,  0  ; Empty space
 
   EQUB &17,&18,&19,&1A ; Explosion edge (r/t/l/b) 1
@@ -1402,6 +1399,7 @@ INCLUDE "input.asm"
   EQUB &1B,&1C,&1D,&1E ; Explosion edge (r/t/l/b) 2
   EQUB &17,&18,&19,&1A ; Explosion edge (r/t/l/b) 1
   EQUB   0,  0,  0,  0 ; Empty space
+}
 
 ; =============== S U B R O U T I N E =======================================
 ; Draw explosions
@@ -1782,6 +1780,7 @@ INCLUDE "input.asm"
 }
 
 ; =============== S U B R O U T I N E =======================================
+;  A = character from MAP
 .sub_C9B6
 {
   ; Cache X and Y regs
