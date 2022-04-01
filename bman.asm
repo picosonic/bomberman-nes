@@ -1221,6 +1221,7 @@ INCLUDE "input.asm"
   AND #%01111111
   TAY
 
+  ; Cache X,Y location of this fire
   LDA FIRE_X,X:STA CACHE_X
   LDA FIRE_Y,X:STA CACHE_Y
 
@@ -1529,7 +1530,7 @@ INCLUDE "input.asm"
 
   TAY
   LDA #0:STA byte_4D6,X
-  
+
   LDA FIRE_X,X
   CLC:ADC FIRE_X_OFFSET,Y
   STA CACHE_X
@@ -2289,40 +2290,45 @@ INCLUDE "input.asm"
 
 .PROCESS_BOMBERMAN_MOVEMENTS
 {
+  ; Check for x offset being in centre of cell
   LDA BOMBMAN_U
   CMP #SPR_HALFSIZE
   BNE loc_CCA4
 
+  ; Check for y offset being in centre of cell
   LDA BOMBMAN_V
   CMP #SPR_HALFSIZE
   BNE loc_CCA4
 
+  ; Cache bomberman Y position
   LDY BOMBMAN_Y:STY CACHE_Y
 
+  ; Set stage map pointer to current cell
   LDA MULT_TABY,Y:STA STAGE_MAP
   LDA MULT_TABX,Y:STA STAGE_MAP+1
 
+  ; Cache bomberman X position
   LDY BOMBMAN_X:STY CACHE_X
 
+  ; Look whats on the map where bomberman is
   LDA (STAGE_MAP),Y
+
+  ; Does this location contain the exit
   CMP #MAP_EXIT
   BEQ over_exit
 
+  ; Skip forward if this location does not contain a BONUS item
   CMP #MAP_BONUS
   BNE loc_CCA4
 
-  ; Clear the map here
+  ; BONUS found - clear the map here
   LDA #MAP_EMPTY:STA (STAGE_MAP),Y
 
   JSR DRAW_TILE   ; Add to TILE_TAB
 
   JMP loc_CEE9
-}
-
-; ---------------------------------------------------------------------------
 
 .over_exit
-{
   INC EXIT_DWELL_TIME
 
   LDA #0:STA KEY_TIMER
@@ -2657,7 +2663,7 @@ INCLUDE "input.asm"
   LDA FRAME_CNT ; Not required
   PLA
 
-  INC KEY_TIMER ; Count 
+  INC KEY_TIMER ; Count
 
   INC BOMBMAN_FRAME
   CMP BOMBMAN_FRAME
@@ -3070,7 +3076,7 @@ INCLUDE "input.asm"
   RTS
 
 ; ---------------------------------------------------------------------------
-.RETURN_POINT 
+.RETURN_POINT
   JSR ENEMY_LOAD ; Restore current monster attributes after THINK proc
   JSR loc_D006
 
@@ -3825,12 +3831,12 @@ INCLUDE "input.asm"
   LDA M_Y
   CMP BOMBMAN_Y
   BNE NO_VTURN    ; IF BY != MY, then return
-  
+
   LDA M_X
   CMP BOMBMAN_X
   LDA #1
   BCC FACE_RIGHT  ; IF BX > MX, go right, otherwise go left
-  
+
   LDA #3
 
 .FACE_RIGHT
@@ -3849,12 +3855,12 @@ INCLUDE "input.asm"
   LDA M_X
   CMP BOMBMAN_X
   BNE NO_HTURN    ; IF BX != MX, then return
-  
+
   LDA M_Y
   CMP BOMBMAN_Y
   LDA #4
   BCC FACE_DOWN   ; IF BY > MY, then go down, otherwise go up
-  
+
   LDA #2
 
 .FACE_DOWN
@@ -6030,7 +6036,7 @@ INCLUDE "sound.asm"
   EQUB   1,  0,  8,  8,  1,  0,  3,  8,  2,&88,  1,  0,  2,&88,  1,  0,&14,  8,  5,&88
   EQUB   4,  8,  2,  0,&1B,  1,  7,&81,&18,  1,  6,&81,&15,  1,  2,  9,&10,  8, &A,&40
   EQUB &1A,  0, &A,  4,  1,  0,  6,  4,  1,  0,&1E,  2,  6,  0,&10,  8,  3,&84
-  
+
 .PADDING
   FOR n, 1, &F000-PADDING
     EQUB &FF
