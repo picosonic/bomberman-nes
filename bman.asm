@@ -1242,7 +1242,7 @@ INCLUDE "input.asm"
   LDA byte_526,X
   BPL loc_C6B2
 
-  AND #7
+  AND #%00000111 ; Mask off top 5 bits
   STA byte_32
 
   LDA byte_526,X
@@ -1255,7 +1255,7 @@ INCLUDE "input.asm"
 ; ---------------------------------------------------------------------------
 
 .loc_C6B2
-  AND #7
+  AND #%00000111 ; Mask off top 5 bits
   BEQ loc_C6D0
 
   AND #1
@@ -1357,7 +1357,7 @@ INCLUDE "input.asm"
 
   LDA ENEMY_FRAME,Y
   LSR A:LSR A
-  AND #7
+  AND #%00000111 ; Mask off top 5 bits
   CLC:ADC #&20
   STA ENEMY_FRAME,Y
 
@@ -1525,7 +1525,7 @@ INCLUDE "input.asm"
 
   LDA byte_4D6,X:STA byte_36
 
-  AND #7
+  AND #%00000111 ; Mask off top 5 bits
   BEQ loc_C835
 
   TAY
@@ -1548,7 +1548,7 @@ INCLUDE "input.asm"
   LDA #1:STA FIRE_ACTIVE,Y
 
   LDA byte_36
-  AND #7
+  AND #%00000111 ; Mask off top 5 bits
   STA byte_526,Y
 
   LDA byte_36
@@ -1753,7 +1753,7 @@ INCLUDE "input.asm"
   LDA #0
 
 ._not_bomb
-  AND #7
+  AND #%00000111 ; Mask off top 5 bits
   JSR sub_C9B6
 
   LDA CHAIN_REACTIONS
@@ -2253,7 +2253,7 @@ INCLUDE "input.asm"
 
   ; Limit check to once every 8 frames
   LDA FRAME_CNT
-  AND #7
+  AND #%00000111 ; Mask off top 5 bits
   BNE skip_invulnerable_timeout
 
   ; Reduce INVULNERABLE_TIMER timer
@@ -4281,7 +4281,7 @@ INCLUDE "input.asm"
   ; Limit to once every 8 frames (7.5/sec @ 60Hz)
   PHA
   LDA FRAME_CNT
-  AND #7
+  AND #%00000111 ; Mask off top 5 bits
   BNE done
   PLA
 
