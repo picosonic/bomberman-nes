@@ -88,6 +88,7 @@ MAX_FIRE = (MAX_BOMB*8)
 ; Enemy related
 MAX_ENEMY = 10
 
+; Enemy type code
 ENEMY_NONE   = 0
 ENEMY_VALCOM = 1
 ENEMY_ONEAL  = 2
@@ -130,5 +131,5 @@ SOLIDWHITE = &3B
 COPYRIGHT = &FE
 FULLSTOP = &FD
 
-; Sounc and music related
+; Sound and music related
 NUM_TUNES = 10
