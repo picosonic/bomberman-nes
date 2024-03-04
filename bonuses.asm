@@ -256,7 +256,7 @@
 
   LDA KEY_TIMER
   CMP #248
-  BCS PLACE_BONUS ; Place bonus if A6 >= 248
+  BCS PLACE_BONUS ; Place bonus if key timer >= 248
 
   RTS
 }
